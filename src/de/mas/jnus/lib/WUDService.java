@@ -11,9 +11,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import com.sun.org.apache.xerces.internal.util.SynchronizedSymbolTable;
-
 import java.util.TreeMap;
 
 import de.mas.jnus.lib.implementations.wud.WUDImage;

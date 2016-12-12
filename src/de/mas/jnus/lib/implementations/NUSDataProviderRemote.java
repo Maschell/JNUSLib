@@ -57,6 +57,6 @@ public class NUSDataProviderRemote extends NUSDataProvider {
 
     @Override
     public byte[] getRawCert() throws IOException {
-        return nulL;
+        return null;
     }
 }
