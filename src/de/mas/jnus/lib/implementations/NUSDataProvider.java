@@ -3,6 +3,7 @@ package de.mas.jnus.lib.implementations;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.SynchronousQueue;
 
 import com.sun.istack.internal.NotNull;
 
@@ -60,11 +61,12 @@ public abstract class NUSDataProvider {
         }
         String h3Filename = String.format("%08X%s", content.getID(),Settings.H3_EXTENTION);
         File output = new File(outputFolder + File.separator + h3Filename);
-        if(output.exists() && output.length() == hash.length){           
+        if(output.exists() && output.length() == hash.length){   
+            System.out.println(h3Filename + " already exists");
             return;
         }
 
-        log.info("Saving " + h3Filename +" ");
+        System.out.println("Saving " + h3Filename +" ");
        
         FileUtils.saveByteArrayToFile(output, hash);
     }

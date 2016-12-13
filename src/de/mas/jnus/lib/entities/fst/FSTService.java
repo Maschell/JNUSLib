@@ -57,7 +57,7 @@ public class FSTService {
                                 
                 FSTEntry parent = fstEntryToOffsetMap.get(parentOffset); 
                 if(parent != null){
-                    log.info("no parent found for a FSTEntry");
+                    log.fine("no parent found for a FSTEntry");
                     parent.addChildren(entry);
                 }
                 

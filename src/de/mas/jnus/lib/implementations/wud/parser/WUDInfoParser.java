@@ -111,8 +111,6 @@ public class WUDInfoParser {
                 gamePartition.setPartitionOffset(partitionOffset);
                 gamePartition.setPartitionName(partitionName);
                 
-                System.out.println(String.format("partitionName: %s", partitionName));
-                System.out.println(String.format("Gameoffset: %016X", partitionOffset));
                 wudInfo.setGamePartitionName(partitionName);
                 partition = gamePartition;
             }

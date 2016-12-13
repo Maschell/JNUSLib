@@ -24,24 +24,31 @@ import lombok.extern.java.Log;
 
 @Log
 public class WUDService {
-    public static boolean compressWUDToWUX(WUDImage image,String outputFolder) throws IOException{
-        return compressWUDToWUX(image, outputFolder, "game.wux");
+    public static File compressWUDToWUX(WUDImage image,String outputFolder) throws IOException{
+        return compressWUDToWUX(image, outputFolder, "game.wux",false);
     }
-    public static boolean compressWUDToWUX(WUDImage image,String outputFolder,String filename) throws IOException{
+    
+    public static File compressWUDToWUX(WUDImage image,String outputFolder,boolean overwrite) throws IOException{
+        return compressWUDToWUX(image, outputFolder, "game.wux",overwrite);
+    }
+    
+    public static File compressWUDToWUX(WUDImage image,String outputFolder,String filename,boolean overwrite) throws IOException{
         if(image.isCompressed()){
-            log.info("Given Image is already compressed");
-            return false;
+            log.info("Given image is already compressed");
+            return null;
         }
         
         if(image.getWUDFileSize() != WUDImage.WUD_FILESIZE)
         {
             log.info("Given WUD has not the expected filesize");
-            return false;
+            return null;
         }
         
         Utils.createDir(outputFolder);
         
         String filePath;
+        if(outputFolder == null) outputFolder = "";
+        
         if(!outputFolder.isEmpty()){
             filePath = outputFolder+ File.separator + filename;
         }else{
@@ -49,11 +56,12 @@ public class WUDService {
         }
         File outputFile = new File(filePath);
         
-        if(outputFile.exists()){
+        if(outputFile.exists() && !overwrite){
             log.info("Couldn't compress wud, target file already exists (" + outputFile.getAbsolutePath() + ")");
-            //return false;
+            return null;
         }
         
+        log.info("Writing compressed file to: " + outputFile.getAbsolutePath() );
         RandomAccessFile fileOutput = new RandomAccessFile(outputFile, "rw");
         
         WUDImageCompressedInfo info = WUDImageCompressedInfo.getDefaultCompressedInfo();
@@ -102,15 +110,16 @@ public class WUDService {
             
             written += read;
             curSector++;
-            if(curSector % 1000 == 0){
+            if(curSector % 10 == 0){
                 double readMB = written / 1024.0 / 1024.0;
                 double writtenMB = ((long)realSector * (long)bufferSize) / 1024.0 / 1024.0;
                 double percent = ((double)written / image.getWUDFileSize())*100;
                 double ratio = 1 / (writtenMB / readMB);
-                System.out.println(String.format(Locale.ROOT,"Compressing (%05.2f%%) | Ratio: 1:%.2f | Read: %08.2fMB | Written: %08.2fMB",percent,ratio,readMB,writtenMB));
+                System.out.print(String.format(Locale.ROOT,"\rCompressing into .wux | Progress %.2f%% | Ratio: 1:%.2f | Read: %.2fMB | Written: %.2fMB\t",percent,ratio,readMB,writtenMB));
             }
         }while(written < image.getWUDFileSize());
-              
+        System.out.println();
+        System.out.println("Sectors compressed."); 
         log.info("Writing sector table");
         fileOutput.seek(sectorTableStart);        
         ByteBuffer buffer =  ByteBuffer.allocate(sectorTablePlaceHolder.length);
@@ -119,15 +128,15 @@ public class WUDService {
             buffer.putInt(e.getValue());
         }
         
-        fileOutput.write(buffer.array());
-        
+        fileOutput.write(buffer.array());        
         fileOutput.close();
-        return true;
+        
+        return outputFile;
     }
     
     public static boolean compareWUDImage(WUDImage firstImage,WUDImage secondImage) throws IOException{
         if(firstImage.getWUDFileSize() != secondImage.getWUDFileSize()){
-            log.info("Filesize if different");
+            log.info("Filesize is different");
             return false;
         }
         InputStream in1 = firstImage.getWUDDiscReader().readEncryptedToInputStream(0, WUDImage.WUD_FILESIZE);
@@ -159,14 +168,16 @@ public class WUDService {
             totalread += read1;
             
             curSector++;
-            if(curSector % 100 == 0){
-                System.out.println(String.format("Checked: %016X bytes (%.2f%%)", (long)curSector*(long)bufferSize,(((long)curSector*(long)bufferSize*1.0)/(WUDImage.WUD_FILESIZE))*100));
+            if(curSector % 1 == 0){
+                double readMB = totalread / 1024.0 / 1024.0;
+                double percent = ((double)totalread / WUDImage.WUD_FILESIZE)*100;
+                System.out.print(String.format("\rVerification: %.2fMB done (%.2f%%)", readMB,percent));
             }
         }while(totalread < WUDImage.WUD_FILESIZE);
-        
+        System.out.println();
+        System.out.print("Verfication done!");
         in1.close();
         in2.close();
-        log.info("Verfication done!");
         
         return result;
     }
