@@ -100,7 +100,6 @@ public class WUDInfoParser {
                 byte[] rawTMD = getFSTEntryAsByte(WUD_TMD_FILENAME,partition,fst,wudInfo.getWUDDiscReader(),wudInfo.getTitleKey());
                 byte[] rawCert = getFSTEntryAsByte(WUD_CERT_FILENAME,partition,fst,wudInfo.getWUDDiscReader(),wudInfo.getTitleKey());
                 
-                FileUtils.saveByteArrayToFile("test.tmd", rawTMD);
                 gamePartition.setRawTMD(rawTMD);
                 gamePartition.setRawTicket(rawTIK);
                 gamePartition.setRawCert(rawCert);
