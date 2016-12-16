@@ -2,8 +2,10 @@ package de.mas.jnus.lib.utils;
 
 import java.io.File;
 
-public class Utils {
-    
+public final class Utils {
+    private Utils(){
+        //Utility class
+    }
     public static long align(long numToRound, int multiple){
         if((multiple>0) && ((multiple & (multiple -1)) == 0)){
             return alignPower2(numToRound, multiple);

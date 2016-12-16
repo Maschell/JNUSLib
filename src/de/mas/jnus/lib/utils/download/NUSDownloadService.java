@@ -4,34 +4,38 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 import de.mas.jnus.lib.Settings;
-import lombok.Setter;
 
-public class NUSDownloadService extends Downloader{
+public final class NUSDownloadService extends Downloader{
     private static NUSDownloadService defaultInstance;
+    private static Map<String,NUSDownloadService> instances = new HashMap<>();
+
+    private final String URL_BASE;
+    
+    private NUSDownloadService(String URL){
+       this.URL_BASE = URL;
+    }
     
     public static NUSDownloadService getDefaultInstance(){
-        if(defaultInstance == null){
-            defaultInstance = new NUSDownloadService();
-            defaultInstance.setURL_BASE(Settings.URL_BASE);
+        synchronized (defaultInstance) {
+            if(defaultInstance == null){
+                defaultInstance = new NUSDownloadService(Settings.URL_BASE);
+            }
         }
         return defaultInstance;
     }
     
     public static NUSDownloadService getInstance(String URL){
-        NUSDownloadService instance = new NUSDownloadService();
-        instance.setURL_BASE(URL);
-        return instance;
+        if(!instances.containsKey(URL)){
+            NUSDownloadService instance = new NUSDownloadService(URL);
+            instances.put(URL, instance);
+        }
+        return instances.get(URL);
     }
-    
-    private NUSDownloadService(){
-        
-    }
-    
-    @Setter private String URL_BASE = "";
-    
-    
+
     public byte[] downloadTMDToByteArray(long titleID, int version) throws IOException {
         String version_suf = "";
         if(version > Settings.LATEST_TMD_VERSION) version_suf = "." + version;

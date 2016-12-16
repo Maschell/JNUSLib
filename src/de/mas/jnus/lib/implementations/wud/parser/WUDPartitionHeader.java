@@ -17,10 +17,11 @@ import lombok.Setter;
 import lombok.extern.java.Log;
 
 @Log
-public class WUDPartitionHeader {
+public final class WUDPartitionHeader {
     @Getter @Setter 
     private boolean calculatedHashes = false;
-    private HashMap<Short,byte[]> h3Hashes;
+    @Getter 
+    private final HashMap<Short,byte[]> h3Hashes = new HashMap<>();
     @Getter(AccessLevel.PRIVATE) @Setter(AccessLevel.PRIVATE)
     private byte[] rawData;
     
@@ -32,13 +33,6 @@ public class WUDPartitionHeader {
         WUDPartitionHeader result = new WUDPartitionHeader();
         result.setRawData(header);
         return result;
-    }
-
-    public HashMap<Short,byte[]> getH3Hashes() {
-        if(h3Hashes == null){
-            h3Hashes =  new HashMap<>();
-        }
-        return h3Hashes;
     }
 
     public void addH3Hashes(short index, byte[] hash) {

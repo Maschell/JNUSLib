@@ -5,7 +5,6 @@ import java.util.List;
 
 import de.mas.jnus.lib.entities.content.Content;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.java.Log;
 
 @Log
@@ -18,29 +17,38 @@ public class FSTEntry{
     public static final byte FSTEntry_DIR = (byte)0x01; 
     public static final byte FSTEntry_notInNUS = (byte)0x80; 
   
-    @Getter @Setter private String filename = "";
-    @Getter @Setter private String path = "";
-    @Getter @Setter private FSTEntry parent = null;
+    @Getter private final String filename;
+    @Getter private final String path;
+    @Getter private final FSTEntry parent;
     
-    private List<FSTEntry> children = null;
+    @Getter private final List<FSTEntry> children = new ArrayList<>();
        
-    @Getter @Setter private short flags;
+    @Getter private final short flags;
       
-    @Getter @Setter private long fileSize = 0;	
-    @Getter @Setter private long fileOffset = 0; 	
+    @Getter private final long fileSize;	
+    @Getter private final long fileOffset; 	
 	
-	@Getter private Content content = null;
+	@Getter private final Content content;
 
-	@Getter @Setter private byte[] hash = new byte[0x14];
-
-	@Getter @Setter private boolean isDir = false;
-	@Getter @Setter private boolean isRoot = false;
-	@Getter @Setter private boolean notInPackage = false;
+	@Getter private final boolean isDir;
+	@Getter private final boolean isRoot;
+	@Getter private final boolean isNotInPackage;
 	
-	@Getter @Setter private short contentFSTID = 0; 
+	@Getter private final short contentFSTID; 
     
-	public FSTEntry(){
-	    
+	protected FSTEntry(FSTEntryParam fstParam){
+	    this.filename = fstParam.getFilename();
+	    this.path = fstParam.getPath();
+	    this.flags = fstParam.getFlags();
+	    this.parent = fstParam.getParent();
+	    this.fileSize = fstParam.getFileSize();
+	    this.fileOffset = fstParam.getFileOffset();
+	    this.content = fstParam.getContent();
+	    content.addEntry(this);
+	    this.isDir = fstParam.isDir();
+	    this.isRoot = fstParam.isRoot();
+	    this.isNotInPackage = fstParam.isNotInPackage();
+	    this.contentFSTID = fstParam.getContentFSTID();
 	}
 	
 	/**
@@ -48,9 +56,10 @@ public class FSTEntry{
 	 * @return
 	 */
 	public static FSTEntry getRootFSTEntry(){
-	    FSTEntry entry = new FSTEntry();
-	    entry.setRoot(true);
-	    return entry;
+	    FSTEntryParam param = new FSTEntryParam();
+	    param.setRoot(true);
+	    param.setDir(true);
+	    return new FSTEntry(param);
 	}
     
     public String getFullPath() {
@@ -63,18 +72,6 @@ public class FSTEntry{
             count += entry.getEntryCount();
         }
         return count;
-    }
-
-    public void addChildren(FSTEntry fstEntry) {        
-        getChildren().add(fstEntry);
-        fstEntry.setParent(this);
-    }
-
-    public List<FSTEntry> getChildren() {
-    	if(children == null){
-    		children = new ArrayList<>();
-    	}
-    	return children;
     }
 
     public List<FSTEntry> getDirChildren(){
@@ -120,16 +117,6 @@ public class FSTEntry{
     	}
     	return entries;
     }
-	
-	public void setContent(Content content) {
-	    if(content == null){
-	        log.warning("Can't set content for "+ getFilename() + ": Content it null");
-	        System.out.println();
-	        return;
-	    }	  
-        this.content = content;
-        content.addEntry(this);
-	}
     
     public long getFileOffsetBlock() {
         if(getContent().isHashed()){
@@ -160,6 +147,6 @@ public class FSTEntry{
     public String toString() {
         return "FSTEntry [filename=" + filename + ", path=" + path + ", flags=" + flags + ", filesize=" + fileSize
                 + ", fileoffset=" + fileOffset + ", content=" + content + ", isDir=" + isDir + ", isRoot=" + isRoot
-                + ", notInPackage=" + notInPackage + "]";
+                + ", notInPackage=" + isNotInPackage + "]";
     }
 }

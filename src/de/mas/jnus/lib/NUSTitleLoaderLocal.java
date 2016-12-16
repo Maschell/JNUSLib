@@ -4,7 +4,7 @@ import de.mas.jnus.lib.entities.Ticket;
 import de.mas.jnus.lib.implementations.NUSDataProviderLocal;
 import de.mas.jnus.lib.implementations.NUSDataProvider;
 
-public class NUSTitleLoaderLocal extends NUSTitleLoader {
+public final class NUSTitleLoaderLocal extends NUSTitleLoader {
     
     private NUSTitleLoaderLocal(){
         super();
@@ -26,10 +26,8 @@ public class NUSTitleLoaderLocal extends NUSTitleLoader {
     }
 
     @Override
-    protected NUSDataProvider getDataProvider(NUSTitleConfig config) {
-        NUSDataProviderLocal result = new NUSDataProviderLocal();
-        result.setLocalPath(config.getInputPath());
-        return result;
+    protected NUSDataProvider getDataProvider(NUSTitle title,NUSTitleConfig config) {
+        return new NUSDataProviderLocal(title,config.getInputPath());
     }
 
 }

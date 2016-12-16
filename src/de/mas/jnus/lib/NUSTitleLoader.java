@@ -13,16 +13,14 @@ import de.mas.jnus.lib.utils.cryptography.AESDecryption;
 
 abstract class NUSTitleLoader {
     protected NUSTitleLoader(){
-        
+        //should be empty
     }
         
     public NUSTitle loadNusTitle(NUSTitleConfig config) throws Exception{
         NUSTitle result = new NUSTitle();
         
-        NUSDataProvider dataProvider = getDataProvider(config);
+        NUSDataProvider dataProvider = getDataProvider(result, config);
         result.setDataProvider(dataProvider);
-        dataProvider.setNUSTitle(result);
-        
         
         TMD tmd = TMD.parseTMD(dataProvider.getRawTMD());
         result.setTMD(tmd);
@@ -63,5 +61,5 @@ abstract class NUSTitleLoader {
         return result;
     }
 
-    protected abstract NUSDataProvider getDataProvider(NUSTitleConfig config);
+    protected abstract NUSDataProvider getDataProvider(NUSTitle title,NUSTitleConfig config);
 }

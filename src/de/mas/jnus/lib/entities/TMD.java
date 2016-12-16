@@ -4,39 +4,53 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import de.mas.jnus.lib.entities.content.Content;
 import de.mas.jnus.lib.entities.content.ContentInfo;
 import lombok.Getter;
-import lombok.Setter;
 
-public class TMD {
-    @Getter @Setter private int             signatureType;                                  // 0x000
-    @Getter @Setter private byte[]          signature           =   new byte[0x100];        // 0x004
-    @Getter @Setter private byte[]          issuer              =   new byte[0x40];         // 0x140
-    @Getter @Setter private byte            version;                                        // 0x180
-    @Getter @Setter private byte            CACRLVersion;                                   // 0x181
-    @Getter @Setter private byte            signerCRLVersion;                               // 0x182
-    @Getter @Setter private long            systemVersion;                                  // 0x184
-    @Getter @Setter private long            titleID;                                        // 0x18C    
-    @Getter @Setter private int             titleType;                                      // 0x194    
-    @Getter @Setter private short           groupID;                                        // 0x198 
-    @Getter @Setter private byte[]          reserved            =   new byte[62];           // 0x19A    
-    @Getter @Setter private int             accessRights;                                   // 0x1D8    
-    @Getter @Setter private short           titleVersion;                                   // 0x1DC 
-    @Getter @Setter private short           contentCount;                                   // 0x1DE 
-    @Getter @Setter private short           bootIndex;                                      // 0x1E0    
-    @Getter @Setter private byte[]          SHA2                =   new byte[0x20];         // 0x1E4
-    @Getter @Setter private ContentInfo[]   contentInfos        =   new ContentInfo[0x40];  
-    Map<Integer,Content>   contentToIndex = new HashMap<>();
-    Map<Integer,Content>   contentToID = new HashMap<>();
-    
-    @Getter @Setter private byte[] rawTMD = new byte[0];
-    private TMD(){
-        
+public final class TMD {
+    @Getter private final int             signatureType;                                  // 0x000
+    @Getter private final byte[]          signature;                                      // 0x004
+    @Getter private final byte[]          issuer;                                         // 0x140
+    @Getter private final byte            version;                                        // 0x180
+    @Getter private final byte            CACRLVersion;                                   // 0x181
+    @Getter private final byte            signerCRLVersion;                               // 0x182
+    @Getter private final long            systemVersion;                                  // 0x184
+    @Getter private final long            titleID;                                        // 0x18C    
+    @Getter private final int             titleType;                                      // 0x194    
+    @Getter private final short           groupID;                                        // 0x198 
+    @Getter private final byte[]          reserved;                                       // 0x19A    
+    @Getter private final int             accessRights;                                   // 0x1D8    
+    @Getter private final short           titleVersion;                                   // 0x1DC 
+    @Getter private final short           contentCount;                                   // 0x1DE 
+    @Getter private final short           bootIndex;                                      // 0x1E0    
+    @Getter private final byte[]          SHA2;                                           // 0x1E4
+    @Getter private final ContentInfo[]   contentInfos;  
+    private final Map<Integer,Content>   contentToIndex = new HashMap<>();
+    private final Map<Integer,Content>   contentToID = new HashMap<>();
+
+    private TMD(TMDParam param) {
+        super();
+        this.signatureType = param.getSignatureType();
+        this.signature = param.getSignature();
+        this.issuer = param.getIssuer();
+        this.version = param.getVersion();
+        this.CACRLVersion = param.getCACRLVersion();
+        this.signerCRLVersion = param.getSignerCRLVersion();
+        this.systemVersion = param.getSystemVersion();
+        this.titleID = param.getTitleID();
+        this.titleType = param.getTitleType();
+        this.groupID = param.getGroupID();
+        this.reserved = param.getReserved();
+        this.accessRights = param.getAccessRights();
+        this.titleVersion = param.getTitleVersion();
+        this.contentCount = param.getContentCount();
+        this.bootIndex = param.getBootIndex();
+        this.SHA2 = param.getSHA2();
+        this.contentInfos = param.getContentInfos();
     }
     
     public static TMD parseTMD(File tmd) throws IOException {
@@ -48,15 +62,12 @@ public class TMD {
     }
 
     public static TMD parseTMD(byte[] input) {
-        
-        TMD result = new TMD();
-        result.setRawTMD(Arrays.copyOf(input,input.length));
         byte[] signature = new byte[0x100];
         byte[] issuer = new byte[0x40];
         byte[] reserved = new byte[62];
         byte[] SHA2 = new byte[0x20];
         
-        ContentInfo[] contentInfos = result.getContentInfos();
+        ContentInfo[] contentInfos = new ContentInfo[0x40];
          
         ByteBuffer buffer = ByteBuffer.allocate(input.length);
         buffer.put(input);
@@ -105,6 +116,25 @@ public class TMD {
             buffer.get(contentInfo, 0, 0x24);
             contentInfos[i] = ContentInfo.parseContentInfo(contentInfo);
         }
+       
+        TMDParam param = new TMDParam();
+        param.setSignatureType(signatureType);
+        param.setSignature(signature);
+        param.setVersion(version);
+        param.setCACRLVersion(CACRLVersion);
+        param.setSignerCRLVersion(signerCRLVersion);
+        param.setSystemVersion(systemVersion);
+        param.setTitleID(titleID);
+        param.setTitleType(titleType);
+        param.setGroupID(groupID);
+        param.setAccessRights(accessRights);
+        param.setTitleVersion(titleVersion);
+        param.setContentCount(contentCount);
+        param.setBootIndex(bootIndex);
+        param.setSHA2(SHA2);
+        param.setContentInfos(contentInfos);
+        
+        TMD result = new TMD(param);
         
         //Get Contents
         for(int i =0;i<contentCount;i++){
@@ -115,22 +145,6 @@ public class TMD {
             result.setContentToIndex(c.getIndex(),c);
             result.setContentToID(c.getID(), c);
         }
-             
-        result.setSignatureType(signatureType);
-        result.setSignature(signature);
-        result.setVersion(version);
-        result.setCACRLVersion(CACRLVersion);
-        result.setSignerCRLVersion(signerCRLVersion);
-        result.setSystemVersion(systemVersion);
-        result.setTitleID(titleID);
-        result.setTitleType(titleType);
-        result.setGroupID(groupID);
-        result.setAccessRights(accessRights);
-        result.setTitleVersion(titleVersion);
-        result.setContentCount(contentCount);
-        result.setBootIndex(bootIndex);
-        result.setSHA2(SHA2);
-        result.setContentInfos(contentInfos);
         
         return result;        
     }

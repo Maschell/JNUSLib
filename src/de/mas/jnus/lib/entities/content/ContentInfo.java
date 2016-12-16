@@ -5,7 +5,6 @@ import java.util.Arrays;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Setter;
 
 @EqualsAndHashCode
 /**
@@ -14,9 +13,9 @@ import lombok.Setter;
  *
  */
 public class ContentInfo{
-    @Getter @Setter private short indexOffset   = 0x00;
-    @Getter @Setter private short commandCount  = 0x00;
-    @Getter @Setter private byte[] SHA2Hash = new byte[0x20];
+    @Getter private final short indexOffset;
+    @Getter private final short commandCount;
+    @Getter private final byte[] SHA2Hash;
         
     public ContentInfo() {
         this((short) 0);
@@ -29,9 +28,9 @@ public class ContentInfo{
         this(indexOffset,commandCount,null);
     }
     public ContentInfo(short indexOffset,short commandCount,byte[] SHA2Hash) {
-        setIndexOffset(indexOffset);
-        setCommandCount(commandCount);
-        setSHA2Hash(SHA2Hash);
+        this.indexOffset = indexOffset;
+        this.commandCount = commandCount;
+        this.SHA2Hash = SHA2Hash;
     }
     
     /**

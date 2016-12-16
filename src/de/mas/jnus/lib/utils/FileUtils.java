@@ -7,8 +7,10 @@ import java.io.InputStream;
 
 import lombok.NonNull;
 
-public class FileUtils {
-
+public final class FileUtils {
+    private FileUtils(){
+        //Utility Class
+    }
     public static boolean saveByteArrayToFile(String filePath,byte[] data) throws IOException {
         File target = new File(filePath);
         if(target.isDirectory()){

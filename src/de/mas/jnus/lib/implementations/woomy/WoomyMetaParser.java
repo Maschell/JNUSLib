@@ -9,7 +9,7 @@ import de.mas.jnus.lib.utils.XMLParser;
 import lombok.extern.java.Log;
 
 @Log
-public class WoomyMetaParser extends XMLParser{
+public final class WoomyMetaParser extends XMLParser{
     private static final String WOOMY_METADATA_NAME = "name";
     private static final String WOOMY_METADATA_ICON = "icon";
     
@@ -25,7 +25,8 @@ public class WoomyMetaParser extends XMLParser{
     
     public static WoomyMeta parseMeta(InputStream data){
         XMLParser parser = new WoomyMetaParser();   
-        WoomyMeta result = new WoomyMeta();
+        String resultName = "";
+        int resultIcon = 0;
         try {
             parser.loadDocument(data);
         } catch(Exception e){
@@ -35,14 +36,17 @@ public class WoomyMetaParser extends XMLParser{
         
         String name = parser.getValueOfElement(WOOMY_METADATA_NAME);
         if(name != null && !name.isEmpty()){
-            result.setName(name);
+            resultName = name;
         }
         
         String icon = parser.getValueOfElement(WOOMY_METADATA_ICON);
         if(icon != null && !icon.isEmpty()){
             int icon_val = Integer.parseInt(icon);            
-            result.setIcon(icon_val);
+            resultIcon = icon_val;
         }
+        
+        WoomyMeta result = new WoomyMeta(resultName,resultIcon);
+        
         Node entries_node = parser.getNodeByValue(WOOMY_METADATA_ENTRIES);
         
         NodeList entry_list = entries_node.getChildNodes();

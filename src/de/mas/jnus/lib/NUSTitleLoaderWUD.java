@@ -8,7 +8,7 @@ import de.mas.jnus.lib.implementations.wud.WUDImage;
 import de.mas.jnus.lib.implementations.wud.parser.WUDInfo;
 import de.mas.jnus.lib.implementations.wud.parser.WUDInfoParser;
 
-public class NUSTitleLoaderWUD extends NUSTitleLoader {
+public final class NUSTitleLoaderWUD extends NUSTitleLoader {
    
     private NUSTitleLoaderWUD(){
         super();
@@ -20,7 +20,7 @@ public class NUSTitleLoaderWUD extends NUSTitleLoader {
     public static NUSTitle loadNUSTitle(String WUDPath, byte[] titleKey) throws Exception{
         NUSTitleLoader loader = new NUSTitleLoaderWUD();
         NUSTitleConfig config = new NUSTitleConfig();
-        
+        byte[] usedTitleKey = titleKey;
         File wudFile = new File(WUDPath);
         if(!wudFile.exists()){
             System.out.println(WUDPath + " does not exist.");
@@ -28,15 +28,15 @@ public class NUSTitleLoaderWUD extends NUSTitleLoader {
         }
         
         WUDImage image = new WUDImage(wudFile);
-        if(titleKey == null){
+        if(usedTitleKey == null){
             File keyFile = new File(wudFile.getParentFile().getPath() + File.separator + Settings.WUD_KEY_FILENAME);
             if(!keyFile.exists()){
                 System.out.println(keyFile.getAbsolutePath() + " does not exist and no title key was provided.");
                 return null;
             }
-            titleKey = Files.readAllBytes(keyFile.toPath());
+            usedTitleKey = Files.readAllBytes(keyFile.toPath());
         }
-        WUDInfo wudInfo = WUDInfoParser.createAndLoad(image.getWUDDiscReader(), titleKey);
+        WUDInfo wudInfo = WUDInfoParser.createAndLoad(image.getWUDDiscReader(), usedTitleKey);
         if(wudInfo == null){
             return null;
         }
@@ -47,10 +47,8 @@ public class NUSTitleLoaderWUD extends NUSTitleLoader {
     }
    
     @Override
-    protected NUSDataProvider getDataProvider(NUSTitleConfig config) {
-        NUSDataProviderWUD result = new NUSDataProviderWUD();
-        result.setWUDInfo(config.getWUDInfo());
-        return result;
+    protected NUSDataProvider getDataProvider(NUSTitle title,NUSTitleConfig config) {
+        return new NUSDataProviderWUD(title,config.getWUDInfo());
     }
 
 }

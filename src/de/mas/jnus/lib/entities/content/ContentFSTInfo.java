@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Setter;
 
 @EqualsAndHashCode
 /**
@@ -13,19 +12,22 @@ import lombok.Setter;
  * @author Maschell
  *
  */
-public class ContentFSTInfo {
-    @Getter @Setter private long offsetSector;
-    @Getter @Setter private long sizeSector;
-    @Getter @Setter private long ownerTitleID;
-    @Getter @Setter private int groupID;
-    @Getter @Setter private byte unkown;
+public final class ContentFSTInfo {
+    @Getter private final long offsetSector;
+    @Getter private final long sizeSector;
+    @Getter private final long ownerTitleID;
+    @Getter private final int groupID;
+    @Getter private final byte unkown;
     
     private static int SECTOR_SIZE = 0x8000;
     
-    private ContentFSTInfo(){
-        
+    private ContentFSTInfo(ContentFSTInfoParam param){
+        this.offsetSector = param.getOffsetSector();
+        this.sizeSector = param.getSizeSector();
+        this.ownerTitleID = param.getOwnerTitleID();
+        this.groupID = param.getGroupID();
+        this.unkown = param.getUnkown();
     }
-    
 
     /**
      * Creates a new ContentFSTInfo object given be the raw byte data
@@ -37,7 +39,7 @@ public class ContentFSTInfo {
             System.out.println("Error: invalid ContentFSTInfo byte[] input");
             return null;
         }
-        ContentFSTInfo cFSTInfo = new ContentFSTInfo();
+        ContentFSTInfoParam param = new ContentFSTInfoParam();
         ByteBuffer buffer = ByteBuffer.allocate(input.length);
         buffer.put(input);
         
@@ -48,13 +50,13 @@ public class ContentFSTInfo {
         int groupID = buffer.getInt();
         byte unkown = buffer.get();
         
-        cFSTInfo.setOffsetSector(offset);
-        cFSTInfo.setSizeSector(size);
-        cFSTInfo.setOwnerTitleID(ownerTitleID);
-        cFSTInfo.setGroupID(groupID);
-        cFSTInfo.setUnkown(unkown);
+        param.setOffsetSector(offset);
+        param.setSizeSector(size);
+        param.setOwnerTitleID(ownerTitleID);
+        param.setGroupID(groupID);
+        param.setUnkown(unkown);
       
-        return cFSTInfo;       
+        return new ContentFSTInfo(param);       
     }
 
     /**

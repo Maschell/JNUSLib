@@ -11,17 +11,19 @@ import de.mas.jnus.lib.utils.ByteUtils;
 import lombok.extern.java.Log;
 
 @Log
-public class FSTService {
-    protected static void parseFST(FSTEntry rootEntry, byte[] fstSection, byte[] namesSection,Map<Integer,Content> contentsByIndex,Map<Integer,ContentFSTInfo> contentsFSTByIndex) {      
+public final class FSTService {
+    private FSTService(){
+        //Don't use this!!!
+    }
+    
+    public static void parseFST(FSTEntry rootEntry, byte[] fstSection, byte[] namesSection,Map<Integer,Content> contentsByIndex,Map<Integer,ContentFSTInfo> contentsFSTByIndex) {      
         int totalEntries = ByteUtils.getIntFromBytes(fstSection, 0x08);
 
         int level = 0;
         int[] LEntry = new int[16];
         int[] Entry = new int[16];
                 
-        HashMap<Integer,FSTEntry> fstEntryToOffsetMap = new HashMap<>();
-        
-        rootEntry.setDir(true);        
+        HashMap<Integer,FSTEntry> fstEntryToOffsetMap = new HashMap<>();    
         Entry[level] = 0;
         LEntry[level++] =  0;
         
@@ -35,7 +37,7 @@ public class FSTService {
             
             byte[] curEntry = Arrays.copyOfRange(fstSection,i*0x10,(i+1)*0x10);
 
-            FSTEntry entry = new FSTEntry();
+            FSTEntryParam entryParam = new FSTEntryParam();
             
             String path = getFullPath(level, fstSection, namesSection, Entry);
             String filename = getName(curEntry,namesSection);
@@ -47,20 +49,16 @@ public class FSTService {
             short contentIndex = ByteUtils.getShortFromBytes(curEntry, 0x0E);
                                   
             if((curEntry[0] & FSTEntry.FSTEntry_notInNUS) == FSTEntry.FSTEntry_notInNUS){
-                entry.setNotInPackage(true);
+                entryParam.setNotInPackage(true);
             }
-                        
+            FSTEntry parent = null;       
             if((curEntry[0] & FSTEntry.FSTEntry_DIR) == FSTEntry.FSTEntry_DIR){
-                entry.setDir(true);
+                entryParam.setDir(true);
                 int parentOffset = (int) fileOffset;
                 int nextOffset = (int) fileSize;
                                 
-                FSTEntry parent = fstEntryToOffsetMap.get(parentOffset); 
-                if(parent != null){
-                    log.fine("no parent found for a FSTEntry");
-                    parent.addChildren(entry);
-                }
-                
+                parent = fstEntryToOffsetMap.get(parentOffset); 
+               
                 Entry[level] = i;
                 LEntry[level++] =  nextOffset ;
                
@@ -69,26 +67,21 @@ public class FSTService {
                     break;
                 }
             }else{
-                entry.setFileOffset(fileOffset<<5);               
-                entry.setFileSize(fileSize);
-                FSTEntry parent = fstEntryToOffsetMap.get(Entry[level-1]);                
-                if(parent != null){
-                    parent.addChildren(entry);
-                }else{
-                    log.warning(entryOffset +"couldn't find parent @ " + Entry[level-1]);
-                }           
+                entryParam.setFileOffset(fileOffset<<5);               
+                entryParam.setFileSize(fileSize);
+                parent = fstEntryToOffsetMap.get(Entry[level-1]); 
             }     
             
-            entry.setFlags(flags);
-            entry.setFilename(filename);
-            entry.setPath(path);
+            entryParam.setFlags(flags);
+            entryParam.setFilename(filename);
+            entryParam.setPath(path);
           
             if(contentsByIndex != null){
                 Content content = contentsByIndex.get((int)contentIndex);
                 if(content == null){
                     log.warning("Content for FST Entry not found");
                 }else{
-                    entry.setContent(content);
+                    entryParam.setContent(content);
                     
                     ContentFSTInfo contentFSTInfo = contentsFSTByIndex.get((int)contentIndex);
                     if(contentFSTInfo == null){
@@ -99,8 +92,11 @@ public class FSTService {
                 }
             }
 
-            entry.setContentFSTID(contentIndex);
-                        
+            entryParam.setContentFSTID(contentIndex);
+            entryParam.setParent(parent);
+            
+            FSTEntry entry = new FSTEntry(entryParam);
+           
             fstEntryToOffsetMap.put(entryOffset, entry);
         }
     }
@@ -123,7 +119,7 @@ public class FSTService {
     }
     
     
-    public static  String getFullPath(int level,byte[] fstSection,byte[] namesSection, int[] Entry){
+    public static String getFullPath(int level,byte[] fstSection,byte[] namesSection, int[] Entry){
         StringBuilder sb = new StringBuilder();             
         for(int i=0; i < level; i++){
             int entryOffset = Entry[i]*0x10;

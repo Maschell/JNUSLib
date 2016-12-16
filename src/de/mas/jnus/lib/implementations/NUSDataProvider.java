@@ -3,7 +3,6 @@ package de.mas.jnus.lib.implementations;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.SynchronousQueue;
 
 import com.sun.istack.internal.NotNull;
 
@@ -13,7 +12,6 @@ import de.mas.jnus.lib.entities.content.Content;
 import de.mas.jnus.lib.utils.FileUtils;
 import de.mas.jnus.lib.utils.Utils;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.java.Log;
 
 @Log
@@ -24,10 +22,10 @@ import lombok.extern.java.Log;
  *
  */
 public abstract class NUSDataProvider {
+    @Getter private final NUSTitle NUSTitle;
     
-    @Getter @Setter private NUSTitle NUSTitle = null;
-    
-    public NUSDataProvider () {       
+    public NUSDataProvider (NUSTitle title) {
+        this.NUSTitle = title;
     }       
     
     /**
@@ -56,7 +54,7 @@ public abstract class NUSDataProvider {
             return;
         }
         byte[] hash = getContentH3Hash(content);
-        if(hash == null){
+        if(hash == null || hash.length == 0){
             return;
         }
         String h3Filename = String.format("%08X%s", content.getID(),Settings.H3_EXTENTION);

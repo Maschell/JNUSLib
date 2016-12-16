@@ -15,16 +15,16 @@ public class WUDImageCompressedInfo {
     public static final int WUX_MAGIC_1 = 0x1099d02e;
     public static final int SECTOR_SIZE = 0x8000;
     
-    @Getter @Setter private int magic0;
-    @Getter @Setter private int magic1;
-    @Getter @Setter private int sectorSize;
-    @Getter @Setter private long uncompressedSize;
-    @Getter @Setter private int flags;
+    @Getter private final int sectorSize;
+    @Getter private final long uncompressedSize;
+    @Getter private final int flags;
     
-    @Getter @Setter private long indexTableEntryCount = 0;
-    @Getter @Setter private long offsetIndexTable = 0;
-    @Getter @Setter private long offsetSectorArray = 0;
-    @Getter @Setter private long indexTableSize = 0;
+    @Getter @Setter private long indexTableEntryCount;
+    @Getter private final long offsetIndexTable = WUX_HEADER_SIZE;
+    @Getter @Setter private long offsetSectorArray;
+    @Getter @Setter private long indexTableSize;
+    
+    private final boolean valid;
     
     @Getter private Map<Integer,Long> indexTable = new HashMap<>();
     
@@ -33,11 +33,16 @@ public class WUDImageCompressedInfo {
             System.out.println("WUX header length wrong");
             System.exit(1);
         }
-        setMagic0(ByteUtils.getIntFromBytes(headData, 0x00,ByteOrder.LITTLE_ENDIAN));
-        setMagic1(ByteUtils.getIntFromBytes(headData, 0x04,ByteOrder.LITTLE_ENDIAN));
-        setSectorSize(ByteUtils.getIntFromBytes(headData, 0x08,ByteOrder.LITTLE_ENDIAN));
-        setFlags(ByteUtils.getIntFromBytes(headData, 0x0C,ByteOrder.LITTLE_ENDIAN));
-        setUncompressedSize(ByteUtils.getLongFromBytes(headData, 0x10,ByteOrder.LITTLE_ENDIAN));
+        int magic0 = ByteUtils.getIntFromBytes(headData, 0x00,ByteOrder.LITTLE_ENDIAN);
+        int magic1 = ByteUtils.getIntFromBytes(headData, 0x04,ByteOrder.LITTLE_ENDIAN);
+        if(magic0 == WUX_MAGIC_0 && magic1 == WUX_MAGIC_1){
+            valid = true;
+        }else{
+            valid = false;
+        }
+        this.sectorSize = ByteUtils.getIntFromBytes(headData, 0x08,ByteOrder.LITTLE_ENDIAN);
+        this.flags = ByteUtils.getIntFromBytes(headData, 0x0C,ByteOrder.LITTLE_ENDIAN);
+        this.uncompressedSize = ByteUtils.getLongFromBytes(headData, 0x10,ByteOrder.LITTLE_ENDIAN);
                 
         calculateOffsets();
     }
@@ -47,17 +52,16 @@ public class WUDImageCompressedInfo {
     }
     
     public WUDImageCompressedInfo(int sectorSize,int flags, long uncompressedSize) {
-        setMagic0(WUX_MAGIC_0);
-        setMagic1(WUX_MAGIC_1);
-        setSectorSize(sectorSize);
-        setFlags(flags);
-        setUncompressedSize(uncompressedSize);
+        this.sectorSize = sectorSize;
+        this.flags = flags;
+        this.uncompressedSize= uncompressedSize;
+        valid = true;
+        calculateOffsets();
     }
 
     private void calculateOffsets() {
         long indexTableEntryCount = (getUncompressedSize()+ getSectorSize()-1) / getSectorSize();
         setIndexTableEntryCount(indexTableEntryCount);
-        setOffsetIndexTable(0x20); 
         long offsetSectorArray = (getOffsetIndexTable() + ((long)getIndexTableEntryCount() * 0x04L));
         // align to SECTOR_SIZE
         offsetSectorArray = (offsetSectorArray + (long)(getSectorSize()-1));
@@ -68,17 +72,9 @@ public class WUDImageCompressedInfo {
     }
 
     public boolean isWUX() {
-        return (getMagic0() == WUX_MAGIC_0 && getMagic1() == WUX_MAGIC_1);
+        return valid;
     }
-
-    @Override
-    public String toString() {
-        return "WUDImageCompressedInfo [magic0=" + String.format("0x%08X", magic0) + ", magic1=" + String.format("0x%08X", magic1) + ", sectorSize=" + String.format("0x%08X", sectorSize)
-                + ", uncompressedSize=" + String.format("0x%016X", uncompressedSize) + ", flags=" + String.format("0x%08X", flags) + ", indexTableEntryCount="
-                + indexTableEntryCount + ", offsetIndexTable=" + offsetIndexTable + ", offsetSectorArray="
-                + offsetSectorArray + ", indexTableSize=" + indexTableSize + "]";
-    }
-
+    
     public long getSectorIndex(int sectorIndex) {
         return getIndexTable().get(sectorIndex);
     }
@@ -90,8 +86,8 @@ public class WUDImageCompressedInfo {
     public byte[] getHeaderAsBytes() {
         ByteBuffer result = ByteBuffer.allocate(WUX_HEADER_SIZE);
         result.order(ByteOrder.LITTLE_ENDIAN);
-        result.putInt(getMagic0());
-        result.putInt(getMagic1());
+        result.putInt(WUX_MAGIC_0);
+        result.putInt(WUX_MAGIC_1);
         result.putInt(getSectorSize());
         result.putInt(getFlags());
         result.putLong(getUncompressedSize());

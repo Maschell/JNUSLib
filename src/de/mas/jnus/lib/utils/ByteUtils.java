@@ -4,7 +4,12 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
-public class ByteUtils {
+public final class ByteUtils {
+    
+    private ByteUtils(){
+        //Utility Class
+    }
+    
     public static int getIntFromBytes(byte[] input,int offset){     
         return getIntFromBytes(input, offset, ByteOrder.BIG_ENDIAN);
     }

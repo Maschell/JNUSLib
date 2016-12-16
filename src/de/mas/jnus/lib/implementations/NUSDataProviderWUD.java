@@ -3,6 +3,7 @@ package de.mas.jnus.lib.implementations;
 import java.io.IOException;
 import java.io.InputStream;
 
+import de.mas.jnus.lib.NUSTitle;
 import de.mas.jnus.lib.Settings;
 import de.mas.jnus.lib.entities.TMD;
 import de.mas.jnus.lib.entities.content.Content;
@@ -16,12 +17,13 @@ import lombok.Setter;
 import lombok.extern.java.Log;
 @Log
 public class NUSDataProviderWUD extends NUSDataProvider {
-    @Getter @Setter private WUDInfo WUDInfo = null;
+    @Getter private final WUDInfo WUDInfo;
     
     @Setter(AccessLevel.PRIVATE) private TMD TMD = null;
     
-    public NUSDataProviderWUD() {
-        super();
+    public NUSDataProviderWUD(NUSTitle title,WUDInfo wudinfo) {
+        super(title);
+        this.WUDInfo = wudinfo;
     }
 
     public long getOffsetInWUD(Content content) {
@@ -97,6 +99,7 @@ public class NUSDataProviderWUD extends NUSDataProvider {
 
     @Override
     public void cleanup() {
+        //We don't need it
     }
   
 }

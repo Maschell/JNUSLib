@@ -13,14 +13,13 @@ import java.util.Arrays;
 import de.mas.jnus.lib.implementations.wud.WUDImage;
 import de.mas.jnus.lib.utils.cryptography.AESDecryption;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.java.Log;
 @Log
 public abstract class WUDDiscReader {
-    @Getter @Setter private WUDImage image = null;
+    @Getter private final WUDImage image;
     
     public WUDDiscReader(WUDImage image){
-        setImage(image);
+        this.image = image;
     }
     
     public InputStream readEncryptedToInputStream(long offset,long size) throws IOException {
@@ -81,10 +80,12 @@ public abstract class WUDDiscReader {
     }
     
     public void readDecryptedToOutputStream(OutputStream outputStream,long clusterOffset, long fileOffset, long size,byte[] key,byte[] IV) throws IOException {
-        if(IV == null){
-            IV = new byte[0x10];
+        byte[] usedIV = IV;
+        if(usedIV == null){
+            usedIV = new byte[0x10];
         }
-        
+        long usedSize = size;
+        long usedFileOffset = fileOffset;
         byte[] buffer;
 
         long maxCopySize;
@@ -96,23 +97,23 @@ public abstract class WUDDiscReader {
         long totalread = 0;
         
         do{
-            long blockNumber = (fileOffset / blockSize);
-            long blockOffset = (fileOffset % blockSize);
+            long blockNumber = (usedFileOffset / blockSize);
+            long blockOffset = (usedFileOffset % blockSize);
             
             readOffset = clusterOffset + (blockNumber * blockSize);
             // (long)WiiUDisc.WIIU_DECRYPTED_AREA_OFFSET + volumeOffset + clusterOffset + (blockStructure.getBlockNumber() * 0x8000);
            
-            buffer = readDecryptedChunk(readOffset,key, IV);
+            buffer = readDecryptedChunk(readOffset,key, usedIV);
             maxCopySize = 0x8000 - blockOffset;
-            copySize = (size > maxCopySize) ? maxCopySize : size;
+            copySize = (usedSize > maxCopySize) ? maxCopySize : usedSize;
                    
             outputStream.write(Arrays.copyOfRange(buffer, (int) blockOffset, (int) copySize));
             totalread += copySize;
 
             // update counters
-            size -= copySize;
-            fileOffset += copySize;
-        }while(totalread < size);
+            usedSize -= copySize;
+            usedFileOffset += copySize;
+        }while(totalread < usedSize);
         
         outputStream.close();
     }

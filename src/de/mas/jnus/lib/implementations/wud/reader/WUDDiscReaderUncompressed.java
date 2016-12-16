@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 
 import de.mas.jnus.lib.implementations.wud.WUDImage;
+import de.mas.jnus.lib.utils.StreamUtils;
 
 public class WUDDiscReaderUncompressed extends WUDDiscReader {
     public WUDDiscReaderUncompressed(WUDImage image) {
@@ -16,7 +17,9 @@ public class WUDDiscReaderUncompressed extends WUDDiscReader {
     protected void readEncryptedToOutputStream(OutputStream outputStream, long offset,long size) throws IOException{
         
         FileInputStream input = new FileInputStream(getImage().getFileHandle());
-        input.skip(offset);
+		
+        StreamUtils.skipExactly(input,offset);
+		
         int bufferSize = 0x8000;
         byte[] buffer = new byte[bufferSize];
         long totalread = 0;

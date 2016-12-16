@@ -7,9 +7,9 @@ import lombok.Data;
 
 @Data
 public class NUSTitleConfig {
-    private String inputPath = "";
-    private WUDInfo WUDInfo = null;
-    private Ticket ticket = null;
+    private String inputPath;
+    private WUDInfo WUDInfo;
+    private Ticket ticket;
         
     private int version = Settings.LATEST_TMD_VERSION;
     private long titleID = 0x0L;

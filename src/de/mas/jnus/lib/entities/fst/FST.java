@@ -8,22 +8,23 @@ import de.mas.jnus.lib.entities.content.Content;
 import de.mas.jnus.lib.entities.content.ContentFSTInfo;
 import de.mas.jnus.lib.utils.ByteUtils;
 import lombok.Getter;
-import lombok.Setter;
 /**
  * Represents the FST
  * @author Maschell
  *
  */
-public class FST {
-    @Getter @Setter private FSTEntry root = FSTEntry.getRootFSTEntry();
+public final class FST {
+    @Getter private final FSTEntry root = FSTEntry.getRootFSTEntry();
     
-    @Getter @Setter private int unknown;
-    @Getter @Setter private int contentCount = 0;
+    @Getter private final int unknown;
+    @Getter private final int contentCount;
     
-    @Getter @Setter private Map<Integer,ContentFSTInfo> contentFSTInfos = new HashMap<>();
-    
-    private FST(){
-        
+    @Getter private final Map<Integer,ContentFSTInfo> contentFSTInfos = new HashMap<>();
+   
+    private FST(int unknown, int contentCount) {
+        super();
+        this.unknown = unknown;
+        this.contentCount = contentCount;
     }
     
     /**
@@ -36,10 +37,11 @@ public class FST {
         if(!Arrays.equals(Arrays.copyOfRange(fstData, 0, 3), new byte[]{0x46,0x53,0x54})){
             throw new IllegalArgumentException("Not a FST. Maybe a wrong key?");      
         }
-        FST result = new FST();
 
         int unknownValue = ByteUtils.getIntFromBytes(fstData, 0x04);
         int contentCount = ByteUtils.getIntFromBytes(fstData, 0x08);
+        
+        FST result = new FST(unknownValue,contentCount);
         
         int contentfst_offset = 0x20;
         int contentfst_size = 0x20*contentCount;
@@ -70,12 +72,7 @@ public class FST {
         FSTEntry root = result.getRoot();
         
         FSTService.parseFST(root,fstSection,nameSection,contentsMappedByIndex,contentFSTInfos);
-        
-        result.setContentCount(contentCount);
-        result.setUnknown(unknownValue);
-        result.setContentFSTInfos(contentFSTInfos);
+
         return result;
     }
-   
-  
 }

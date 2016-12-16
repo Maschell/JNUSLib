@@ -17,8 +17,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class NUSTitle {
-    @Getter @Setter private String inputPath = ""; 
-    
     @Getter @Setter private FST FST;
     @Getter @Setter private TMD TMD;
     @Getter @Setter private Ticket ticket;
@@ -53,10 +51,10 @@ public class NUSTitle {
     }
 
     public FSTEntry getFSTEntryByFullPath(String givenFullPath) {
-        givenFullPath = givenFullPath.replaceAll("/", "\\\\");
-        if(!givenFullPath.startsWith("\\")) givenFullPath = "\\" +givenFullPath;
+        String fullPath = givenFullPath.replaceAll("/", "\\\\");
+        if(!fullPath.startsWith("\\")) fullPath = "\\" +fullPath;
         for(FSTEntry f :getAllFSTEntriesFlat()){
-            if(f.getFullPath().equals(givenFullPath)){
+            if(f.getFullPath().equals(fullPath)){
                 return f;
             }
         }

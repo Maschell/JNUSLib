@@ -5,10 +5,12 @@ import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
+import de.mas.jnus.lib.NUSTitle;
 import de.mas.jnus.lib.Settings;
 import de.mas.jnus.lib.entities.content.Content;
 import de.mas.jnus.lib.implementations.woomy.WoomyInfo;
 import de.mas.jnus.lib.implementations.woomy.WoomyZipFile;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -16,8 +18,13 @@ import lombok.extern.java.Log;
 
 @Log
 public class NUSDataProviderWoomy extends NUSDataProvider{
-    @Getter @Setter private WoomyInfo woomyInfo;
-    @Setter private WoomyZipFile woomyZipFile;
+    @Getter private final WoomyInfo woomyInfo;
+    @Setter(AccessLevel.PRIVATE) private WoomyZipFile woomyZipFile;
+    
+    public NUSDataProviderWoomy(NUSTitle title,WoomyInfo woomyInfo) {
+        super(title);
+        this.woomyInfo = woomyInfo;
+    }
     
     @Override
     public InputStream getInputStreamFromContent(@NonNull Content content, long fileOffsetBlock) throws IOException {
@@ -39,7 +46,7 @@ public class NUSDataProviderWoomy extends NUSDataProvider{
             zipFile.close();
             return result;
         }
-        return null;
+        return new byte[0];
     }
 
     @Override
@@ -70,10 +77,10 @@ public class NUSDataProviderWoomy extends NUSDataProvider{
     }
 
     public WoomyZipFile getSharedWoomyZipFile() throws ZipException, IOException {
-        if(woomyZipFile == null || woomyZipFile.isClosed()){
-            woomyZipFile = getNewWoomyZipFile();
+        if(this.woomyZipFile == null || this.woomyZipFile.isClosed()){
+            this.woomyZipFile = getNewWoomyZipFile();
         }
-        return woomyZipFile;
+        return this.woomyZipFile;
     }
 
     private WoomyZipFile getNewWoomyZipFile() throws ZipException, IOException {
@@ -82,14 +89,13 @@ public class NUSDataProviderWoomy extends NUSDataProvider{
 
     @Override
     public void cleanup() throws IOException {
-        if(woomyZipFile != null && woomyZipFile.isClosed()){
-            woomyZipFile.close();
+        if(this.woomyZipFile != null && this.woomyZipFile.isClosed()){
+            this.woomyZipFile.close();
         }
     }
 
     @Override
     public byte[] getRawCert() throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        return new byte[0];
     }
 }

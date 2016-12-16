@@ -3,21 +3,25 @@ package de.mas.jnus.lib.implementations;
 import java.io.IOException;
 import java.io.InputStream;
 
-import de.mas.jnus.lib.Settings;
+import de.mas.jnus.lib.NUSTitle;
 import de.mas.jnus.lib.entities.content.Content;
 import de.mas.jnus.lib.utils.download.NUSDownloadService;
 import lombok.Getter;
-import lombok.Setter;
 
 public class NUSDataProviderRemote extends NUSDataProvider {
-    @Getter @Setter private int version = Settings.LATEST_TMD_VERSION;
-    @Getter @Setter private long titleID = 0L;
+    @Getter private final int version;
+    @Getter private final long titleID;
+    
+    public NUSDataProviderRemote(NUSTitle title,int version, long titleID) {
+        super(title);
+        this.version = version;
+        this.titleID = titleID;
+    }
     
     @Override
     public InputStream getInputStreamFromContent(Content content, long fileOffsetBlock) throws IOException {
         NUSDownloadService downloadService = NUSDownloadService.getDefaultInstance();
-        InputStream in = downloadService.getInputStreamForURL(getRemoteURL(content),fileOffsetBlock);
-        return in;
+        return downloadService.getInputStreamForURL(getRemoteURL(content),fileOffsetBlock);
     }
 
     private String getRemoteURL(Content content) {        
@@ -51,12 +55,12 @@ public class NUSDataProviderRemote extends NUSDataProvider {
     }
 
     @Override
-    public void cleanup() throws IOException {
-        // TODO Auto-generated method stub
+    public byte[] getRawCert() throws IOException {
+        return new byte[0];
     }
 
     @Override
-    public byte[] getRawCert() throws IOException {
-        return null;
+    public void cleanup() throws IOException {
+        //We don't need this
     }
 }

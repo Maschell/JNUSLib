@@ -12,7 +12,10 @@ import java.util.Arrays;
 
 import lombok.extern.java.Log;
 @Log
-public class HashUtil {
+public final class HashUtil {
+    private HashUtil(){
+        //Utility class
+    }
     public static byte[] hashSHA256(byte[] data){
         MessageDigest sha256;
         try {

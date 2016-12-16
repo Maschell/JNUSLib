@@ -12,22 +12,21 @@ import de.mas.jnus.lib.implementations.NUSDataProvider;
 import de.mas.jnus.lib.utils.FileUtils;
 import de.mas.jnus.lib.utils.Utils;
 import lombok.Getter;
-import lombok.Setter;
 
-public class ExtractionService {
+public final class ExtractionService {
     private static Map<NUSTitle,ExtractionService> instances = new HashMap<>();
-  
+    
+    @Getter private final NUSTitle NUSTitle;
+    
     public static ExtractionService getInstance(NUSTitle nustitle) {
         if(!instances.containsKey(nustitle)){
             instances.put(nustitle, new ExtractionService(nustitle));
         }
         return instances.get(nustitle);
     }
-    
-    @Getter @Setter private NUSTitle NUSTitle = null;
-    
+
     private ExtractionService(NUSTitle nustitle){
-        setNUSTitle(nustitle);
+        this.NUSTitle = nustitle;
     }
     
     private NUSDataProvider getDataProvider(){
@@ -76,7 +75,7 @@ public class ExtractionService {
         
         byte[] rawTMD=  getDataProvider().getRawTMD();
         
-        if(rawTMD != null && rawTMD.length == 0){
+        if(rawTMD == null || rawTMD.length == 0){
             System.out.println("Couldn't write TMD: No TMD loaded");
             return;
         }
@@ -90,7 +89,7 @@ public class ExtractionService {
         
         byte[] rawTicket=  getDataProvider().getRawTicket();
         
-        if(rawTicket != null && rawTicket.length == 0){
+        if(rawTicket == null || rawTicket.length == 0){
             System.out.println("Couldn't write Ticket: No Ticket loaded");
             return;
         }
@@ -104,7 +103,7 @@ public class ExtractionService {
         
         byte[] rawCert =  getDataProvider().getRawCert();
         
-        if(rawCert != null && rawCert.length == 0){
+        if(rawCert == null || rawCert.length == 0){
             System.out.println("Couldn't write Cert: No Cert loaded");
             return;
         }

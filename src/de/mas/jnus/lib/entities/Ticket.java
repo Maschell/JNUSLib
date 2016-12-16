@@ -10,23 +10,20 @@ import de.mas.jnus.lib.Settings;
 import de.mas.jnus.lib.utils.Utils;
 import de.mas.jnus.lib.utils.cryptography.AESDecryption;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.java.Log;
 
 @Log
-public class Ticket {
-    @Getter @Setter private byte[] encryptedKey = new byte[0x10];
-    @Getter @Setter private byte[] decryptedKey = new byte[0x10];
+public final class Ticket {
+    @Getter private final byte[] encryptedKey;
+    @Getter private final byte[] decryptedKey;
     
-    @Getter @Setter private byte[] IV = new byte[0x10];
-    
-    @Getter @Setter private byte[] cert0 = new byte[0x300];
-    @Getter @Setter private byte[] cert1 = new byte[0x400];
+    @Getter private final byte[] IV;
 
-    @Getter @Setter private byte[] rawTicket = new byte[0];
-    
-    private Ticket(){
-        
+    private Ticket(byte[] encryptedKey, byte[] decryptedKey,byte[] IV) {
+        super();
+        this.encryptedKey = encryptedKey;
+        this.decryptedKey = decryptedKey;
+        this.IV = IV;
     }
     
     public static Ticket parseTicket(File ticket) throws IOException {
@@ -55,36 +52,15 @@ public class Ticket {
         long titleID = buffer.getLong();
         
         Ticket result = createTicket(encryptedKey,titleID);
-        result.setRawTicket(Arrays.copyOf(ticket, ticket.length));
-        
-        //read certs.
-        byte[] cert0 = new byte[0x300];
-        byte[] cert1 = new byte[0x400];
-        
-        if(ticket.length >= 0x650){
-            buffer.position(0x350);
-            buffer.get(cert0,0x00,0x300);
-        }
-        if(ticket.length >= 0xA50){
-            buffer.position(0x650);
-            buffer.get(cert1,0x00,0x400);
-        }
-        
-        result.setCert0(cert0);
-        result.setCert1(cert1);
         
         return result;
     }
     
     public static Ticket createTicket(byte[] encryptedKey, long titleID) {
-        Ticket result = new Ticket();
-        result.encryptedKey = encryptedKey;
-        
         byte[] IV = ByteBuffer.allocate(0x10).putLong(titleID).array();
-        result.decryptedKey = calculateDecryptedKey(result.encryptedKey,IV);
-        result.setIV(IV);
+        byte[] decryptedKey = calculateDecryptedKey(encryptedKey,IV);
         
-        return result;
+        return new Ticket(encryptedKey,decryptedKey,IV);
     }
 
     private static byte[] calculateDecryptedKey(byte[] encryptedKey, byte[] IV) {        
@@ -109,9 +85,7 @@ public class Ticket {
         if (getClass() != obj.getClass())
             return false;
         Ticket other = (Ticket) obj;
-        if (!Arrays.equals(encryptedKey, other.encryptedKey))
-            return false;
-        return true;
+        return Arrays.equals(encryptedKey, other.encryptedKey);
     }
 
     @Override

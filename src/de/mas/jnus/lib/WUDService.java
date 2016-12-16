@@ -23,7 +23,11 @@ import de.mas.jnus.lib.utils.Utils;
 import lombok.extern.java.Log;
 
 @Log
-public class WUDService {
+public final class WUDService {
+    private WUDService(){
+        //Just an utility class
+    }
+    
     public static File compressWUDToWUX(WUDImage image,String outputFolder) throws IOException{
         return compressWUDToWUX(image, outputFolder, "game.wux",false);
     }
@@ -44,16 +48,17 @@ public class WUDService {
             return null;
         }
         
-        Utils.createDir(outputFolder);
-        
+        String usedOutputFolder = outputFolder;
+        if(usedOutputFolder == null) usedOutputFolder = "";
+        Utils.createDir(usedOutputFolder);
+
         String filePath;
-        if(outputFolder == null) outputFolder = "";
-        
-        if(!outputFolder.isEmpty()){
-            filePath = outputFolder+ File.separator + filename;
-        }else{
+        if(usedOutputFolder.isEmpty()){
             filePath = filename;
+        }else{
+            filePath = usedOutputFolder + File.separator + filename;
         }
+        
         File outputFile = new File(filePath);
         
         if(outputFile.exists() && !overwrite){
@@ -98,14 +103,14 @@ public class WUDService {
             int read = StreamUtils.getChunkFromStream(in, blockBuffer, overflow, bufferSize);
             ByteArrayWrapper hash = new ByteArrayWrapper(HashUtil.hashSHA1(blockBuffer));
             
-            if((oldOffset = sectorHashes.get(hash)) !=  null){
-                sectorMapping.put(curSector, oldOffset);
-                oldOffset = null;
-            }else{ //its a new sector
+            if((oldOffset = sectorHashes.get(hash)) ==  null){
                 sectorMapping.put(curSector, realSector);
                 sectorHashes.put(hash, realSector);
                 fileOutput.write(blockBuffer);
                 realSector++;
+            }else{
+                sectorMapping.put(curSector, oldOffset);
+                oldOffset = null;
             }
             
             written += read;

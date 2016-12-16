@@ -5,7 +5,10 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class Downloader {
+public abstract class Downloader {
+    public Downloader() {
+        //
+    }
     public static byte[] downloadFileToByteArray(String fileURL) throws IOException {        
         int BUFFER_SIZE = 0x800;        
         URL url = new URL(fileURL);

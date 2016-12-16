@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,7 +28,10 @@ import lombok.extern.java.Log;
  *
  */
 @Log
-public class WoomyParser {
+public final class WoomyParser {
+    private WoomyParser(){
+        //
+    }
     public static WoomyInfo createWoomyInfo(File woomyFile) throws IOException, ParserConfigurationException, SAXException{
         WoomyInfo result = new WoomyInfo();
         if(!woomyFile.exists()){
@@ -72,7 +76,7 @@ public class WoomyParser {
                 if(matcher.matches()){
                     String[] tokens = entryName.split("[\\\\|/]"); //We only want the filename!
                     String filename = tokens[tokens.length - 1];
-                    result.put(filename.toLowerCase(), entry);
+                    result.put(filename.toLowerCase(Locale.ENGLISH), entry);
                 }
             }
         }            

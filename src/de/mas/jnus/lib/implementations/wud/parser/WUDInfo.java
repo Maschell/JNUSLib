@@ -1,5 +1,6 @@
 package de.mas.jnus.lib.implementations.wud.parser;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -11,19 +12,20 @@ import lombok.Setter;
 
 @Data
 public class WUDInfo {    
-    private byte[] titleKey = null;
+    private final byte[] titleKey;
     
-    private WUDDiscReader WUDDiscReader = null;    
-    private Map<String,WUDPartition> partitions = null;
+    private final WUDDiscReader  WUDDiscReader;    
+    private final Map<String,WUDPartition> partitions = new HashMap<>();
     
     @Getter(AccessLevel.PRIVATE) @Setter(AccessLevel.PROTECTED)
     private String gamePartitionName;
     
-    WUDInfo(){        
+    private WUDGamePartition cachedGamePartition = null;
+   
+    public void addPartion(String partitionName, WUDGamePartition partition){
+        getPartitions().put(partitionName, partition);
     }
     
-    
-    private WUDGamePartition cachedGamePartition = null;
     public WUDGamePartition getGamePartition(){
         if(cachedGamePartition == null){
             cachedGamePartition = findGamePartition();

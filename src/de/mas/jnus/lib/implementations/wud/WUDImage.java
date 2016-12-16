@@ -20,13 +20,14 @@ import lombok.extern.java.Log;
 public class WUDImage {
     public static long WUD_FILESIZE = 0x5D3A00000L;
     
-    @Getter @Setter private File fileHandle = null;
+    @Getter private final File fileHandle;
     @Getter @Setter private WUDImageCompressedInfo compressedInfo = null;
 
-    @Getter @Setter private boolean isCompressed = false;
-    @Getter @Setter private boolean isSplitted = false;
+    @Getter private final boolean isCompressed;
+    @Getter private final boolean isSplitted;
+    
     private long inputFileSize = 0L;
-    @Setter private WUDDiscReader WUDDiscReader =  null;
+    @Getter private final WUDDiscReader WUDDiscReader;
     
     public WUDImage(File file) throws IOException{
         if(file == null || !file.exists()){
@@ -42,7 +43,8 @@ public class WUDImage {
       
         if(compressedInfo.isWUX()){
             log.info("Image is compressed");
-            setCompressed(true);
+            this.isCompressed = true;
+            this.isSplitted = false;
             Map<Integer,Long> indexTable = new HashMap<>();
             long offsetIndexTable = compressedInfo.getOffsetIndexTable();            
             fileStream.seek(offsetIndexTable);
@@ -56,27 +58,27 @@ public class WUDImage {
             }
             compressedInfo.setIndexTable(indexTable);
             setCompressedInfo(compressedInfo);
-        }else if(file.getName().equals(String.format(WUDDiscReaderSplitted.WUD_SPLITTED_DEFAULT_FILEPATTERN, 1)) &&
+        }else{
+            this.isCompressed = false;
+            if(file.getName().equals(String.format(WUDDiscReaderSplitted.WUD_SPLITTED_DEFAULT_FILEPATTERN, 1)) &&
                 (file.length() == WUDDiscReaderSplitted.WUD_SPLITTED_FILE_SIZE)){
-            setSplitted(true);
-            log.info("Image is splitted");
+                this.isSplitted = true;
+                log.info("Image is splitted");
+            }else{
+                this.isSplitted = false;
+            }
+        }
+        
+        if(isCompressed()){
+            this.WUDDiscReader = new WUDDiscReaderCompressed(this);
+        }else if(isSplitted()){
+            this.WUDDiscReader = new WUDDiscReaderSplitted(this);
+        }else{
+            this.WUDDiscReader = new WUDDiscReaderUncompressed(this);
         }
         
         fileStream.close();
-        setFileHandle(file);
-    }
-
-    public WUDDiscReader getWUDDiscReader() {
-        if(WUDDiscReader == null){
-            if(isCompressed()){
-                setWUDDiscReader(new WUDDiscReaderCompressed(this));
-            }else if(isSplitted()){
-                setWUDDiscReader(new WUDDiscReaderSplitted(this));
-            }else{
-                setWUDDiscReader(new WUDDiscReaderUncompressed(this));
-            }
-        }
-        return WUDDiscReader;
+        this.fileHandle = file;
     }
 
     public long getWUDFileSize() {

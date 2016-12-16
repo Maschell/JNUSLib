@@ -96,7 +96,7 @@ public class NUSDecryption extends AESDecryption{
                 log.info(Utils.ByteArrayToString(expected_hash));
                 log.info("Hash doesn't match decrypted content.");
             }else{
-                //log.warning("###################################################Hash DOES match saves output stream.");
+                //log.warning("Hash DOES match saves output stream.");
             }
         }
         

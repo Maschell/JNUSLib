@@ -25,11 +25,11 @@ import de.mas.jnus.lib.utils.StreamUtils;
 import de.mas.jnus.lib.utils.Utils;
 import de.mas.jnus.lib.utils.cryptography.NUSDecryption;
 import lombok.Getter;
-import lombok.Setter;
 
-public class DecryptionService {
+public final class DecryptionService {
     private static Map<NUSTitle,DecryptionService> instances = new HashMap<>();
-  
+    @Getter private final NUSTitle NUSTitle;
+    
     public static DecryptionService getInstance(NUSTitle nustitle) {
         if(!instances.containsKey(nustitle)){
             instances.put(nustitle, new DecryptionService(nustitle));
@@ -37,10 +37,8 @@ public class DecryptionService {
         return instances.get(nustitle);
     }
     
-    @Getter @Setter private NUSTitle NUSTitle = null;
-    
     private DecryptionService(NUSTitle nustitle){
-        setNUSTitle(nustitle);
+        this.NUSTitle = nustitle;
     }
     
     public Ticket getTicket() {
@@ -80,16 +78,16 @@ public class DecryptionService {
                 }
                 if(targetFile.length() == entry.getFileSize()){   
                     Content c = entry.getContent();
-                    if(!c.isHashed()){
+                    if(c.isHashed()){
+                        System.out.println("File already exists: " + entry.getFilename());
+                        return;
+                    }else{
                         if(Arrays.equals(HashUtil.hashSHA1(target,(int) c.getEncryptedFileSize()), c.getSHA2Hash())){
                             System.out.println("File already exists: " + entry.getFilename());
                             return;
                         }else{
                             System.out.println("File already exists with the same filesize, but the hash doesn't match: " + entry.getFilename());
                         }
-                    }else{
-                        System.out.println("File already exists: " + entry.getFilename());
-                        return;
                     }
                   
                 }else{
@@ -138,9 +136,7 @@ public class DecryptionService {
         short contentIndex = (short)content.getIndex();
         
         long encryptedFileSize = content.getEncryptedFileSize();
-        if(!content.isEncrypted()){
-            StreamUtils.saveInputStreamToOutputStreamWithHash(inputStream, outputStream,size,content.getSHA2Hash(),encryptedFileSize);
-        }else{
+        if(content.isEncrypted()){
             if(content.isHashed()){
                 NUSDataProvider dataProvider = getNUSTitle().getDataProvider();
                 byte[] h3 = dataProvider.getContentH3Hash(content);
@@ -148,6 +144,8 @@ public class DecryptionService {
             }else{
                 nusdecryption.decryptFileStream(inputStream, outputStream, size, (short)contentIndex,content.getSHA2Hash(),encryptedFileSize);
             }
+        }else{
+            StreamUtils.saveInputStreamToOutputStreamWithHash(inputStream, outputStream,size,content.getSHA2Hash(),encryptedFileSize);
         }
        
         inputStream.close();

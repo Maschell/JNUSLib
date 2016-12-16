@@ -4,7 +4,7 @@ import de.mas.jnus.lib.entities.Ticket;
 import de.mas.jnus.lib.implementations.NUSDataProviderRemote;
 import de.mas.jnus.lib.implementations.NUSDataProvider;
 
-public class NUSTitleLoaderRemote extends NUSTitleLoader{
+public final class NUSTitleLoaderRemote extends NUSTitleLoader{
 
     private NUSTitleLoaderRemote(){
         super();
@@ -33,11 +33,8 @@ public class NUSTitleLoaderRemote extends NUSTitleLoader{
     }
  
     @Override
-    protected NUSDataProvider getDataProvider(NUSTitleConfig config) {
-        NUSDataProviderRemote result = new NUSDataProviderRemote();
-        result.setVersion(config.getVersion());
-        result.setTitleID(config.getTitleID());
-        return result;
+    protected NUSDataProvider getDataProvider(NUSTitle title,NUSTitleConfig config) {
+        return new NUSDataProviderRemote(title,config.getVersion(),config.getTitleID());
     }
 
 }

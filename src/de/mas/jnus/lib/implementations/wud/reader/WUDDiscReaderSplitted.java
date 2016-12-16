@@ -9,12 +9,13 @@ import java.util.Arrays;
 import de.mas.jnus.lib.implementations.wud.WUDImage;
 
 public class WUDDiscReaderSplitted extends WUDDiscReader{
-    public WUDDiscReaderSplitted(WUDImage image) {
-        super(image);
-    }
     public static long WUD_SPLITTED_FILE_SIZE =  0x100000L * 0x800L;
     public static long NUMBER_OF_FILES =  12;
     public static String WUD_SPLITTED_DEFAULT_FILEPATTERN = "game_part%d.wud";
+    
+    public WUDDiscReaderSplitted(WUDImage image) {
+        super(image);
+    }
     
     @Override
     protected void readEncryptedToOutputStream(OutputStream outputStream, long offset, long size) throws IOException {

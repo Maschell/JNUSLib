@@ -9,7 +9,7 @@ import de.mas.jnus.lib.implementations.woomy.WoomyParser;
 import lombok.extern.java.Log;
 
 @Log
-public class NUSTitleLoaderWoomy extends NUSTitleLoader {
+public final class NUSTitleLoaderWoomy extends NUSTitleLoader {
 
     public static NUSTitle loadNUSTitle(String inputFile) throws Exception{
         NUSTitleLoaderWoomy loader = new NUSTitleLoaderWoomy();
@@ -24,10 +24,8 @@ public class NUSTitleLoaderWoomy extends NUSTitleLoader {
         return loader.loadNusTitle(config);
     }
     @Override
-    protected NUSDataProvider getDataProvider(NUSTitleConfig config) {
-        NUSDataProviderWoomy dataProvider = new NUSDataProviderWoomy();
-        dataProvider.setWoomyInfo(config.getWoomyInfo());
-        return dataProvider;
+    protected NUSDataProvider getDataProvider(NUSTitle title,NUSTitleConfig config) {
+        return new NUSDataProviderWoomy(title,config.getWoomyInfo());
     }
 
 }

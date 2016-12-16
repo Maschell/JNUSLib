@@ -1,5 +1,6 @@
 package de.mas.jnus.lib.utils;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -10,7 +11,10 @@ import java.util.Arrays;
 import lombok.extern.java.Log;
 
 @Log
-public class StreamUtils {
+public final class StreamUtils {
+    private StreamUtils(){
+        //Utility class
+    }
     public static byte[] getBytesFromStream(InputStream in,int size) throws IOException{
         byte[] result = new byte[size];
         byte[] buffer = new byte[0x8000];
@@ -123,5 +127,17 @@ public class StreamUtils {
         
         outputStream.close();        
         inputStream.close();
+    }
+
+    public static void skipExactly(InputStream in, long offset) throws IOException {
+        long n = offset;
+        while (n != 0) {
+            long skipped = in.skip(n);
+            if (skipped == 0){
+                in.close();
+                throw new EOFException();
+            }
+            n -= skipped;
+        }
     }
 }

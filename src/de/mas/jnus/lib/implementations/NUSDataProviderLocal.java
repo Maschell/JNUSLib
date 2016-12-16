@@ -6,15 +6,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 
+import de.mas.jnus.lib.NUSTitle;
 import de.mas.jnus.lib.Settings;
 import de.mas.jnus.lib.entities.content.Content;
+import de.mas.jnus.lib.utils.StreamUtils;
 import lombok.Getter;
-import lombok.Setter;
 
-public class NUSDataProviderLocal extends NUSDataProvider {
-    @Getter @Setter private String localPath = "";
+public final class NUSDataProviderLocal extends NUSDataProvider {
+    @Getter private final String localPath;
     
-    public NUSDataProviderLocal() {
+    public NUSDataProviderLocal(NUSTitle nustitle, String localPath) {
+        super(nustitle);
+        this.localPath = localPath;
     }
     
     public String getFilePathOnDisk(Content c) {
@@ -29,7 +32,7 @@ public class NUSDataProviderLocal extends NUSDataProvider {
             return null;
         }
         InputStream in = new FileInputStream(filepath);
-        in.skip(offset);
+        StreamUtils.skipExactly(in,offset);
         return in;
     }
 
@@ -38,7 +41,7 @@ public class NUSDataProviderLocal extends NUSDataProvider {
         String h3Path = getLocalPath() + File.separator + String.format("%08X.h3", content.getID());
         File h3File = new File(h3Path);
         if(!h3File.exists()){   
-            return null;
+            return new byte[0];
         }
         return Files.readAllBytes(h3File.toPath());
     }
@@ -60,14 +63,15 @@ public class NUSDataProviderLocal extends NUSDataProvider {
     }
 
     @Override
-    public void cleanup() throws IOException {
-    }
-
-    @Override
     public byte[] getRawCert() throws IOException {
         String inputPath = getLocalPath();
         String certPath = inputPath + File.separator + Settings.CERT_FILENAME;
         File certFile = new File(certPath);        
         return Files.readAllBytes(certFile.toPath());
+    }
+    
+    @Override
+    public void cleanup() throws IOException {
+        //We don't need this
     }
 }

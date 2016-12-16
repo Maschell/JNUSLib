@@ -31,7 +31,7 @@ public class AESDecryption {
 		init();	
 	}
     
-    protected void init() {
+    protected final void init() {
         init(getAESKey(),getIV());
     }
 	

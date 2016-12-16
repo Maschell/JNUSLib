@@ -23,14 +23,18 @@ public class WUDDiscReaderCompressed extends WUDDiscReader{
     protected void readEncryptedToOutputStream(OutputStream out, long offset, long size) throws IOException {
         // make sure there is no out-of-bounds read
         WUDImageCompressedInfo info = getImage().getCompressedInfo();
-        
+
         long fileBytesLeft = info.getUncompressedSize() - offset;
+        
+        long usedOffset = offset;
+        long usedSize = size;
+        
         if( fileBytesLeft <= 0 ){
             log.warning("offset too big");
             System.exit(1);
         }
-        if( fileBytesLeft < size ){
-            size = fileBytesLeft;
+        if( fileBytesLeft < usedSize ){
+            usedSize = fileBytesLeft;
         }
         // compressed read must be handled on a per-sector level
         
@@ -38,11 +42,11 @@ public class WUDDiscReaderCompressed extends WUDDiscReader{
         byte[] buffer = new byte[bufferSize];
       
         RandomAccessFile input = getRandomAccessFileStream();
-        while( size > 0 ){
-            long sectorOffset = (offset % info.getSectorSize());
+        while( usedSize > 0 ){
+            long sectorOffset = (usedOffset % info.getSectorSize());
             long remainingSectorBytes = info.getSectorSize() - sectorOffset;
-            long sectorIndex = (offset / info.getSectorSize());
-            int bytesToRead = (int) ((remainingSectorBytes<size)?remainingSectorBytes:size); // read only up to the end of the current sector
+            long sectorIndex = (usedOffset / info.getSectorSize());
+            int bytesToRead = (int) ((remainingSectorBytes<usedSize)?remainingSectorBytes:usedSize); // read only up to the end of the current sector
             // look up real sector index
             long realSectorIndex = info.getSectorIndex((int) sectorIndex);
             long offset2 = info.getOffsetSectorArray() + realSectorIndex*info.getSectorSize()+sectorOffset;
@@ -60,10 +64,9 @@ public class WUDDiscReaderCompressed extends WUDDiscReader{
                 }
             }
             
-            size -= bytesToRead;
-            offset += bytesToRead;
+            usedSize -= bytesToRead;
+            usedOffset += bytesToRead;
         }
         input.close();
     }
-
 }

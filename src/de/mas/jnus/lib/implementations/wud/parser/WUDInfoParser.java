@@ -13,12 +13,11 @@ import de.mas.jnus.lib.entities.fst.FST;
 import de.mas.jnus.lib.entities.fst.FSTEntry;
 import de.mas.jnus.lib.implementations.wud.reader.WUDDiscReader;
 import de.mas.jnus.lib.utils.ByteUtils;
-import de.mas.jnus.lib.utils.FileUtils;
 import de.mas.jnus.lib.utils.Utils;
 import lombok.extern.java.Log;
 
 @Log
-public class WUDInfoParser {
+public final class WUDInfoParser {
     public static byte[] DECRYPTED_AREA_SIGNATURE = new byte[] { (byte) 0xCC, (byte) 0xA6, (byte) 0xE6, 0x7B };
     public static byte[] PARTITION_FILE_TABLE_SIGNATURE = new byte[] { 0x46, 0x53, 0x54, 0x00 }; // "FST"
     public final static int PARTITION_TOC_OFFSET = 0x800;
@@ -28,11 +27,12 @@ public class WUDInfoParser {
     public static final String WUD_TICKET_FILENAME = "title.tik";
     public static final String WUD_CERT_FILENAME = "title.cert";
     
+    private WUDInfoParser(){
+        //
+    }
+    
     public static WUDInfo createAndLoad(WUDDiscReader discReader,byte[] titleKey) throws IOException {
-        WUDInfo result = new WUDInfo();
-        
-        result.setTitleKey(titleKey);
-        result.setWUDDiscReader(discReader);
+        WUDInfo result = new WUDInfo(titleKey,discReader);
         
         byte[] PartitionTocBlock = discReader.readDecryptedToByteArray(Settings.WIIU_DECRYPTED_AREA_OFFSET, 0, 0x8000, titleKey, null);
 
@@ -43,7 +43,7 @@ public class WUDInfoParser {
         }
         
         Map<String,WUDPartition> partitions = readPartitions(result,PartitionTocBlock);
-        result.setPartitions(partitions);
+        result.getPartitions().putAll(partitions);
         //parsePartitions(wudInfo,partitions);
         
         return result;
@@ -61,12 +61,14 @@ public class WUDInfoParser {
 
         Map<String,WUDPartition> partitions = new HashMap<>();
         
-        WUDGamePartition gamePartition = new WUDGamePartition();
-    
+        byte[] gamePartitionTMD = new byte[0];
+        byte[] gamePartitionTicket = new byte[0];
+        byte[] gamePartitionCert = new byte[0];
+        
         String realGamePartitionName = null;
         // populate partition information from decrypted TOC
         for (int i = 0; i < partitionCount; i++){
-            WUDPartition partition = new WUDPartition();
+            
 
             int offset = (PARTITION_TOC_OFFSET + (i * PARTITION_TOC_ENTRY_SIZE));
             byte[] partitionIdentifier = Arrays.copyOfRange(partitionTocBlock, offset, offset+ 0x19);
@@ -83,9 +85,7 @@ public class WUDInfoParser {
            
             long partitionOffset = ((tmp * (long)0x8000) - 0x10000);
             
-            
-            partition.setPartitionName(partitionName);  
-            partition.setPartitionOffset(partitionOffset);
+            WUDPartition partition = new WUDPartition(partitionName,partitionOffset);
             
             if(partitionName.startsWith("SI")){
                 byte[] fileTableBlock = wudInfo.getWUDDiscReader().readDecryptedToByteArray(Settings.WIIU_DECRYPTED_AREA_OFFSET + partitionOffset,0, 0x8000, wudInfo.getTitleKey(),null);
@@ -100,18 +100,14 @@ public class WUDInfoParser {
                 byte[] rawTMD = getFSTEntryAsByte(WUD_TMD_FILENAME,partition,fst,wudInfo.getWUDDiscReader(),wudInfo.getTitleKey());
                 byte[] rawCert = getFSTEntryAsByte(WUD_CERT_FILENAME,partition,fst,wudInfo.getWUDDiscReader(),wudInfo.getTitleKey());
                 
-                gamePartition.setRawTMD(rawTMD);
-                gamePartition.setRawTicket(rawTIK);
-                gamePartition.setRawCert(rawCert);
+                gamePartitionTMD = rawTMD;
+                gamePartitionTicket = rawTIK;
+                gamePartitionCert = rawCert;
                 
                 //We want to use the real game partition
                 realGamePartitionName = partitionName = "GM" + Utils.ByteArrayToString(Arrays.copyOfRange(rawTIK, 0x1DC, 0x1DC + 0x08));
-            }else if(partitionName.startsWith(realGamePartitionName)){                
-                gamePartition.setPartitionOffset(partitionOffset);
-                gamePartition.setPartitionName(partitionName);
-                
-                wudInfo.setGamePartitionName(partitionName);
-                partition = gamePartition;
+            }else if(partitionName.startsWith(realGamePartitionName)){
+                partition = new WUDGamePartition(partitionName, partitionOffset, gamePartitionTMD, gamePartitionCert, gamePartitionTicket);
             }
             byte [] header = wudInfo.getWUDDiscReader().readEncryptedToByteArray(partition.getPartitionOffset()+0x10000,0,0x8000);
             WUDPartitionHeader partitionHeader = WUDPartitionHeader.parseHeader(header);
