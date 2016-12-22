@@ -14,7 +14,7 @@ public class FileUtils {
         if(target.isDirectory()){
             return false;
         }
-        File parent = target.getParentFile();
+        File parent = new File(target.getAbsolutePath()).getParentFile();
         if(parent != null){
             Utils.createDir(parent.getAbsolutePath());
         }

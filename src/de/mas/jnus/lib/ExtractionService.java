@@ -62,7 +62,6 @@ public class ExtractionService {
         Utils.createDir(outputFolder);
         NUSDataProvider dataProvider = getDataProvider();
         for(Content c : list){
-            System.out.println("Saving " + c.getFilename());
             if(withHashes){
                 dataProvider.saveEncryptedContentWithH3Hash(c, outputFolder);
             }else{

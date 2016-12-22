@@ -29,7 +29,7 @@ public class NUSTitleLoaderWUD extends NUSTitleLoader {
         
         WUDImage image = new WUDImage(wudFile);
         if(titleKey == null){
-            File keyFile = new File(wudFile.getParentFile().getPath() + File.separator + Settings.WUD_KEY_FILENAME);
+            File keyFile = new File(new File(wudFile.getAbsolutePath()).getParentFile().getPath() + File.separator + Settings.WUD_KEY_FILENAME);
             if(!keyFile.exists()){
                 System.out.println(keyFile.getAbsolutePath() + " does not exist and no title key was provided.");
                 return null;

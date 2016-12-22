@@ -96,6 +96,7 @@ public abstract class NUSDataProvider {
                 log.info("Encrypted content alreadys exists, but the length is not as expected. Saving it again");
             }
         }
+        System.out.println("Saving " + content.getFilename());
         FileUtils.saveInputStreamToFile(output,inputStream,content.getEncryptedFileSize());
     }
 

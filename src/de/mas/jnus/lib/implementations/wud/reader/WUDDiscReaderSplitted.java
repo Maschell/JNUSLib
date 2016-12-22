@@ -76,7 +76,7 @@ public class WUDDiscReaderSplitted extends WUDDiscReader{
     }
     
     private RandomAccessFile getFileByOffset(long offset) throws IOException{
-        File filehandlePart1 = getImage().getFileHandle();
+        File filehandlePart1 = new File(getImage().getFileHandle().getAbsolutePath()); //Create copy
         String pathToFiles = filehandlePart1.getParentFile().getAbsolutePath();
         
         int filePart = getFilePartByOffset(offset);

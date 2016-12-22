@@ -94,7 +94,7 @@ public class WUDImage {
 
     private long calculateSplittedFileSize() {
         long result = 0;
-        File filehandlePart1 = getFileHandle();
+        File filehandlePart1 = new File(getFileHandle().getAbsolutePath());
         String pathToFiles = filehandlePart1.getParentFile().getAbsolutePath();
         for(int i = 1; i<=WUDDiscReaderSplitted.NUMBER_OF_FILES;i++){                    
             String filePartPath = pathToFiles + File.separator + String.format(WUDDiscReaderSplitted.WUD_SPLITTED_DEFAULT_FILEPATTERN, i);
