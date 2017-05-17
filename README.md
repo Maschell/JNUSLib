@@ -1,8 +1,8 @@
-#JNUSLib - All in one library to handle NUS content
+# JNUSLib - All in one library to handle NUS content
 
 JNUSLib is a library written in Java to handle NUS Contents (.app, tmd, tik, cert files) from different sources. It can be easily used in other Applications and is directed to devolpers. It's based on JNUSTool, but is heavily rewritten and extented with even more features.
 
-##Features
+## Features
 Loading NUS Contents from different sources. Currently implemented:
    * Local files
    * Files from the NUS Server (Only the part that are needed will be downloaded)
@@ -24,7 +24,7 @@ For WUD files, following additional operations are possible:
 * Compressing into .wux file format (from .wud and splitted .wud)
 * Verifing (comparing) to different wud images.
   
-##How to use it
+## How to use it
 At first you have to import the jnuslib.jar and the common key in the Settings class.
 ```
 Settings.commonKey = Utils.StringToByteArray("12345678901234567890123456789012");
@@ -64,7 +64,7 @@ Then for each different source type, you need to use a an own NUSTitleLoader.
 Once the title is loaded, you can use one of the services to extract and decrypt files.  
 Here are some of the operations you can do. Look at the code for the full list of methods.
 
-###Decryption:
+### Decryption:
 
 ```
 DecryptionService decrypt = DecryptionService.getInstance(title);
@@ -99,7 +99,7 @@ in.close();
 [...]
 ```
 
-###Extraction:
+### Extraction:
 ```
 //Get the Service for the NUSTitle
 ExtractionService extract = ExtractionService.getInstance(title);
@@ -120,7 +120,7 @@ extract.extractCertTo(output);
 
 [...]
 ```
-###WUD Services
+### WUD Services
 Example for compressing and verifing into .wux files.
 
 ```
@@ -134,10 +134,10 @@ Example for compressing and verifing into .wux files.
     WUDService.compareWUDImage(imageUncompressed, imageCompressed);
 ```
 
-###Cleanup:
+### Cleanup:
 Call the method cleanup() for a NUSTitle to cleanup/close all opened ressources.
 
-#Credits
+# Credits
 Maschell
 
 Thanks to:
