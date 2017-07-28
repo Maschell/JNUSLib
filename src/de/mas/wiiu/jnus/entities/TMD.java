@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import de.mas.wiiu.jnus.entities.content.Content;
@@ -29,6 +31,11 @@ public final class TMD {
 
     private static final int CONTENT_INFO_OFFSET = 0x204;
     private static final int CONTENT_OFFSET = 0xB04;
+    
+    private static final int CERT1_LENGTH     = 0x400;
+    private static final int CERT2_LENGTH     = 0x300;
+    
+    
 
     @Getter private final int signatureType;                        // 0x000
     @Getter private final byte[] signature;                         // 0x004
@@ -47,6 +54,9 @@ public final class TMD {
     @Getter private final short bootIndex;                          // 0x1E0
     @Getter private final byte[] SHA2;                              // 0x1E4
     @Getter private final ContentInfo[] contentInfos;
+    @Getter private byte[] cert1;
+    @Getter private byte[] cert2;
+  
     private final Map<Integer, Content> contentToIndex = new HashMap<>();
     private final Map<Integer, Content> contentToID = new HashMap<>();
 
@@ -69,6 +79,8 @@ public final class TMD {
         this.bootIndex = param.getBootIndex();
         this.SHA2 = param.getSHA2();
         this.contentInfos = param.getContentInfos();
+        this.cert1 = param.getCert1();
+        this.cert2 = param.getCert2();
     }
 
     public static TMD parseTMD(File tmd) throws IOException {
@@ -84,6 +96,8 @@ public final class TMD {
         byte[] issuer = new byte[ISSUER_LENGTH];
         byte[] reserved = new byte[RESERVED_LENGTH];
         byte[] SHA2 = new byte[SHA2_LENGTH];
+        byte[] cert1 = new byte[CERT1_LENGTH];
+        byte[] cert2 = new byte[CERT2_LENGTH];
 
         ContentInfo[] contentInfos = new ContentInfo[CONTENT_INFO_ARRAY_SIZE];
 
@@ -136,6 +150,28 @@ public final class TMD {
             contentInfos[i] = ContentInfo.parseContentInfo(contentInfo);
         }
 
+        List<Content> contentList = new ArrayList<>();
+        // Get Contents
+        for (int i = 0; i < contentCount; i++) {
+            buffer.position(CONTENT_OFFSET + (Content.CONTENT_SIZE * i));
+            byte[] content = new byte[Content.CONTENT_SIZE];
+            buffer.get(content, 0, Content.CONTENT_SIZE);
+            Content c = Content.parseContent(content);
+            contentList.add(c);
+        }
+        
+        try{
+            buffer.get(cert2, 0, CERT2_LENGTH);
+        }catch(Exception e){
+            
+        }
+        
+        try{
+            buffer.get(cert1, 0, CERT1_LENGTH);
+        }catch(Exception e){
+            
+        }
+        
         TMDParam param = new TMDParam();
         param.setSignatureType(signatureType);
         param.setSignature(signature);
@@ -152,15 +188,12 @@ public final class TMD {
         param.setBootIndex(bootIndex);
         param.setSHA2(SHA2);
         param.setContentInfos(contentInfos);
+        param.setCert1(cert1);
+        param.setCert2(cert2);
 
         TMD result = new TMD(param);
-
-        // Get Contents
-        for (int i = 0; i < contentCount; i++) {
-            buffer.position(CONTENT_OFFSET + (Content.CONTENT_SIZE * i));
-            byte[] content = new byte[Content.CONTENT_SIZE];
-            buffer.get(content, 0, Content.CONTENT_SIZE);
-            Content c = Content.parseContent(content);
+        
+        for(Content c : contentList){
             result.setContentToIndex(c.getIndex(), c);
             result.setContentToID(c.getID(), c);
         }
@@ -222,5 +255,7 @@ public final class TMD {
         private short bootIndex;                                    // 0x1E0
         private byte[] SHA2;                                        // 0x1E4
         private ContentInfo[] contentInfos;                         //
+        private byte[] cert1;
+        private byte[] cert2;
     }
 }

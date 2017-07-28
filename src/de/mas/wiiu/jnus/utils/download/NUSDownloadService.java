@@ -1,9 +1,12 @@
 package de.mas.wiiu.jnus.utils.download;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,6 +17,8 @@ public final class NUSDownloadService extends Downloader {
     private static Map<String, NUSDownloadService> instances = new HashMap<>();
 
     private final String URL_BASE;
+    
+    private byte[] defaultCertTicket = null;
 
     private NUSDownloadService(String URL) {
         this.URL_BASE = URL;
@@ -30,12 +35,27 @@ public final class NUSDownloadService extends Downloader {
         }
         return instances.get(URL);
     }
+    
+    public byte[] getDefaultCert() throws IOException {
+        if(defaultCertTicket == null){
+            byte [] ticket = downloadTicketToByteArray(0x000500101000400AL); //Downloading cetk from OSv10
+            defaultCertTicket = Arrays.copyOfRange(ticket, 0x350, 0x350+0x300);
+        }
+        return defaultCertTicket;
+    }
 
     public byte[] downloadTMDToByteArray(long titleID, int version) throws IOException {
         String version_suf = "";
         if (version > Settings.LATEST_TMD_VERSION) version_suf = "." + version;
         String URL = URL_BASE + "/" + String.format("%016X", titleID) + "/tmd" + version_suf;
         return downloadFileToByteArray(URL);
+    }
+    
+    /**
+     * For the cert we need a part from a ticket. For this we simply load a public ticket and use it.
+     */
+    public byte[] downloadDefaultCertToByteArray() throws IOException {
+        return getDefaultCert();
     }
 
     public byte[] downloadTicketToByteArray(long titleID) throws IOException {

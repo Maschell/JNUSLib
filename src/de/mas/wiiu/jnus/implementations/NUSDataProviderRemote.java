@@ -1,9 +1,14 @@
 package de.mas.wiiu.jnus.implementations;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Logger;
 
 import de.mas.wiiu.jnus.NUSTitle;
+import de.mas.wiiu.jnus.Settings;
+import de.mas.wiiu.jnus.entities.TMD;
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.utils.download.NUSDownloadService;
 import lombok.Getter;
@@ -56,7 +61,22 @@ public class NUSDataProviderRemote extends NUSDataProvider {
 
     @Override
     public byte[] getRawCert() throws IOException {
-        return new byte[0]; // TODO: needs to be implemented
+        NUSDownloadService downloadService = NUSDownloadService.getDefaultInstance();
+        byte[] defaultCert = downloadService.downloadDefaultCertToByteArray();
+        
+        TMD tmd = getNUSTitle().getTMD();
+        byte[] result = new byte[0];
+        try{ 
+            ByteArrayOutputStream fos = new ByteArrayOutputStream();
+            fos.write(tmd.getCert1());
+            fos.write(tmd.getCert2());
+            fos.write(defaultCert);
+            result = fos.toByteArray();
+            fos.close();   
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return result;
     }
 
     @Override
