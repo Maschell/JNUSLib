@@ -35,7 +35,7 @@ public final class FSTService {
         fstEntryToOffsetMap.put(0, rootEntry);
 
         int lastlevel = level;
-        String path = "\\";
+        String path = File.separator;
 
         FSTEntry last = null;
         for (int i = 1; i < totalEntries; i++) {
