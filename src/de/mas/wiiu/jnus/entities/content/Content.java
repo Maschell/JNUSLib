@@ -1,3 +1,19 @@
+/****************************************************************************
+ * Copyright (C) 2016-2018 Maschell
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ ****************************************************************************/
 package de.mas.wiiu.jnus.entities.content;
 
 import java.nio.ByteBuffer;
@@ -104,9 +120,7 @@ public class Content {
     }
 
     /**
-     * Return the filename of the encrypted content.
-     * It's the ID as hex with an extension
-     * For example: 00000000.app
+     * Return the filename of the encrypted content. It's the ID as hex with an extension For example: 00000000.app
      * 
      * @return filename of the encrypted content
      */
@@ -138,9 +152,7 @@ public class Content {
     }
 
     /**
-     * Return the filename of the decrypted content.
-     * It's the ID as hex with an extension
-     * For example: 00000000.dec
+     * Return the filename of the decrypted content. It's the ID as hex with an extension For example: 00000000.dec
      * 
      * @return filename of the decrypted content
      */
