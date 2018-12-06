@@ -246,12 +246,17 @@ public final class TMD {
     }
 
     public void printContents() {
+        printContents(System.out);
+    }
+
+    public void printContents(PrintStream out) {
         long totalSize = 0;
         for (Content c : contentToIndex.values()) {
             totalSize += c.getEncryptedFileSize();
-            System.out.println(c);
+            out.println(c);
         }
-        System.out.println("Total size: " + totalSize);
+        out.println("Total size: " + totalSize);
+    }
 
     @Override
     public String toString() {
