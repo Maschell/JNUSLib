@@ -18,6 +18,7 @@ package de.mas.wiiu.jnus.entities;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.entities.content.ContentInfo;
 import lombok.Data;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.java.Log;
 
 @Log
@@ -47,6 +49,7 @@ public final class TMD {
 
     private static final int CONTENT_INFO_OFFSET = 0x204;
     private static final int CONTENT_OFFSET = 0xB04;
+
     
     private static final int CERT1_LENGTH     = 0x400;
     private static final int CERT2_LENGTH     = 0x300;
@@ -69,10 +72,11 @@ public final class TMD {
     @Getter private final short contentCount;                       // 0x1DE
     @Getter private final short bootIndex;                          // 0x1E0
     @Getter private final byte[] SHA2;                              // 0x1E4
+
     @Getter private final ContentInfo[] contentInfos;
     @Getter private byte[] cert1;
     @Getter private byte[] cert2;
-  
+
     private final Map<Integer, Content> contentToIndex = new HashMap<>();
     private final Map<Integer, Content> contentToID = new HashMap<>();
 
@@ -178,19 +182,17 @@ public final class TMD {
             Content c = Content.parseContent(content);
             contentList.add(c);
         }
-        
-        try{
+
+        try {
             buffer.get(cert2, 0, CERT2_LENGTH);
-        }catch(Exception e){
-            
+        } catch (Exception e) {
         }
-        
-        try{
+
+        try {
             buffer.get(cert1, 0, CERT1_LENGTH);
-        }catch(Exception e){
-            
+        } catch (Exception e) {
         }
-        
+
         TMDParam param = new TMDParam();
         param.setSignatureType(signatureType);
         param.setSignature(signature);
@@ -211,8 +213,8 @@ public final class TMD {
         param.setCert2(cert2);
 
         TMD result = new TMD(param);
-        
-        for(Content c : contentList){
+
+        for (Content c : contentList) {
             result.setContentToIndex(c.getIndex(), c);
             result.setContentToID(c.getID(), c);
         }
@@ -283,6 +285,7 @@ public final class TMD {
         private short bootIndex;                                    // 0x1E0
         private byte[] SHA2;                                        // 0x1E4
         private ContentInfo[] contentInfos;                         //
+
         private byte[] cert1;
         private byte[] cert2;
     }
