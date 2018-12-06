@@ -36,7 +36,7 @@ import lombok.extern.java.Log;
  *
  */
 @Log
-public class Content {
+public class Content implements Comparable<Content> {
     public static final short CONTENT_FLAG_UNKWN1 = 0x4000;
     public static final short CONTENT_HASHED = 0x0002;
     public static final short CONTENT_ENCRYPTED = 0x0001;
@@ -197,6 +197,11 @@ public class Content {
         private byte[] SHA2Hash;
 
         private ContentFSTInfo contentFSTInfo;
+    }
+
+    @Override
+    public int compareTo(Content o) {
+        return Integer.compare(this.ID, o.ID);
     }
 
 }
