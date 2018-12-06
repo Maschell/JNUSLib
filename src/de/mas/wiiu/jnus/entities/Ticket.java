@@ -82,8 +82,7 @@ public final class Ticket {
     }
 
     private static byte[] calculateDecryptedKey(byte[] encryptedKey, byte[] IV) {
-        AESDecryption decryption = new AESDecryption(Settings.commonKey, IV) {
-        };
+        AESDecryption decryption = new AESDecryption(Settings.commonKey, IV);
         return decryption.decrypt(encryptedKey);
     }
 
