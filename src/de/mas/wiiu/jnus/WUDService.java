@@ -18,8 +18,10 @@
 package de.mas.wiiu.jnus;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -201,11 +203,83 @@ public final class WUDService {
             }
         } while (totalread < WUDImage.WUD_FILESIZE);
         System.out.println();
-        System.out.print("Verfication done!");
+        System.out.println("Verfication done!");
         in1.close();
         in2.close();
 
         return result;
+    }
+
+    public static File decompressWUX(WUDImage image, String outputFolder) throws IOException {
+        return decompressWUX(image, outputFolder, "game.wud", false);
+    }
+
+    public static File decompressWUX(WUDImage image, String outputFolder, boolean overwrite) throws IOException {
+        return decompressWUX(image, outputFolder, "game.wud", overwrite);
+    }
+
+    public static File decompressWUX(WUDImage image, String outputFolder, String filename, boolean overwrite) throws IOException {
+        if (!image.isCompressed()) {
+            log.info("Given image is already decompressed (a wud file)");
+            return null;
+        }
+
+        if (image.getWUDFileSize() != WUDImage.WUD_FILESIZE) {
+            log.info("Given WUX has not the expected filesize");
+            return null;
+        }
+
+        String usedOutputFolder = outputFolder;
+        if (usedOutputFolder == null) usedOutputFolder = "";
+        Utils.createDir(usedOutputFolder);
+
+        String filePath;
+        if (usedOutputFolder.isEmpty()) {
+            filePath = filename;
+        } else {
+            filePath = usedOutputFolder + File.separator + filename;
+        }
+
+        File outputFile = new File(filePath);
+
+        if (outputFile.exists() && !overwrite) {
+            log.info("Couldn't decompress wux, target file already exists (" + outputFile.getAbsolutePath() + ")");
+            return null;
+        }
+
+        log.info("Writing decompressed file to: " + outputFile.getAbsolutePath());
+        InputStream in = image.getWUDDiscReader().readEncryptedToInputStream(0, WUDImage.WUD_FILESIZE);
+        OutputStream out = new FileOutputStream(outputFile);
+
+        int bufferSize = 1024 * 1024;
+        long totalread = 0;
+        byte[] blockBuffer = new byte[bufferSize];
+        ByteArrayBuffer overflow = new ByteArrayBuffer(bufferSize);
+        long curSector = 0;
+        do {
+            int read = StreamUtils.getChunkFromStream(in, blockBuffer, overflow, bufferSize);
+
+            if (read == bufferSize) {
+                out.write(blockBuffer);
+            } else if (read > 0) {
+                out.write(Arrays.copyOfRange(blockBuffer, 0, read));
+            }
+
+            totalread += read;
+
+            curSector++;
+            if (curSector % 1 == 0) {
+                double readMB = totalread / 1024.0 / 1024.0;
+                double percent = ((double) totalread / WUDImage.WUD_FILESIZE) * 100;
+                System.out.print(String.format("\rDecompressing: %.2fMB done (%.2f%%)", readMB, percent));
+            }
+        } while (totalread < WUDImage.WUD_FILESIZE);
+        System.out.println();
+        System.out.println("Decompressing done!");
+        in.close();
+        out.close();
+
+        return outputFile;
     }
 
     public static HashResult hashWUDImage(WUDImage image) throws IOException {
