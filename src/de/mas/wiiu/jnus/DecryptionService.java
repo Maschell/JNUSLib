@@ -17,6 +17,7 @@
 package de.mas.wiiu.jnus;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,8 +28,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+
+import javax.management.RuntimeErrorException;
 
 import de.mas.wiiu.jnus.entities.TMD;
 import de.mas.wiiu.jnus.entities.Ticket;
@@ -36,17 +40,22 @@ import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
 import de.mas.wiiu.jnus.implementations.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.CheckSumWrongException;
+import de.mas.wiiu.jnus.utils.FileUtils;
 import de.mas.wiiu.jnus.utils.HashUtil;
+import de.mas.wiiu.jnus.utils.Parallelizable;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 import de.mas.wiiu.jnus.utils.Utils;
 import de.mas.wiiu.jnus.utils.cryptography.NUSDecryption;
 import lombok.Getter;
+import lombok.val;
 import lombok.extern.java.Log;
 
 @Log
 public final class DecryptionService {
     private static Map<NUSTitle, DecryptionService> instances = new HashMap<>();
     @Getter private final NUSTitle NUSTitle;
+
+    private boolean parallelizable = false;
 
     public static DecryptionService getInstance(NUSTitle nustitle) {
         if (!instances.containsKey(nustitle)) {
@@ -56,6 +65,9 @@ public final class DecryptionService {
     }
 
     private DecryptionService(NUSTitle nustitle) {
+        if (nustitle.getDataProvider() instanceof Parallelizable) {
+            parallelizable = true;
+        }
         this.NUSTitle = nustitle;
     }
 
@@ -63,70 +75,83 @@ public final class DecryptionService {
         return getNUSTitle().getTicket();
     }
 
-    public void decryptFSTEntryTo(boolean useFullPath, FSTEntry entry, String outputPath, boolean skipExistingFile) throws IOException, CheckSumWrongException {
-        if (entry.isNotInPackage() || entry.getContent() == null) {
-            return;
+    public void decryptFSTEntryToSync(boolean useFullPath, FSTEntry entry, String outputPath, boolean skipExistingFile) {
+        try {
+            decryptFSTEntryToAsync(useFullPath, entry, outputPath, skipExistingFile).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
         }
+    }
 
-        // log.info("Decrypting " + entry.getFilename());
-
-        String targetFilePath = new StringBuilder().append(outputPath).append("/").append(entry.getFilename()).toString();
-        String fullPath = new StringBuilder().append(outputPath).toString();
-
-        if (useFullPath) {
-            targetFilePath = new StringBuilder().append(outputPath).append(entry.getFullPath()).toString();
-            fullPath = new StringBuilder().append(outputPath).append(entry.getPath()).toString();
-            if (entry.isDir()) { // If the entry is a directory. Create it and return.
-                Utils.createDir(targetFilePath);
-                return;
-            }
-        } else if (entry.isDir()) {
-            return;
-        }
-
-        if (!Utils.createDir(fullPath)) {
-            return;
-        }
-
-        File target = new File(targetFilePath);
-
-        if (skipExistingFile) {
-            File targetFile = new File(targetFilePath);
-            if (targetFile.exists()) {
-                if (entry.isDir()) {
+    public CompletableFuture<Void> decryptFSTEntryToAsync(boolean useFullPath, FSTEntry entry, String outputPath, boolean skipExistingFile) {
+        return CompletableFuture.runAsync(() -> {
+            try {
+                if (entry.isNotInPackage() || entry.getContent() == null) {
                     return;
                 }
-                if (targetFile.length() == entry.getFileSize()) {
-                    Content c = entry.getContent();
-                    if (c.isHashed()) {
-                        log.info("File already exists: " + entry.getFilename());
+
+                log.fine("Decrypting " + entry.getFilename());
+
+                String targetFilePath = new StringBuilder().append(outputPath).append("/").append(entry.getFilename()).toString();
+                String fullPath = new StringBuilder().append(outputPath).toString();
+
+                if (useFullPath) {
+                    targetFilePath = new StringBuilder().append(outputPath).append(entry.getFullPath()).toString();
+                    fullPath = new StringBuilder().append(outputPath).append(entry.getPath()).toString();
+                    if (entry.isDir()) { // If the entry is a directory. Create it and return.
+                        Utils.createDir(targetFilePath);
                         return;
-                    } else {
-                        if (Arrays.equals(HashUtil.hashSHA1(target, (int) c.getDecryptedFileSize()), c.getSHA2Hash())) {
-                            log.info("File already exists: " + entry.getFilename());
+                    }
+                } else if (entry.isDir()) {
+                    return;
+                }
+
+                if (!Utils.createDir(fullPath)) {
+                    return;
+                }
+
+                File target = new File(targetFilePath);
+
+                if (skipExistingFile) {
+                    File targetFile = new File(targetFilePath);
+                    if (targetFile.exists()) {
+                        if (entry.isDir()) {
                             return;
+                        }
+                        if (targetFile.length() == entry.getFileSize()) {
+                            Content c = entry.getContent();
+                            if (c.isHashed()) {
+                                log.info("File already exists: " + entry.getFilename());
+                                return;
+                            } else {
+                                if (Arrays.equals(HashUtil.hashSHA1(target, (int) c.getDecryptedFileSize()), c.getSHA2Hash())) {
+                                    log.info("File already exists: " + entry.getFilename());
+                                    return;
+                                } else {
+                                    log.info("File already exists with the same filesize, but the hash doesn't match: " + entry.getFilename());
+                                }
+                            }
+
                         } else {
-                            log.info("File already exists with the same filesize, but the hash doesn't match: " + entry.getFilename());
+                            log.info("File already exists but the filesize doesn't match: " + entry.getFilename());
                         }
                     }
-
-                } else {
-                    log.info("File already exists but the filesize doesn't match: " + entry.getFilename());
                 }
-            }
-        }
 
-        FileOutputStream outputStream = new FileOutputStream(new File(targetFilePath));
-        try {
-            decryptFSTEntryToStream(entry, outputStream);
-        } catch (CheckSumWrongException e) {
-            if (entry.getFilename().endsWith(".xml") && Utils.checkXML(new File(targetFilePath))) {
-                log.info("Hash doesn't match, but it's an XML file and it looks okay.");
-            } else {
-                log.info("Hash doesn't match!");
-                throw e;
+                // to avoid having fragmented files.
+                FileUtils.FileAsOutputStreamWrapper(new File(targetFilePath), entry.getFileSize(), newOutputStream -> {
+                    try {
+                        decryptFSTEntryToStream(entry, newOutputStream);
+                    } catch (CheckSumWrongException e) {
+                        log.info("Hash doesn't match!");
+                        // Wrapp it into a IOException
+                        throw new IOException(e);
+                    }
+                });
+            } catch (Exception ex) {
+                throw new CompletionException(ex);
             }
-        }
+        });
     }
 
     public void decryptFSTEntryToStream(FSTEntry entry, OutputStream outputStream) throws IOException, CheckSumWrongException {
@@ -147,17 +172,11 @@ public final class DecryptionService {
         try {
             decryptFSTEntryFromStreams(in, outputStream, fileSize, fileOffset, c);
         } catch (CheckSumWrongException e) {
-            log.info("Hash doesn't match");
-            if (entry.getFilename().endsWith(".xml")) {
-                if (outputStream instanceof PipedOutputStream) {
-                    log.info("Hash doesn't match. Please check the data for " + entry.getFullPath());
-                } else {
-                    throw e;
-                }
-            } else if (entry.getContent().isUNKNWNFlag1Set()) {
-                log.info("But file is optional. Don't worry.");
+            if (entry.getContent().isUNKNWNFlag1Set()) {
+                log.info("Hash doesn't match. But file is optional. Don't worry.");
             } else {
                 StringBuilder sb = new StringBuilder();
+                sb.append("Hash doesn't match").append(System.lineSeparator());
                 sb.append("Detailed info:").append(System.lineSeparator());
                 sb.append(entry).append(System.lineSeparator());
                 sb.append(entry.getContent()).append(System.lineSeparator());
@@ -200,33 +219,51 @@ public final class DecryptionService {
             StreamUtils.saveInputStreamToOutputStreamWithHash(inputStream, outputStream, size, content.getSHA2Hash(), encryptedFileSize);
         }
 
-        inputStream.close();
-        outputStream.close();
+        synchronized (inputStream) {
+            inputStream.close();
+        }
+        synchronized (outputStream) {
+            outputStream.close();
+        }
     }
 
-    public void decryptContentTo(Content content, String outPath, boolean skipExistingFile) throws IOException, CheckSumWrongException {
-        String targetFilePath = outPath + File.separator + content.getFilenameDecrypted();
-        if (skipExistingFile) {
-            File targetFile = new File(targetFilePath);
-            if (targetFile.exists()) {
-                if (targetFile.length() == content.getDecryptedFileSize()) {
-                    log.info("File already exists : " + content.getFilenameDecrypted());
-                    return;
-                } else {
-                    log.info("File already exists but the filesize doesn't match: " + content.getFilenameDecrypted());
+    public void decryptContentToSync(Content content, String outPath, boolean skipExistingFile) {
+        try {
+            decryptContentToAsync(content, outPath, skipExistingFile).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public CompletableFuture<Void> decryptContentToAsync(Content content, String outPath, boolean skipExistingFile) {
+        return CompletableFuture.runAsync(() -> {
+            try {
+                String targetFilePath = outPath + File.separator + content.getFilenameDecrypted();
+                if (skipExistingFile) {
+                    File targetFile = new File(targetFilePath);
+                    if (targetFile.exists()) {
+                        if (targetFile.length() == content.getDecryptedFileSize()) {
+                            log.info("File already exists : " + content.getFilenameDecrypted());
+                            return;
+                        } else {
+                            log.info("File already exists but the filesize doesn't match: " + content.getFilenameDecrypted());
+                        }
+                    }
                 }
+
+                if (!Utils.createDir(outPath)) {
+                    return;
+                }
+
+                log.info("Decrypting Content " + String.format("%08X", content.getID()));
+
+                FileOutputStream outputStream = new FileOutputStream(new File(targetFilePath));
+
+                decryptContentToStream(content, outputStream);
+            } catch (Exception ex) {
+                throw new CompletionException(ex);
             }
-        }
-
-        if (!Utils.createDir(outPath)) {
-            return;
-        }
-
-        log.info("Decrypting Content " + String.format("%08X", content.getID()));
-
-        FileOutputStream outputStream = new FileOutputStream(new File(targetFilePath));
-
-        decryptContentToStream(content, outputStream);
+        });
     }
 
     public void decryptContentToStream(Content content, OutputStream outputStream) throws IOException, CheckSumWrongException {
@@ -240,18 +277,17 @@ public final class DecryptionService {
         decryptContentFromStream(inputStream, outputStream, content);
     }
 
-    public PipedInputStreamWithException getDecryptedOutputAsInputStream(FSTEntry fstEntry) throws IOException {
+    public InputStreamWithException getDecryptedOutputAsInputStream(FSTEntry fstEntry) throws IOException {
         PipedInputStreamWithException in = new PipedInputStreamWithException();
         PipedOutputStream out = new PipedOutputStream(in);
 
         new Thread(() -> {
-            try { // Throwing it in both cases is EXTREMLY important. Otherwise it'll end in a deadlock
+            try {
                 decryptFSTEntryToStream(fstEntry, out);
                 in.throwException(null);
             } catch (Exception e) {
                 in.throwException(e);
             }
-
         }).start();
 
         return in;
@@ -262,7 +298,8 @@ public final class DecryptionService {
         PipedOutputStream out = new PipedOutputStream(in);
 
         new Thread(() -> {
-            try {// Throwing it in both cases is EXTREMLY important. Otherwise it'll end in a deadlock
+            try {// Throwing it in both cases is EXTREMLY important. Otherwise it'll end in a
+                 // deadlock
                 decryptContentToStream(content, out);
                 in.throwException(null);
             } catch (Exception e) {
@@ -280,6 +317,7 @@ public final class DecryptionService {
         FSTEntry entry = getNUSTitle().getFSTEntryByFullPath(entryFullPath);
         if (entry == null) {
             log.info("File not found");
+            throw new FileNotFoundException("File not found");
         }
 
         decryptFSTEntryToStream(entry, outputStream);
@@ -302,31 +340,27 @@ public final class DecryptionService {
 
     public void decryptFSTEntryTo(boolean fullPath, String entryFullPath, String outputFolder, boolean skipExistingFiles)
             throws IOException, CheckSumWrongException {
+
         FSTEntry entry = getNUSTitle().getFSTEntryByFullPath(entryFullPath);
         if (entry == null) {
             log.info("File not found");
-            return;
+            CompletableFuture.completedFuture(null);
         }
 
-        decryptFSTEntryTo(fullPath, entry, outputFolder, skipExistingFiles);
+        decryptFSTEntryToSync(fullPath, entry, outputFolder, skipExistingFiles);
     }
 
     public void decryptFSTEntryTo(FSTEntry entry, String outputFolder) throws IOException, CheckSumWrongException {
         decryptFSTEntryTo(false, entry, outputFolder);
     }
 
-    public void decryptFSTEntryTo(boolean fullPath, FSTEntry entry, String outputFolder) throws IOException, CheckSumWrongException {
-        decryptFSTEntryTo(fullPath, entry, outputFolder, getNUSTitle().isSkipExistingFiles());
-    }
-
     public void decryptFSTEntryTo(FSTEntry entry, String outputFolder, boolean skipExistingFiles) throws IOException, CheckSumWrongException {
-        decryptFSTEntryTo(false, entry, outputFolder, getNUSTitle().isSkipExistingFiles());
+        decryptFSTEntryToSync(false, entry, outputFolder, getNUSTitle().isSkipExistingFiles());
     }
 
-    /*
-     * public void decryptFSTEntryTo(boolean fullPath, FSTEntry entry,String outputFolder, boolean skipExistingFiles) throws IOException{
-     * decryptFSTEntry(fullPath,entry,outputFolder,skipExistingFiles); }
-     */
+    public void decryptFSTEntryTo(boolean fullPath, FSTEntry entry, String outputFolder) throws IOException, CheckSumWrongException {
+        decryptFSTEntryToSync(fullPath, entry, outputFolder, getNUSTitle().isSkipExistingFiles());
+    }
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // Decrypt list of FSTEntry to Files
@@ -350,10 +384,25 @@ public final class DecryptionService {
         decryptFSTEntryListTo(true, list, outputFolder);
     }
 
+    public CompletableFuture<Void> decryptFSTEntryListToAsync(boolean fullPath, List<FSTEntry> list, String outputFolder)
+            throws IOException, CheckSumWrongException {
+        return CompletableFuture.allOf(list.stream().map(entry -> decryptFSTEntryToAsync(fullPath, entry, outputFolder, getNUSTitle().isSkipExistingFiles()))
+                .toArray(CompletableFuture[]::new));
+    }
+
     public void decryptFSTEntryListTo(boolean fullPath, List<FSTEntry> list, String outputFolder) throws IOException, CheckSumWrongException {
-        for (FSTEntry entry : list) {
-            decryptFSTEntryTo(fullPath, entry, outputFolder, getNUSTitle().isSkipExistingFiles());
+        if (parallelizable && Settings.ALLOW_PARALLELISATION) {
+            try {
+                decryptFSTEntryListToAsync(fullPath, list, outputFolder).get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            for (val entry : list) {
+                decryptFSTEntryToSync(fullPath, entry, outputFolder, getNUSTitle().isSkipExistingFiles());
+            }
         }
+
     }
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -372,9 +421,25 @@ public final class DecryptionService {
     }
 
     public void decryptPlainContents(List<Content> list, String outputFolder) throws IOException, CheckSumWrongException {
-        for (Content c : list) {
-            decryptContentTo(c, outputFolder, getNUSTitle().isSkipExistingFiles());
+
+        if (parallelizable && Settings.ALLOW_PARALLELISATION) {
+            try {
+                decryptPlainContentsAsync(list, outputFolder).get();
+            } catch (InterruptedException | ExecutionException e) {
+                // wrap it.
+                throw new RuntimeException(e);
+            }
+        } else {
+            for (val c : list) {
+                decryptContentToSync(c, outputFolder, getNUSTitle().isSkipExistingFiles());
+            }
         }
+
+    }
+
+    public CompletableFuture<Void> decryptPlainContentsAsync(List<Content> list, String outputFolder) throws IOException, CheckSumWrongException {
+        return CompletableFuture
+                .allOf(list.stream().map(c -> decryptContentToAsync(c, outputFolder, getNUSTitle().isSkipExistingFiles())).toArray(CompletableFuture[]::new));
     }
 
     public void decryptAllPlainContents(String outputFolder) throws IOException, CheckSumWrongException {
