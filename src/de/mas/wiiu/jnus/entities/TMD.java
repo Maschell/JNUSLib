@@ -108,6 +108,9 @@ public final class TMD {
     }
 
     public static TMD parseTMD(byte[] input) {
+        if (input == null || input.length == 0) {
+            throw new RuntimeException("Invalid TMD file.");
+        }
         byte[] signature = new byte[SIGNATURE_LENGTH];
         byte[] issuer = new byte[ISSUER_LENGTH];
         byte[] reserved = new byte[RESERVED_LENGTH];
