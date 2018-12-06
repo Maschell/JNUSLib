@@ -24,7 +24,6 @@ import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.TMD;
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.implementations.wud.parser.WUDGamePartition;
-import de.mas.wiiu.jnus.implementations.wud.parser.WUDInfo;
 import de.mas.wiiu.jnus.implementations.wud.parser.WUDPartitionHeader;
 import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReader;
 import lombok.Getter;

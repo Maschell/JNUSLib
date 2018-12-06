@@ -26,9 +26,7 @@ import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.implementations.wud.parser.WUDGIPartitionTitle;
 import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReader;
 import lombok.Getter;
-import lombok.extern.java.Log;
 
-@Log
 public class NUSDataProviderWUDGI extends NUSDataProvider {
     @Getter private final WUDGIPartitionTitle giPartitionTitle;
     @Getter private final WUDDiscReader discReader;

@@ -2,7 +2,6 @@ package de.mas.wiiu.jnus.implementations.wud.parser;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 
 import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.content.ContentFSTInfo;

@@ -28,7 +28,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import de.mas.wiiu.jnus.implementations.wud.WUDImage;
-import de.mas.wiiu.jnus.utils.Utils;
 import de.mas.wiiu.jnus.utils.cryptography.AESDecryption;
 import lombok.Getter;
 import lombok.extern.java.Log;

@@ -21,7 +21,6 @@ import de.mas.wiiu.jnus.implementations.woomy.WoomyInfo;
 import de.mas.wiiu.jnus.implementations.wud.parser.WUDGIPartitionTitle;
 import de.mas.wiiu.jnus.implementations.wud.parser.WUDGamePartition;
 import de.mas.wiiu.jnus.implementations.wud.parser.WUDInfo;
-import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReader;
 import lombok.Data;
 
 @Data

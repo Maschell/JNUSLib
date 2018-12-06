@@ -44,7 +44,6 @@ public final class NUSDataProviderLocal extends NUSDataProvider {
     public InputStream getInputStreamFromContent(Content content, long offset) throws IOException {
         File filepath = new File(getFilePathOnDisk(content));
         if (!filepath.exists()) {
-
             return null;
         }
         InputStream in = new FileInputStream(filepath);

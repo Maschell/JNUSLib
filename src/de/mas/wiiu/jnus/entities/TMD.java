@@ -30,7 +30,6 @@ import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.entities.content.ContentInfo;
 import lombok.Data;
 import lombok.Getter;
-import lombok.ToString;
 import lombok.extern.java.Log;
 
 @Log
