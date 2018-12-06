@@ -95,7 +95,7 @@ public final class ExtractionService {
 
     public void extractEncryptedContentFilesTo(List<Content> list, String outputFolder, boolean withHashes) throws IOException {
         Utils.createDir(outputFolder);
-        if (parallelizable) {
+        if (parallelizable && Settings.ALLOW_PARALLELISATION) {
             try {
                 CompletableFuture.allOf(list.stream().map((Content c) -> CompletableFuture.runAsync(() -> {
                     try {
@@ -105,7 +105,7 @@ public final class ExtractionService {
                     }
                 })).toArray(CompletableFuture[]::new)).get();
             } catch (InterruptedException | ExecutionException e) {
-                throw new IOException(e);
+                throw new RuntimeException(e);
             }
         } else {
             for (Content c : list) {
