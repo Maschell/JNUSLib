@@ -62,7 +62,9 @@ public class WUDImageCompressedInfo {
         this.flags = ByteUtils.getIntFromBytes(headData, 0x0C, ByteOrder.LITTLE_ENDIAN);
         this.uncompressedSize = ByteUtils.getLongFromBytes(headData, 0x10, ByteOrder.LITTLE_ENDIAN);
 
-        calculateOffsets();
+        if (valid) {
+            calculateOffsets();
+        }
     }
 
     public static WUDImageCompressedInfo getDefaultCompressedInfo() {
