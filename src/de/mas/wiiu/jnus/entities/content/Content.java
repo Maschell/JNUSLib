@@ -84,8 +84,6 @@ public class Content {
         buffer.position(0x10);
         byte[] hash = new byte[0x14];
         buffer.get(hash, 0x00, 0x14);
-        byte[] hash2 = new byte[0x06];
-        buffer.get(hash2, 0x00, 0x06);
 
         ContentParam param = new ContentParam();
         param.setID(ID);
