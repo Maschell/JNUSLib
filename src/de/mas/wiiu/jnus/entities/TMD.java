@@ -253,6 +253,10 @@ public final class TMD {
         }
         System.out.println("Total size: " + totalSize);
 
+    @Override
+    public String toString() {
+        return String.format("TMD for %016X titleversion %d content count: %d version %d system version %016X", titleID, titleVersion, contentCount, version,
+                systemVersion);
     }
 
     @Data
