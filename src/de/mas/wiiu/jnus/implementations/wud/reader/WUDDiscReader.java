@@ -94,7 +94,7 @@ public abstract class WUDDiscReader {
      * @throws IOException
      */
     public byte[] readDecryptedChunk(long readOffset, byte[] key, byte[] IV) throws IOException {
-        int chunkSize = 0x8000;
+        int chunkSize = 0x10000;
 
         byte[] encryptedChunk = readEncryptedToByteArray(readOffset, 0, chunkSize);
         byte[] decryptedChunk = new byte[chunkSize];
@@ -120,18 +120,18 @@ public abstract class WUDDiscReader {
 
         long readOffset;
 
-        int blockSize = 0x8000;
+        final int BLOCK_SIZE = 0x10000;
         long totalread = 0;
 
         do {
-            long blockNumber = (usedFileOffset / blockSize);
-            long blockOffset = (usedFileOffset % blockSize);
+            long blockNumber = (usedFileOffset / BLOCK_SIZE);
+            long blockOffset = (usedFileOffset % BLOCK_SIZE);
 
-            readOffset = clusterOffset + (blockNumber * blockSize);
+            readOffset = clusterOffset + (blockNumber * BLOCK_SIZE);
             // (long)WiiUDisc.WIIU_DECRYPTED_AREA_OFFSET + volumeOffset + clusterOffset + (blockStructure.getBlockNumber() * 0x8000);
 
             buffer = readDecryptedChunk(readOffset, key, usedIV);
-            maxCopySize = 0x8000 - blockOffset;
+            maxCopySize = BLOCK_SIZE - blockOffset;
             copySize = (usedSize > maxCopySize) ? maxCopySize : usedSize;
 
             outputStream.write(Arrays.copyOfRange(buffer, (int) blockOffset, (int) copySize));
@@ -140,7 +140,7 @@ public abstract class WUDDiscReader {
             // update counters
             usedSize -= copySize;
             usedFileOffset += copySize;
-        } while (totalread < usedSize);
+        } while (totalread < size);
 
         outputStream.close();
     }
