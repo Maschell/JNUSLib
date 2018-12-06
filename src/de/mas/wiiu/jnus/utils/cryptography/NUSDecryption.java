@@ -80,6 +80,7 @@ public class NUSDecryption extends AESDecryption {
 
         int inBlockBuffer;
         long written = 0;
+        long writtenFallback = 0;
 
         ByteArrayBuffer overflow = new ByteArrayBuffer(BLOCKSIZE);
 
@@ -101,12 +102,21 @@ public class NUSDecryption extends AESDecryption {
 
             if (sha1 != null && sha1fallback != null) {
                 sha1.update(output, 0, toWrite);
-                sha1fallback.update(output, 0, toWrite);
+
+                // In some cases it's using the hash of the whole .app file instead of the part
+                // that's been actually used.
+                long toFallback = inBlockBuffer;
+                if (writtenFallback + toFallback > expectedSizeForHash) {
+                    toFallback = expectedSizeForHash - writtenFallback;
+                }
+                sha1fallback.update(output, 0, (int) toFallback);
+                writtenFallback += toFallback;
             }
         } while (inBlockBuffer == BLOCKSIZE);
 
         if (sha1 != null && sha1fallback != null) {
-            long missingInHash = expectedSizeForHash - written;
+
+            long missingInHash = expectedSizeForHash - writtenFallback;
             if (missingInHash > 0) {
                 sha1fallback.update(new byte[(int) missingInHash]);
             }
@@ -118,6 +128,7 @@ public class NUSDecryption extends AESDecryption {
                 outputStream.close();
                 inputStream.close();
                 throw new CheckSumWrongException("hash checksum failed", calculated_hash1, expected_hash);
+
             } else {
                 // log.warning("Hash DOES match saves output stream.");
             }
