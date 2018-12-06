@@ -16,9 +16,12 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.implementations.wud.parser;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReader;
 import lombok.AccessLevel;
@@ -35,25 +38,16 @@ public class WUDInfo {
 
     @Getter(AccessLevel.PRIVATE) @Setter(AccessLevel.PROTECTED) private String gamePartitionName;
 
-    private WUDGamePartition cachedGamePartition = null;
-
     public void addPartion(String partitionName, WUDGamePartition partition) {
         getPartitions().put(partitionName, partition);
     }
 
-    public WUDGamePartition getGamePartition() {
-        if (cachedGamePartition == null) {
-            cachedGamePartition = findGamePartition();
-        }
-        return cachedGamePartition;
+    public List<WUDGamePartition> getGamePartitions() {
+        return partitions.values().stream().filter(p -> p instanceof WUDGamePartition).map(p -> (WUDGamePartition) p).collect(Collectors.toList());
     }
 
-    private WUDGamePartition findGamePartition() {
-        for (Entry<String, WUDPartition> e : getPartitions().entrySet()) {
-            if (e.getKey().equals(getGamePartitionName())) {
-                return (WUDGamePartition) e.getValue();
-            }
-        }
-        return null;
+    public List<WUDGIPartitionTitle> getGIPartitionTitles() {
+        return partitions.values().stream().filter(p -> p instanceof WUDGIPartition).flatMap(p -> ((WUDGIPartition) p).getTitles().stream())
+                .collect(Collectors.toList());
     }
 }

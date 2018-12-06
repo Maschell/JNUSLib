@@ -58,7 +58,7 @@ public class WUDImage {
         WUDImageCompressedInfo compressedInfo = new WUDImageCompressedInfo(wuxheader);
 
         if (compressedInfo.isWUX()) {
-            log.info("Image is compressed");
+            log.fine("Image is compressed");
             this.isCompressed = true;
             this.isSplitted = false;
             Map<Integer, Long> indexTable = new HashMap<>();

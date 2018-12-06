@@ -23,60 +23,38 @@ import de.mas.wiiu.jnus.NUSTitle;
 import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.TMD;
 import de.mas.wiiu.jnus.entities.content.Content;
-import de.mas.wiiu.jnus.implementations.wud.parser.WUDGamePartition;
-import de.mas.wiiu.jnus.implementations.wud.parser.WUDInfo;
-import de.mas.wiiu.jnus.implementations.wud.parser.WUDPartitionHeader;
+import de.mas.wiiu.jnus.implementations.wud.parser.WUDGIPartitionTitle;
 import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReader;
 import lombok.Getter;
 import lombok.extern.java.Log;
 
 @Log
-public class NUSDataProviderWUD extends NUSDataProvider {
-    @Getter private final WUDGamePartition gamePartition;
+public class NUSDataProviderWUDGI extends NUSDataProvider {
+    @Getter private final WUDGIPartitionTitle giPartitionTitle;
     @Getter private final WUDDiscReader discReader;
+
+    private final byte[] titleKey;
 
     private final TMD tmd;
 
-    public NUSDataProviderWUD(NUSTitle title, WUDGamePartition gamePartition, WUDDiscReader discReader) {
+    public NUSDataProviderWUDGI(NUSTitle title, WUDGIPartitionTitle giPartitionTitle, WUDDiscReader discReader, byte[] titleKey) {
         super(title);
-        this.gamePartition = gamePartition;
+        this.giPartitionTitle = giPartitionTitle;
         this.discReader = discReader;
+        this.titleKey = titleKey;
         this.tmd = TMD.parseTMD(getRawTMD());
-    }
-
-    public long getOffsetInWUD(Content content) {
-        if (content.getContentFSTInfo() == null) {
-            return getAbsoluteReadOffset();
-        } else {
-            return getAbsoluteReadOffset() + content.getContentFSTInfo().getOffset();
-        }
-    }
-
-    public long getAbsoluteReadOffset() {
-        return (long) Settings.WIIU_DECRYPTED_AREA_OFFSET + getGamePartition().getPartitionOffset();
     }
 
     @Override
     public InputStream getInputStreamFromContent(Content content, long fileOffsetBlock) throws IOException {
-        WUDDiscReader discReader = getDiscReader();
-        long offset = getOffsetInWUD(content) + fileOffsetBlock;
-        return discReader.readEncryptedToInputStream(offset, content.getEncryptedFileSize());
+        InputStream in = getGiPartitionTitle().getFileAsStream(content.getFilename(), getDiscReader(), titleKey);
+        in.skip(fileOffsetBlock);
+        return in;
     }
 
     @Override
     public byte[] getContentH3Hash(Content content) throws IOException {
-
-        if (getGamePartitionHeader() == null) {
-            log.warning("GamePartitionHeader is null");
-            return null;
-        }
-
-        if (!getGamePartitionHeader().isCalculatedHashes()) {
-            log.info("Calculating h3 hashes");
-            getGamePartitionHeader().calculateHashes(getTMD().getAllContents());
-
-        }
-        return getGamePartitionHeader().getH3Hash(content);
+        return getGiPartitionTitle().getFileAsByte(String.format("%08X.h3", content.getID()), getDiscReader(), titleKey);
     }
 
     public TMD getTMD() {
@@ -85,21 +63,29 @@ public class NUSDataProviderWUD extends NUSDataProvider {
 
     @Override
     public byte[] getRawTMD() {
-        return getGamePartition().getRawTMD();
+        try {
+            return getGiPartitionTitle().getFileAsByte(Settings.TMD_FILENAME, getDiscReader(), titleKey);
+        } catch (IOException e) {
+            return new byte[0];
+        }
     }
 
     @Override
     public byte[] getRawTicket() {
-        return getGamePartition().getRawTicket();
+        try {
+            return getGiPartitionTitle().getFileAsByte(Settings.TICKET_FILENAME, getDiscReader(), titleKey);
+        } catch (IOException e) {
+            return new byte[0];
+        }
     }
 
     @Override
     public byte[] getRawCert() throws IOException {
-        return getGamePartition().getRawCert();
-    }
-
-    public WUDPartitionHeader getGamePartitionHeader() {
-        return getGamePartition().getPartitionHeader();
+        try {
+            return getGiPartitionTitle().getFileAsByte(Settings.CERT_FILENAME, getDiscReader(), titleKey);
+        } catch (IOException e) {
+            return new byte[0];
+        }
     }
 
     @Override
@@ -107,8 +93,4 @@ public class NUSDataProviderWUD extends NUSDataProvider {
         // We don't need it
     }
 
-    @Override
-    public String toString() {
-        return "NUSDataProviderWUD [WUDGamePartition=" + gamePartition + "]";
-    }
 }

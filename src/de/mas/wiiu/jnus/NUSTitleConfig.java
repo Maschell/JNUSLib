@@ -18,12 +18,17 @@ package de.mas.wiiu.jnus;
 
 import de.mas.wiiu.jnus.entities.Ticket;
 import de.mas.wiiu.jnus.implementations.woomy.WoomyInfo;
+import de.mas.wiiu.jnus.implementations.wud.parser.WUDGIPartitionTitle;
+import de.mas.wiiu.jnus.implementations.wud.parser.WUDGamePartition;
 import de.mas.wiiu.jnus.implementations.wud.parser.WUDInfo;
+import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReader;
 import lombok.Data;
 
 @Data
 public class NUSTitleConfig {
     private String inputPath;
+    private WUDGamePartition WUDGamePartition = null;
+    private WUDGIPartitionTitle WUDGIPartitionTitle = null;
     private WUDInfo WUDInfo;
     private Ticket ticket;
 

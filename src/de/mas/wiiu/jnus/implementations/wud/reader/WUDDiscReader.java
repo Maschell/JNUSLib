@@ -24,9 +24,11 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import de.mas.wiiu.jnus.implementations.wud.WUDImage;
+import de.mas.wiiu.jnus.utils.Utils;
 import de.mas.wiiu.jnus.utils.cryptography.AESDecryption;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -60,13 +62,13 @@ public abstract class WUDDiscReader {
         return out.toByteArray();
     }
 
-    public InputStream readDecryptedToInputStream(long offset, long fileoffset, long size, byte[] key, byte[] iv) throws IOException {
+    public InputStream readDecryptedToInputStream(long offset, long fileoffset, long size, byte[] key, byte[] IV, boolean useFixedIV) throws IOException {
         PipedInputStream in = new PipedInputStream();
         PipedOutputStream out = new PipedOutputStream(in);
 
         new Thread(() -> {
             try {
-                readDecryptedToOutputStream(out, offset, fileoffset, size, key, iv);
+                readDecryptedToOutputStream(out, offset, fileoffset, size, key, IV, useFixedIV);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -75,10 +77,10 @@ public abstract class WUDDiscReader {
         return in;
     }
 
-    public byte[] readDecryptedToByteArray(long offset, long fileoffset, long size, byte[] key, byte[] iv) throws IOException {
+    public byte[] readDecryptedToByteArray(long offset, long fileoffset, long size, byte[] key, byte[] IV, boolean useFixedIV) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        readDecryptedToOutputStream(out, offset, fileoffset, size, key, iv);
+        readDecryptedToOutputStream(out, offset, fileoffset, size, key, IV, useFixedIV);
         return out.toByteArray();
     }
 
@@ -105,12 +107,16 @@ public abstract class WUDDiscReader {
         return decryptedChunk;
     }
 
-    public void readDecryptedToOutputStream(OutputStream outputStream, long clusterOffset, long fileOffset, long size, byte[] key, byte[] IV)
-            throws IOException {
-        byte[] usedIV = IV;
-        if (usedIV == null) {
-            usedIV = new byte[0x10];
+    public void readDecryptedToOutputStream(OutputStream outputStream, long clusterOffset, long fileOffset, long size, byte[] key, byte[] IV,
+            boolean useFixedIV) throws IOException {
+        byte[] usedIV = null;
+        if (useFixedIV) {
+            usedIV = IV;
+            if (IV == null) {
+                usedIV = new byte[0x10];
+            }
         }
+
         long usedSize = size;
         long usedFileOffset = fileOffset;
         byte[] buffer;
@@ -130,11 +136,26 @@ public abstract class WUDDiscReader {
             readOffset = clusterOffset + (blockNumber * BLOCK_SIZE);
             // (long)WiiUDisc.WIIU_DECRYPTED_AREA_OFFSET + volumeOffset + clusterOffset + (blockStructure.getBlockNumber() * 0x8000);
 
+            if (!useFixedIV) {
+                ByteBuffer byteBuffer = ByteBuffer.allocate(0x10);
+                byteBuffer.position(0x08);
+                usedIV = byteBuffer.putLong(usedFileOffset >> 16).array();
+            }
+
             buffer = readDecryptedChunk(readOffset, key, usedIV);
             maxCopySize = BLOCK_SIZE - blockOffset;
             copySize = (usedSize > maxCopySize) ? maxCopySize : usedSize;
 
-            outputStream.write(Arrays.copyOfRange(buffer, (int) blockOffset, (int) copySize));
+            try {
+                outputStream.write(Arrays.copyOfRange(buffer, (int) blockOffset, (int) (blockOffset + copySize)));
+            } catch (IOException e) {
+                if (e.getMessage().equals("Pipe closed")) {
+                    break;
+                } else {
+                    throw e;
+                }
+            }
+
             totalread += copySize;
 
             // update counters
@@ -145,6 +166,12 @@ public abstract class WUDDiscReader {
         outputStream.close();
     }
 
+    /**
+     * Create a new RandomAccessFileStream
+     * 
+     * @return
+     * @throws FileNotFoundException
+     */
     public RandomAccessFile getRandomAccessFileStream() throws FileNotFoundException {
         if (getImage() == null || getImage().getFileHandle() == null) {
             log.warning("No image or image filehandle set.");
