@@ -85,7 +85,7 @@ decrypt.decryptAllPlainContents("decrypted_contents");
 
 //Use decrypting inputstream. Data will be only loaded/decrypted on demand.
 
-//Display the app.xml as hey dump
+//Display the app.xml as hex dump
 FSTEntry appXMLEntry = title.getFSTEntryByFullPath("code/app.xml");
 decrypt.getDecryptedOutputAsInputStream(appXMLEntry);
 //Lets just print the app.xml as hex data

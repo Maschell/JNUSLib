@@ -1,3 +1,19 @@
+/****************************************************************************
+ * Copyright (C) 2016-2018 Maschell
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ ****************************************************************************/
 package de.mas.wiiu.jnus.implementations;
 
 import java.io.File;
@@ -15,8 +31,7 @@ import lombok.extern.java.Log;
 
 @Log
 /**
- * Service Methods for loading NUS/Content data from
- * different sources
+ * Service Methods for loading NUS/Content data from different sources
  * 
  * @author Maschell
  *
@@ -29,9 +44,8 @@ public abstract class NUSDataProvider {
     }
 
     /**
-     * Saves the given content encrypted with his .h3 file in the given directory.
-     * The Target directory will be created if it's missing.
-     * If the content is not hashed, no .h3 will be saved
+     * Saves the given content encrypted with his .h3 file in the given directory. The Target directory will be created if it's missing. If the content is not
+     * hashed, no .h3 will be saved
      * 
      * @param content
      *            Content that should be saved
@@ -45,9 +59,8 @@ public abstract class NUSDataProvider {
     }
 
     /**
-     * Saves the .h3 file of the given content into the given directory.
-     * The Target directory will be created if it's missing.
-     * If the content is not hashed, no .h3 will be saved
+     * Saves the .h3 file of the given content into the given directory. The Target directory will be created if it's missing. If the content is not hashed, no
+     * .h3 will be saved
      * 
      * @param content
      *            The content of which the h3 hashes should be saved
@@ -75,9 +88,8 @@ public abstract class NUSDataProvider {
     }
 
     /**
-     * Saves the given content encrypted in the given directory.
-     * The Target directory will be created if it's missing.
-     * If the content is not encrypted at all, it will be just saved anyway.
+     * Saves the given content encrypted in the given directory. The Target directory will be created if it's missing. If the content is not encrypted at all,
+     * it will be just saved anyway.
      * 
      * @param content
      *            Content that should be saved
