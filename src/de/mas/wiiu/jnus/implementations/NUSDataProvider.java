@@ -19,11 +19,13 @@ package de.mas.wiiu.jnus.implementations;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 import de.mas.wiiu.jnus.NUSTitle;
 import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.utils.FileUtils;
+import de.mas.wiiu.jnus.utils.HashUtil;
 import de.mas.wiiu.jnus.utils.Utils;
 import lombok.Getter;
 import lombok.NonNull;
@@ -65,26 +67,38 @@ public abstract class NUSDataProvider {
      * @param content
      *            The content of which the h3 hashes should be saved
      * @param outputFolder
+     * @return
      * @throws IOException
      */
     public void saveContentH3Hash(@NonNull Content content, @NonNull String outputFolder) throws IOException {
         if (!content.isHashed()) {
             return;
         }
+        String h3Filename = String.format("%08X%s", content.getID(), Settings.H3_EXTENTION);
+        File output = new File(outputFolder + File.separator + h3Filename);
+
+        if (output.exists()) {
+            if (Arrays.equals(content.getSHA2Hash(), HashUtil.hashSHA1(output))) {
+                log.info(h3Filename + " already exists");
+                return;
+            } else {
+                if (Arrays.equals(content.getSHA2Hash(), Arrays.copyOf(HashUtil.hashSHA256(output), 20))) { // 0005000c1f941200 used sha256 instead of SHA1
+                    log.info(h3Filename + " already exists");
+                    return;
+                }
+                log.warning(h3Filename + " already exists but hash is differrent than expected.");
+            }
+        }
+
         byte[] hash = getContentH3Hash(content);
         if (hash == null || hash.length == 0) {
             return;
         }
-        String h3Filename = String.format("%08X%s", content.getID(), Settings.H3_EXTENTION);
-        File output = new File(outputFolder + File.separator + h3Filename);
-        if (output.exists() && output.length() == hash.length) {
-            log.info(h3Filename + " already exists");
-            return;
-        }
 
-        log.info("Saving " + h3Filename + " ");
+        log.warning("Saving " + h3Filename + " ");
 
         FileUtils.saveByteArrayToFile(output, hash);
+
     }
 
     /**
