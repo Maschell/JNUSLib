@@ -109,26 +109,48 @@ public abstract class NUSDataProvider {
      *            Content that should be saved
      * @param outputFolder
      *            Target directory where the files will be stored in.
+     * @return
      * @throws IOException
      */
     public void saveEncryptedContent(@NonNull Content content, @NonNull String outputFolder) throws IOException {
-        Utils.createDir(outputFolder);
-        InputStream inputStream = getInputStreamFromContent(content, 0);
-        if (inputStream == null) {
-            log.info("Couldn't save encrypted content. Input stream was null");
-            return;
-        }
+        int maxTries = 3;
+        int i = 0;
+        while (i < maxTries) {
+            File output = new File(outputFolder + File.separator + content.getFilename());
+            if (output.exists()) {
+                if (output.length() == content.getEncryptedFileSizeAligned()) {
+                    log.info(content.getFilename() + "Encrypted content alreadys exists, skipped");
+                    return;
+                } else {
+                    log.warning(content.getFilename() + " Encrypted content alreadys exists, but the length is not as expected. Saving it again. "
+                            + output.length() + " " + content.getEncryptedFileSizeAligned() + " Difference: "
+                            + (output.length() - content.getEncryptedFileSizeAligned()));
+                }
+            }
 
-        File output = new File(outputFolder + File.separator + content.getFilename());
-        if (output.exists()) {
-            if (output.length() == content.getEncryptedFileSizeAligned()) {
-                log.info("Encrypted content alreadys exists, skipped");
+            Utils.createDir(outputFolder);
+            InputStream inputStream = getInputStreamFromContent(content, 0);
+            if (inputStream == null) {
+                log.info(content.getFilename() + " Couldn't save encrypted content. Input stream was null");
                 return;
-            } else {
-                log.info("Encrypted content alreadys exists, but the length is not as expected. Saving it again");
+            }
+            log.warning("loading " + content.getFilename());
+            FileUtils.saveInputStreamToFile(output, inputStream, content.getEncryptedFileSizeAligned());
+
+            File outputNow = new File(outputFolder + File.separator + content.getFilename());
+            if (outputNow.exists()) {
+                if (outputNow.length() != content.getEncryptedFileSizeAligned()) {
+                    log.warning(content.getFilename() + " Encrypted content length is not as expected. Saving it again. Loaded: " + outputNow.length()
+                            + " Expected: " + content.getEncryptedFileSizeAligned() + " Difference: "
+                            + (outputNow.length() - content.getEncryptedFileSizeAligned()));
+                    i++;
+                    continue;
+                } else {
+                    break;
+                }
             }
         }
-        FileUtils.saveInputStreamToFile(output, inputStream, content.getEncryptedFileSizeAligned());
+
     }
 
     /**
