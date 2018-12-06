@@ -234,9 +234,7 @@ public final class HashUtil {
         byte[] expected_h0_hash = Arrays.copyOfRange(hashes, H0_start, H0_start + 20);
 
         if (!Arrays.equals(real_h0_hash, expected_h0_hash)) {
-            if (!Arrays.equals(expected_h0_hash, new byte[20])) { // Fix for /meta/WUP-N-HASP-EUR.bfma in 0005001b10059200
-                throw new CheckSumWrongException("h0 checksumfail", real_h0_hash, expected_h0_hash);
-            }
+            throw new CheckSumWrongException("h0 checksumfail", real_h0_hash, expected_h0_hash);
         } else {
             log.finest("h1 checksum right!");
         }
