@@ -58,31 +58,33 @@ public class WUDDiscReaderCompressed extends WUDDiscReader {
         byte[] buffer = new byte[bufferSize];
 
         RandomAccessFile input = getRandomAccessFileStream();
-        while (usedSize > 0) {
-            long sectorOffset = (usedOffset % info.getSectorSize());
-            long remainingSectorBytes = info.getSectorSize() - sectorOffset;
-            long sectorIndex = (usedOffset / info.getSectorSize());
-            int bytesToRead = (int) ((remainingSectorBytes < usedSize) ? remainingSectorBytes : usedSize); // read only up to the end of the current sector
-            // look up real sector index
-            long realSectorIndex = info.getSectorIndex((int) sectorIndex);
-            long offset2 = info.getOffsetSectorArray() + realSectorIndex * info.getSectorSize() + sectorOffset;
+        synchronized (input) {
+            while (usedSize > 0) {
+                long sectorOffset = (usedOffset % info.getSectorSize());
+                long remainingSectorBytes = info.getSectorSize() - sectorOffset;
+                long sectorIndex = (usedOffset / info.getSectorSize());
+                int bytesToRead = (int) ((remainingSectorBytes < usedSize) ? remainingSectorBytes : usedSize); // read only up to the end of the current sector
+                // look up real sector index
+                long realSectorIndex = info.getSectorIndex((int) sectorIndex);
+                long offset2 = info.getOffsetSectorArray() + realSectorIndex * info.getSectorSize() + sectorOffset;
 
-            input.seek(offset2);
-            int read = input.read(buffer);
-            if (read < 0) return;
-            try {
-                out.write(Arrays.copyOfRange(buffer, 0, bytesToRead));
-            } catch (IOException e) {
-                if (e.getMessage().equals("Pipe closed")) {
-                    break;
-                } else {
-                    throw e;
+                input.seek(offset2);
+                int read = input.read(buffer);
+                if (read < 0) return;
+                try {
+                    out.write(Arrays.copyOfRange(buffer, 0, bytesToRead));
+                } catch (IOException e) {
+                    if (e.getMessage().equals("Pipe closed")) {
+                        break;
+                    } else {
+                        throw e;
+                    }
                 }
-            }
 
-            usedSize -= bytesToRead;
-            usedOffset += bytesToRead;
+                usedSize -= bytesToRead;
+                usedOffset += bytesToRead;
+            }
+            input.close();
         }
-        input.close();
     }
 }
