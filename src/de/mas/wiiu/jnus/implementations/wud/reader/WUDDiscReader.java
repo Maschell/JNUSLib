@@ -56,7 +56,7 @@ public abstract class WUDDiscReader {
 
     public byte[] readEncryptedToByteArray(long offset, long fileoffset, long size) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        readEncryptedToOutputStream(out, offset, size);
+        readEncryptedToOutputStream(out, offset + fileoffset, size);
         return out.toByteArray();
     }
 
