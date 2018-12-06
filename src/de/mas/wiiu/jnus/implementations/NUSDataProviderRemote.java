@@ -52,7 +52,7 @@ public class NUSDataProviderRemote extends NUSDataProvider {
     @Override
     public byte[] getContentH3Hash(Content content) throws IOException {
         NUSDownloadService downloadService = NUSDownloadService.getDefaultInstance();
-        String url = getRemoteURL(content) + ".h3";
+        String url = getRemoteURL(content) + Settings.H3_EXTENTION;
         return downloadService.downloadToByteArray(url);
     }
 
