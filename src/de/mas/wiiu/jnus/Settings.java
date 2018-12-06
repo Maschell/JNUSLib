@@ -28,6 +28,7 @@ public class Settings {
     public static final String WUD_KEY_FILENAME = "game.key";
     public static final String WOOMY_METADATA_FILENAME = "metadata.xml";
     public static final String H3_EXTENTION = ".h3";
+    public static final String USER_AGENT = "Mozilla/5.0 (Nintendo WiiU) AppleWebKit/536.28 (KHTML, like Gecko) NX/3.0.3.12.12 NintendoBrowser/3.0.0.9561.US";
 
     public static byte[] commonKey = new byte[0x10];
     public static int WIIU_DECRYPTED_AREA_OFFSET = 0x18000;

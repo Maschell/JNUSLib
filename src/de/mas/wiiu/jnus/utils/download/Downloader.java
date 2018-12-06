@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import de.mas.wiiu.jnus.Settings;
 import lombok.extern.java.Log;
 
 @Log
@@ -33,6 +34,7 @@ public abstract class Downloader {
         int BUFFER_SIZE = 0x800;
         URL url = new URL(fileURL);
         HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+        httpConn.setRequestProperty("User-Agent", Settings.USER_AGENT);
         int responseCode = httpConn.getResponseCode();
 
         byte[] file = null;

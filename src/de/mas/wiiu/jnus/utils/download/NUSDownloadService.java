@@ -85,6 +85,7 @@ public final class NUSDownloadService extends Downloader {
     public InputStream getInputStream(String URL, long offset) throws IOException {
         URL url_obj = new URL(URL);
         HttpURLConnection connection = (HttpURLConnection) url_obj.openConnection();
+        connection.setRequestProperty("User-Agent", Settings.USER_AGENT);
         connection.setRequestProperty("Range", "bytes=" + offset + "-");
         try {
             connection.connect();
