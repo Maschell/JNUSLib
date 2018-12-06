@@ -17,8 +17,17 @@
 package de.mas.wiiu.jnus.utils;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,6 +39,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import de.mas.wiiu.jnus.Settings;
 import lombok.extern.java.Log;
 
 @Log
@@ -160,6 +170,70 @@ public final class Utils {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
         }
+    }
+
+    public static long StringToLong(String s) {
+        try {
+            BigInteger bi = new BigInteger(s, 16);
+            return bi.longValue();
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid Title ID");
+            return 0L;
+        }
+    }
+
+    public static boolean checkFileExists(String path) {
+        return new File(path).exists();
+    }
+
+    /**
+     * Pings a HTTP URL. This effectively sends a HEAD request and returns <code>true</code> if the response code is in the 200-399 range.
+     * 
+     * @param url
+     *            The HTTP URL to be pinged.
+     * @param timeout
+     *            The timeout in millis for both the connection timeout and the response read timeout. Note that the total timeout is effectively two times the
+     *            given timeout.
+     * @return <code>true</code> if the given HTTP URL has returned response code 200-399 on a HEAD request within the given timeout, otherwise
+     *         <code>false</code>.
+     */
+    public static boolean pingURL(String url, int timeout) {
+        try {
+            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setRequestProperty("User-Agent", Settings.USER_AGENT);
+            connection.setConnectTimeout(timeout);
+            connection.setReadTimeout(timeout);
+            int responseCode = connection.getResponseCode();
+            return (200 <= responseCode && responseCode <= 399);
+        } catch (IOException exception) {
+            return false;
+        }
+    }
+
+    public static Long getLastModifiedURL(String url, int timeout) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setRequestProperty("User-Agent", Settings.USER_AGENT);
+        connection.setConnectTimeout(timeout);
+        connection.setReadTimeout(timeout);
+
+        int responseCode = connection.getResponseCode();
+
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            InputStream inputStream = connection.getInputStream();
+            byte[] buffer = new byte[0x10];
+            inputStream.read(buffer);
+            inputStream.close();
+        } else {
+            return null;
+        }
+
+        Long dateTime = connection.getLastModified();
+
+        if (200 <= responseCode && responseCode <= 399) {
+            return dateTime;
+        }
+
+        return null;
     }
 
 }
