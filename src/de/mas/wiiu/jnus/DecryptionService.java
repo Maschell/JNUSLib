@@ -73,7 +73,7 @@ public final class DecryptionService {
         return getNUSTitle().getTicket();
     }
 
-    public void decryptFSTEntryToSync(boolean useFullPath, FSTEntry entry, String outputPath, boolean skipExistingFile) {
+    public void decryptFSTEntryTo(boolean useFullPath, FSTEntry entry, String outputPath, boolean skipExistingFile) {
         try {
             decryptFSTEntryToAsync(useFullPath, entry, outputPath, skipExistingFile).get();
         } catch (InterruptedException | ExecutionException e) {
@@ -345,7 +345,7 @@ public final class DecryptionService {
             CompletableFuture.completedFuture(null);
         }
 
-        decryptFSTEntryToSync(fullPath, entry, outputFolder, skipExistingFiles);
+        decryptFSTEntryTo(fullPath, entry, outputFolder, skipExistingFiles);
     }
 
     public void decryptFSTEntryTo(FSTEntry entry, String outputFolder) throws IOException, CheckSumWrongException {
@@ -353,11 +353,11 @@ public final class DecryptionService {
     }
 
     public void decryptFSTEntryTo(FSTEntry entry, String outputFolder, boolean skipExistingFiles) throws IOException, CheckSumWrongException {
-        decryptFSTEntryToSync(false, entry, outputFolder, getNUSTitle().isSkipExistingFiles());
+        decryptFSTEntryTo(false, entry, outputFolder, getNUSTitle().isSkipExistingFiles());
     }
 
     public void decryptFSTEntryTo(boolean fullPath, FSTEntry entry, String outputFolder) throws IOException, CheckSumWrongException {
-        decryptFSTEntryToSync(fullPath, entry, outputFolder, getNUSTitle().isSkipExistingFiles());
+        decryptFSTEntryTo(fullPath, entry, outputFolder, getNUSTitle().isSkipExistingFiles());
     }
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -397,7 +397,7 @@ public final class DecryptionService {
             }
         } else {
             for (val entry : list) {
-                decryptFSTEntryToSync(fullPath, entry, outputFolder, getNUSTitle().isSkipExistingFiles());
+                decryptFSTEntryTo(fullPath, entry, outputFolder, getNUSTitle().isSkipExistingFiles());
             }
         }
 
