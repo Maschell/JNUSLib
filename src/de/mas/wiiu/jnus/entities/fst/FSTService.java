@@ -33,7 +33,7 @@ public final class FSTService {
     }
 
     public static void parseFST(FSTEntry rootEntry, byte[] fstSection, byte[] namesSection, Map<Integer, Content> contentsByIndex,
-            Map<Integer, ContentFSTInfo> contentsFSTByIndex) {
+            Map<Integer, ContentFSTInfo> contentsFSTByIndex, int sectorSize) {
         int totalEntries = ByteUtils.getIntFromBytes(fstSection, 0x08);
 
         int level = 0;
@@ -99,7 +99,7 @@ public final class FSTService {
                     break;
                 }
             } else {
-                entryParam.setFileOffset(fileOffset << 5);
+                entryParam.setFileOffset(fileOffset * sectorSize);
 
                 entryParam.setFileSize(fileSize);
                 parent = fstEntryToOffsetMap.get(Entry[level - 1]);
@@ -114,11 +114,6 @@ public final class FSTService {
                 if (content == null) {
                     log.warning("Content for FST Entry not found");
                 } else {
-
-                    if (content.isHashed() && (content.getDecryptedFileSize() < (fileOffset << 5))) { // TODO: Figure out how this works...
-                        entryParam.setFileOffset(fileOffset);
-                    }
-
                     entryParam.setContent(content);
 
                     ContentFSTInfo contentFSTInfo = contentsFSTByIndex.get((int) contentIndex);

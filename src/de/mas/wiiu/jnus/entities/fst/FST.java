@@ -34,13 +34,13 @@ import lombok.Getter;
 public final class FST {
     @Getter private final FSTEntry root = FSTEntry.getRootFSTEntry();
 
-    @Getter private final int unknown;
+    @Getter private final int sectorSize;
     @Getter private final int contentCount;
 
     @Getter private final Map<Integer, ContentFSTInfo> contentFSTInfos = new HashMap<>();
 
     private FST(int unknown, int contentCount) {
-        this.unknown = unknown;
+        this.sectorSize = unknown;
         this.contentCount = contentCount;
     }
 
@@ -55,15 +55,15 @@ public final class FST {
      */
     public static FST parseFST(byte[] fstData, Map<Integer, Content> contentsMappedByIndex) {
         if (!Arrays.equals(Arrays.copyOfRange(fstData, 0, 3), new byte[] { 0x46, 0x53, 0x54 })) {
-            throw new NullPointerException();
+            throw new RuntimeException("Failed to parse FST");
             // return null;
             // throw new IllegalArgumentException("Not a FST. Maybe a wrong key?");
         }
 
-        int unknownValue = ByteUtils.getIntFromBytes(fstData, 0x04);
+        int sectorSize = ByteUtils.getIntFromBytes(fstData, 0x04);
         int contentCount = ByteUtils.getIntFromBytes(fstData, 0x08);
 
-        FST result = new FST(unknownValue, contentCount);
+        FST result = new FST(sectorSize, contentCount);
 
         int contentfst_offset = 0x20;
         int contentfst_size = 0x20 * contentCount;
@@ -94,7 +94,7 @@ public final class FST {
 
         FSTEntry root = result.getRoot();
 
-        FSTService.parseFST(root, fstSection, nameSection, contentsMappedByIndex, contentFSTInfos);
+        FSTService.parseFST(root, fstSection, nameSection, contentsMappedByIndex, contentFSTInfos, sectorSize);
 
         return result;
     }
