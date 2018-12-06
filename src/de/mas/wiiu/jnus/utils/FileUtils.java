@@ -20,6 +20,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
 
 import lombok.NonNull;
 
@@ -55,16 +57,41 @@ public final class FileUtils {
         return true;
     }
 
+    public static void saveInputStreamToFile(@NonNull File outputFile, InputStream inputStream, long filesize) throws IOException {
+        FileAsOutputStreamWrapper(outputFile, filesize, outputStream -> StreamUtils.saveInputStreamToOutputStream(inputStream, outputStream, filesize));
+    }
+
     /**
-     * Saves a byte array to a file (and overwrite it if its already exists) DOES NOT IF THE PATH/FILE EXIST OR IS IT EVEN A FILE
+     * Allows to write into a target file as OutputStream with some extras. The provided OutputStream already has the needed memory allocated. This results in a
+     * non-fragmented file.
      * 
-     * @param output
-     * @param inputStream
+     * @param outputFile
+     * @param filesize
+     * @param action
      * @throws IOException
      */
-    public static void saveInputStreamToFile(@NonNull File output, InputStream inputStream, long filesize) throws IOException {
-        FileOutputStream out = new FileOutputStream(output);
-        StreamUtils.saveInputStreamToOutputStream(inputStream, out, filesize);
+    public static void FileAsOutputStreamWrapper(@NonNull File outputFile, long filesize, CheckedFunction<OutputStream> action) throws IOException {
+        // Create a new temp file which already has the target filesize allocated.
+        String tempFilePath = outputFile.getAbsolutePath() + "." + outputFile.getAbsolutePath().hashCode() + ".part";
+        File tempFile = new File(tempFilePath);
+        if (tempFile.exists()) {
+            tempFile.delete();
+        }
+
+        tempFile.createNewFile();
+        RandomAccessFile outStream = new RandomAccessFile(tempFilePath, "rw");
+        outStream.setLength(filesize);
+        outStream.seek(0L);
+
+        action.apply(new RandomFileOutputStream(outStream));
+
+        outStream.close();
+
+        // Rename temp file.
+        if (outputFile.exists()) {
+            outputFile.delete();
+        }
+        tempFile.renameTo(outputFile);
     }
 
 }
