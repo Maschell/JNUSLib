@@ -48,18 +48,21 @@ abstract class NUSTitleLoader {
             throw new Exception();
         }
 
+        if (config.isNoDecryption()) {
+            return result;
+        }
+
         Ticket ticket = config.getTicket();
         if (ticket == null) {
             ticket = Ticket.parseTicket(dataProvider.getRawTicket());
         }
         result.setTicket(ticket);
-        // System.out.println(ticket);
 
         Content fstContent = tmd.getContentByIndex(0);
 
         InputStream fstContentEncryptedStream = dataProvider.getInputStreamFromContent(fstContent, 0);
         if (fstContentEncryptedStream == null) {
-
+            log.warning("FST is null");
             return null;
         }
 

@@ -36,4 +36,5 @@ public class NUSTitleConfig {
     private long titleID = 0x0L;
 
     private WoomyInfo woomyInfo;
+    private boolean noDecryption;
 }
