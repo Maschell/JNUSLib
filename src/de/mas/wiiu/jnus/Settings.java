@@ -18,7 +18,7 @@ package de.mas.wiiu.jnus;
 
 public class Settings {
     public static String URL_BASE = "http://ccs.cdn.c.shop.nintendowifi.net/ccs/download";
-    public static final int LATEST_TMD_VERSION = 0;
+    public static final int LATEST_TMD_VERSION = -1;
     public static final String TMD_FILENAME = "title.tmd";
     public static final String TICKET_FILENAME = "title.tik";
     public static final String CERT_FILENAME = "title.cert";
