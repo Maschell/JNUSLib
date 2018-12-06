@@ -17,19 +17,18 @@
 package de.mas.wiiu.jnus.implementations;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.logging.Logger;
 
 import de.mas.wiiu.jnus.NUSTitle;
 import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.TMD;
 import de.mas.wiiu.jnus.entities.content.Content;
+import de.mas.wiiu.jnus.utils.Parallelizable;
 import de.mas.wiiu.jnus.utils.download.NUSDownloadService;
 import lombok.Getter;
 
-public class NUSDataProviderRemote extends NUSDataProvider {
+public class NUSDataProviderRemote extends NUSDataProvider implements Parallelizable {
     @Getter private final int version;
     @Getter private final long titleID;
 

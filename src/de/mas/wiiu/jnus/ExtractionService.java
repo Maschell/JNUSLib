@@ -22,10 +22,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.implementations.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.FileUtils;
+import de.mas.wiiu.jnus.utils.Parallelizable;
 import de.mas.wiiu.jnus.utils.Utils;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -36,6 +40,8 @@ public final class ExtractionService {
 
     @Getter private final NUSTitle NUSTitle;
 
+    private boolean parallelizable = false;
+
     public static ExtractionService getInstance(NUSTitle nustitle) {
         if (!instances.containsKey(nustitle)) {
             instances.put(nustitle, new ExtractionService(nustitle));
@@ -44,6 +50,9 @@ public final class ExtractionService {
     }
 
     private ExtractionService(NUSTitle nustitle) {
+        if (nustitle.getDataProvider() instanceof Parallelizable) {
+            parallelizable = true;
+        }
         this.NUSTitle = nustitle;
     }
 
@@ -75,15 +84,32 @@ public final class ExtractionService {
         extractEncryptedContentFilesTo(new ArrayList<Content>(getNUSTitle().getTMD().getAllContents().values()), outputFolder, true);
     }
 
+    public void extractEncryptedContentTo(Content content, String outputFolder, boolean withHashes) throws IOException {
+        NUSDataProvider dataProvider = getDataProvider();
+        if (withHashes) {
+            dataProvider.saveEncryptedContentWithH3Hash(content, outputFolder);
+        } else {
+            dataProvider.saveEncryptedContent(content, outputFolder);
+        }
+    }
+
     public void extractEncryptedContentFilesTo(List<Content> list, String outputFolder, boolean withHashes) throws IOException {
         Utils.createDir(outputFolder);
-        NUSDataProvider dataProvider = getDataProvider();
-        for (Content c : list) {
-            log.info("Saving " + c.getFilename());
-            if (withHashes) {
-                dataProvider.saveEncryptedContentWithH3Hash(c, outputFolder);
-            } else {
-                dataProvider.saveEncryptedContent(c, outputFolder);
+        if (parallelizable) {
+            try {
+                CompletableFuture.allOf(list.stream().map((Content c) -> CompletableFuture.runAsync(() -> {
+                    try {
+                        extractEncryptedContentTo(c, outputFolder, withHashes);
+                    } catch (IOException e) {
+                        throw new CompletionException(e);
+                    }
+                })).toArray(CompletableFuture[]::new)).get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new IOException(e);
+            }
+        } else {
+            for (Content c : list) {
+                extractEncryptedContentTo(c, outputFolder, withHashes);
             }
         }
     }
@@ -102,18 +128,18 @@ public final class ExtractionService {
         FileUtils.saveByteArrayToFile(tmd_path, rawTMD);
     }
 
-    public void extractTicketTo(String output) throws IOException {
+    public boolean extractTicketTo(String output) throws IOException {
         Utils.createDir(output);
 
         byte[] rawTicket = getDataProvider().getRawTicket();
 
         if (rawTicket == null || rawTicket.length == 0) {
             log.info("Couldn't write Ticket: No Ticket loaded");
-            return;
+            return false;
         }
         String ticket_path = output + File.separator + Settings.TICKET_FILENAME;
         log.info("Extracting Ticket to: " + ticket_path);
-        FileUtils.saveByteArrayToFile(ticket_path, rawTicket);
+        return FileUtils.saveByteArrayToFile(ticket_path, rawTicket);
     }
 
     public void extractCertTo(String output) throws IOException {
@@ -132,6 +158,7 @@ public final class ExtractionService {
 
     public void extractAll(String outputFolder) throws IOException {
         Utils.createDir(outputFolder);
+
         extractAllEncryptedContentFilesWithHashesTo(outputFolder);
         extractCertTo(outputFolder);
         extractTMDTo(outputFolder);
