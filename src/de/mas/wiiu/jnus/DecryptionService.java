@@ -88,7 +88,7 @@ public final class DecryptionService {
                     return;
                 }
 
-                log.fine("Decrypting " + entry.getFilename());
+                log.info("Decrypting " + entry.getFilename());
 
                 String targetFilePath = new StringBuilder().append(outputPath).append("/").append(entry.getFilename()).toString();
                 String fullPath = new StringBuilder().append(outputPath).toString();

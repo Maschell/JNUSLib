@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.io.PipedInputStream;
 
 import de.mas.wiiu.jnus.utils.Utils;
+import lombok.extern.java.Log;
 
+@Log
 public class PipedInputStreamWithException extends PipedInputStream implements InputStreamWithException {
     private Exception e = null;
     private boolean exceptionSet = false;
@@ -63,7 +65,7 @@ public class PipedInputStreamWithException extends PipedInputStream implements I
                     Utils.sleep(10);
                 }
                 if (tries > 100) {
-                    // TODO: warning?
+                    log.warning("Tried too often.");
                     break;
                 }
             }

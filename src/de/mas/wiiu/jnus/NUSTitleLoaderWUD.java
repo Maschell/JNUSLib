@@ -44,7 +44,7 @@ public final class NUSTitleLoaderWUD extends NUSTitleLoader {
     public static List<NUSTitle> loadNUSTitle(String WUDPath, File key) throws Exception {
         byte[] data = Files.readAllBytes(key.toPath());
         if (data == null) {
-            System.out.println("Failed to read the key file.");
+            log.warning("Failed to read the key file.");
             return new ArrayList<>();
         }
         return loadNUSTitle(WUDPath, data);
@@ -62,7 +62,7 @@ public final class NUSTitleLoaderWUD extends NUSTitleLoader {
         byte[] usedTitleKey = titleKey;
         File wudFile = new File(WUDPath);
         if (!wudFile.exists()) {
-            log.info(WUDPath + " does not exist.");
+            log.warning(WUDPath + " does not exist.");
             System.exit(1);
         }
 
@@ -70,7 +70,7 @@ public final class NUSTitleLoaderWUD extends NUSTitleLoader {
         if (usedTitleKey == null && !forceNoKey) {
             File keyFile = new File(wudFile.getParentFile().getPath() + File.separator + Settings.WUD_KEY_FILENAME);
             if (!keyFile.exists()) {
-                log.info(keyFile.getAbsolutePath() + " does not exist and no title key was provided.");
+                log.warning(keyFile.getAbsolutePath() + " does not exist and no title key was provided.");
                 return new ArrayList<>();
             }
             usedTitleKey = Files.readAllBytes(keyFile.toPath());
@@ -78,7 +78,7 @@ public final class NUSTitleLoaderWUD extends NUSTitleLoader {
         WUDInfo wudInfo = WUDInfoParser.createAndLoad(image.getWUDDiscReader(), usedTitleKey);
 
         if (wudInfo == null) {
-            System.out.println("WTF. ERROR.");
+            log.warning("Failed to parse any WUDInfo");
             return new ArrayList<>();
         }
 

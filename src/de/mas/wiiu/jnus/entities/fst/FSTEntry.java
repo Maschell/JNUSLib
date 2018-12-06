@@ -16,6 +16,7 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.entities.fst;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -151,14 +152,18 @@ public class FSTEntry {
     }
 
     public void printRecursive(int space) {
+        printRecursive(System.out,space);
+    }
+
+    public void printRecursive(PrintStream out, int space) {
         for (int i = 0; i < space; i++) {
-            System.out.print(" ");
+            out.print(" ");
         }
-        System.out.print(getFilename());
+        out.print(getFilename());
         if (isNotInPackage()) {
-            System.out.print(" (not in package)");
+            out.print(" (not in package)");
         }
-        System.out.println();
+        out.println();
         for (FSTEntry child : getDirChildren(true)) {
             child.printRecursive(space + 5);
         }

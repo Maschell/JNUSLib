@@ -30,7 +30,9 @@ import de.mas.wiiu.jnus.utils.CheckSumWrongException;
 import de.mas.wiiu.jnus.utils.HashUtil;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 import de.mas.wiiu.jnus.utils.Utils;
+import lombok.extern.java.Log;
 
+@Log
 public class NUSDecryption extends AESDecryption {
     public NUSDecryption(byte[] AESKey, byte[] IV) {
         super(AESKey, IV);
@@ -130,7 +132,7 @@ public class NUSDecryption extends AESDecryption {
                 throw new CheckSumWrongException("hash checksum failed", calculated_hash1, expected_hash);
 
             } else {
-                // log.warning("Hash DOES match saves output stream.");
+                log.finest("Hash DOES match saves output stream.");
             }
         }
 
@@ -184,7 +186,7 @@ public class NUSDecryption extends AESDecryption {
                 soffset = 0;
             }
         } while (wrote < filesize && (inBlockBuffer == BLOCKSIZE));
-        // System.out.println("Decryption okay");
+        log.finest("Decryption okay");
         outputStream.close();
         inputStream.close();
     }

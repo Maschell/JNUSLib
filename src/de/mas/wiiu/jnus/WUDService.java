@@ -147,7 +147,7 @@ public final class WUDService {
             }
         } while (written < image.getWUDFileSize());
         System.out.println();
-        System.out.println("Sectors compressed.");
+        log.info("Sectors compressed.");
         log.info("Writing sector table");
         fileOutput.seek(sectorTableStart);
         ByteBuffer buffer = ByteBuffer.allocate(sectorTablePlaceHolder.length);
@@ -164,7 +164,7 @@ public final class WUDService {
 
     public static boolean compareWUDImage(WUDImage firstImage, WUDImage secondImage) throws IOException {
         if (firstImage.getWUDFileSize() != secondImage.getWUDFileSize()) {
-            log.info("Filesize is different");
+            log.warning("Filesize is different");
             return false;
         }
         InputStream in1 = firstImage.getWUDDiscReader().readEncryptedToInputStream(0, WUDImage.WUD_FILESIZE);
@@ -182,13 +182,13 @@ public final class WUDService {
             int read1 = StreamUtils.getChunkFromStream(in1, blockBuffer1, overflow1, bufferSize);
             int read2 = StreamUtils.getChunkFromStream(in2, blockBuffer2, overflow2, bufferSize);
             if (read1 != read2) {
-                log.info("Verification error");
+                log.warning("Verification error");
                 result = false;
                 break;
             }
 
             if (!Arrays.equals(blockBuffer1, blockBuffer2)) {
-                log.info("Verification error");
+                log.warning("Verification error");
                 result = false;
                 break;
             }
@@ -203,7 +203,7 @@ public final class WUDService {
             }
         } while (totalread < WUDImage.WUD_FILESIZE);
         System.out.println();
-        System.out.println("Verfication done!");
+        log.info("Verfication done!");
         in1.close();
         in2.close();
 
@@ -275,7 +275,7 @@ public final class WUDService {
             }
         } while (totalread < WUDImage.WUD_FILESIZE);
         System.out.println();
-        System.out.println("Decompressing done!");
+        log.info("Decompressing done!");
         in.close();
         out.close();
 
@@ -331,7 +331,7 @@ public final class WUDService {
         double readMB = totalread / 1024.0 / 1024.0;
         double percent = ((double) totalread / WUDImage.WUD_FILESIZE) * 100;
 
-        System.out.println(String.format("\rHashing: %.2fMB done (%.2f%%)", readMB, percent));
+        log.info(String.format("\rHashing: %.2fMB done (%.2f%%)", readMB, percent));
 
         HashResult result = new HashResult(sha1.digest(), md5.digest(), Utils.StringToByteArray(Long.toHexString(checksumEngine.getValue())));
 

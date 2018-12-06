@@ -204,7 +204,7 @@ public final class HashUtil {
         byte[] hash2 = HashUtil.hashSHA1(file2);
         boolean result = Arrays.equals(hash1, hash2);
         if (!result) {
-            log.info("Hash doesn't match for " + file1.getAbsolutePath() + "(" + Utils.ByteArrayToString(hash1) + ") and " + file2.getAbsolutePath() + "("
+            log.warning("Hash doesn't match for " + file1.getAbsolutePath() + "(" + Utils.ByteArrayToString(hash1) + ") and " + file2.getAbsolutePath() + "("
                     + Utils.ByteArrayToString(hash2) + ")!");
         }
         return result;
@@ -246,7 +246,7 @@ public final class HashUtil {
             if (!Arrays.equals(expected_h1_hash, real_h1_hash)) {
                 throw new CheckSumWrongException("h1 checksumfail", real_h1_hash, expected_h1_hash);
             } else {
-                log.finer("h1 checksum right!");
+                log.finest("h1 checksum right!");
             }
         }
 
@@ -257,12 +257,12 @@ public final class HashUtil {
             if (!Arrays.equals(expected_h2_hash, real_h2_hash)) {
                 throw new CheckSumWrongException("h2 checksumfail", real_h2_hash, expected_h2_hash);
             } else {
-                log.fine("h2 checksum right!");
+                log.finest("h2 checksum right!");
             }
         }
 
         if (h3Hashes == null) {
-            log.info("didn't check the h3, its missing.");
+            log.warning("didn't check the h3, its missing.");
             return;
         }
         if ((block % 4096) == 0) {
@@ -272,7 +272,7 @@ public final class HashUtil {
             if (!Arrays.equals(expected_h3_hash, real_h3_hash)) {
                 throw new CheckSumWrongException("h3 checksumfail", real_h3_hash, expected_h3_hash);
             } else {
-                log.fine("h3 checksum right!");
+                log.finest("h3 checksum right!");
             }
         }
     }

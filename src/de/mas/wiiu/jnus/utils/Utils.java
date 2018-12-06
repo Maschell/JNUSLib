@@ -23,6 +23,9 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -175,6 +178,10 @@ public final class Utils {
             System.err.println("Invalid Title ID");
             return 0L;
         }
+    }
+    
+    public static void setGlobalLogLevel(Level level) {
+        Arrays.stream(LogManager.getLogManager().getLogger("").getHandlers()).forEach(h -> h.setLevel(level));
     }
 
     public static boolean checkFileExists(String path) {
