@@ -59,7 +59,7 @@ public final class NUSDataProviderLocal extends NUSDataProvider {
 
     @Override
     public byte[] getContentH3Hash(Content content) throws IOException {
-        String h3Filename = String.format("%08X.%s", content.getID(), Settings.H3_EXTENTION);
+        String h3Filename = String.format("%08X%s", content.getID(), Settings.H3_EXTENTION);
         File filepath = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), h3Filename);
         if (filepath == null || !filepath.exists()) {
             String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + h3Filename + "\", file does not exist";
