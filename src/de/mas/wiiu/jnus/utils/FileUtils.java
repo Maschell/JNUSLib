@@ -17,6 +17,7 @@
 package de.mas.wiiu.jnus.utils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -92,6 +93,20 @@ public final class FileUtils {
             outputFile.delete();
         }
         tempFile.renameTo(outputFile);
+    }
+
+    public static File getFileIgnoringFilenameCases(String folder, String filename) {
+        File filepath = new File(folder + File.separator + filename);
+        if (!filepath.exists()) {
+            // Try to find it ignoring cases.
+            File[] filesIngoringCases = new File(folder).listFiles(f -> f.getName().equalsIgnoreCase(filename));
+            if (filesIngoringCases.length == 1 && !filesIngoringCases[0].isDirectory()) {
+                return filesIngoringCases[0].getAbsoluteFile();
+            } else {
+                return null;
+            }
+        }
+        return filepath;
     }
 
 }

@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import de.mas.wiiu.jnus.NUSTitle;
 import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.content.Content;
+import de.mas.wiiu.jnus.utils.FileUtils;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -45,9 +46,9 @@ public final class NUSDataProviderLocal extends NUSDataProvider {
 
     @Override
     public InputStream getInputStreamFromContent(Content content, long offset) throws IOException {
-        File filepath = new File(getFilePathOnDisk(content));
-        if (!filepath.exists()) {
-            String errormsg = "Couldn't open \"" + filepath + "\", file does not exist";
+        File filepath = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), content.getFilename());
+        if (filepath == null) {
+            String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + content.getFilename() + "\", file does not exist";
             log.warning(errormsg);
             throw new FileNotFoundException(errormsg);
         }
@@ -58,38 +59,47 @@ public final class NUSDataProviderLocal extends NUSDataProvider {
 
     @Override
     public byte[] getContentH3Hash(Content content) throws IOException {
-        String h3Path = getLocalPath() + File.separator + String.format("%08X.h3", content.getID());
-        File h3File = new File(h3Path);
-        if (!h3File.exists()) {
-            String errormsg = "Couldn't open \"" + h3Path + "\", file does not exist";
+        String h3Filename = String.format("%08X.%s", content.getID(), Settings.H3_EXTENTION);
+        File filepath = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), h3Filename);
+        if (filepath == null) {
+            String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + h3Filename + "\", file does not exist";
             log.warning(errormsg);
             return new byte[0];
         }
-        return Files.readAllBytes(h3File.toPath());
+        return Files.readAllBytes(filepath.toPath());
     }
 
     @Override
     public byte[] getRawTMD() throws IOException {
-        String inputPath = getLocalPath();
-        String tmdPath = inputPath + File.separator + Settings.TMD_FILENAME;
-        File tmdFile = new File(tmdPath);
-        return Files.readAllBytes(tmdFile.toPath());
+        File file = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), Settings.TMD_FILENAME);
+        if (file == null || file.exists()) {
+            String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + Settings.TMD_FILENAME + "\", file does not exist";
+            log.warning(errormsg);
+            throw new FileNotFoundException(errormsg);
+        }
+        return Files.readAllBytes(file.toPath());
     }
 
     @Override
     public byte[] getRawTicket() throws IOException {
-        String inputPath = getLocalPath();
-        String ticketPath = inputPath + File.separator + Settings.TICKET_FILENAME;
-        File ticketFile = new File(ticketPath);
-        return Files.readAllBytes(ticketFile.toPath());
+        File file = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), Settings.TICKET_FILENAME);
+        if (file == null || file.exists()) {
+            String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + Settings.TICKET_FILENAME + "\", file does not exist";
+            log.warning(errormsg);
+            throw new FileNotFoundException(errormsg);
+        }
+        return Files.readAllBytes(file.toPath());
     }
 
     @Override
     public byte[] getRawCert() throws IOException {
-        String inputPath = getLocalPath();
-        String certPath = inputPath + File.separator + Settings.CERT_FILENAME;
-        File certFile = new File(certPath);
-        return Files.readAllBytes(certFile.toPath());
+        File file = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), Settings.CERT_FILENAME);
+        if (file == null || file.exists()) {
+            String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + Settings.CERT_FILENAME + "\", file does not exist";
+            log.warning(errormsg);
+            throw new FileNotFoundException(errormsg);
+        }
+        return Files.readAllBytes(file.toPath());
     }
 
     @Override
