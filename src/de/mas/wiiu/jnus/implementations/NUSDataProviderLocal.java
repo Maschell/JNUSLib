@@ -47,7 +47,7 @@ public final class NUSDataProviderLocal extends NUSDataProvider {
     @Override
     public InputStream getInputStreamFromContent(Content content, long offset) throws IOException {
         File filepath = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), content.getFilename());
-        if (filepath == null) {
+        if (filepath == null || !filepath.exists()) {
             String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + content.getFilename() + "\", file does not exist";
             log.warning(errormsg);
             throw new FileNotFoundException(errormsg);
@@ -61,7 +61,7 @@ public final class NUSDataProviderLocal extends NUSDataProvider {
     public byte[] getContentH3Hash(Content content) throws IOException {
         String h3Filename = String.format("%08X.%s", content.getID(), Settings.H3_EXTENTION);
         File filepath = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), h3Filename);
-        if (filepath == null) {
+        if (filepath == null || !filepath.exists()) {
             String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + h3Filename + "\", file does not exist";
             log.warning(errormsg);
             return new byte[0];
@@ -72,7 +72,7 @@ public final class NUSDataProviderLocal extends NUSDataProvider {
     @Override
     public byte[] getRawTMD() throws IOException {
         File file = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), Settings.TMD_FILENAME);
-        if (file == null || file.exists()) {
+        if (file == null || !file.exists()) {
             String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + Settings.TMD_FILENAME + "\", file does not exist";
             log.warning(errormsg);
             throw new FileNotFoundException(errormsg);
@@ -83,7 +83,7 @@ public final class NUSDataProviderLocal extends NUSDataProvider {
     @Override
     public byte[] getRawTicket() throws IOException {
         File file = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), Settings.TICKET_FILENAME);
-        if (file == null || file.exists()) {
+        if (file == null || !file.exists()) {
             String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + Settings.TICKET_FILENAME + "\", file does not exist";
             log.warning(errormsg);
             throw new FileNotFoundException(errormsg);
@@ -94,7 +94,7 @@ public final class NUSDataProviderLocal extends NUSDataProvider {
     @Override
     public byte[] getRawCert() throws IOException {
         File file = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), Settings.CERT_FILENAME);
-        if (file == null || file.exists()) {
+        if (file == null || !file.exists()) {
             String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + Settings.CERT_FILENAME + "\", file does not exist";
             log.warning(errormsg);
             throw new FileNotFoundException(errormsg);
