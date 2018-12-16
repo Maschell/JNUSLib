@@ -18,6 +18,7 @@ package de.mas.wiiu.jnus.implementations;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -27,7 +28,9 @@ import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 import lombok.Getter;
+import lombok.extern.java.Log;
 
+@Log
 public final class NUSDataProviderLocal extends NUSDataProvider {
     @Getter private final String localPath;
 
@@ -44,7 +47,9 @@ public final class NUSDataProviderLocal extends NUSDataProvider {
     public InputStream getInputStreamFromContent(Content content, long offset) throws IOException {
         File filepath = new File(getFilePathOnDisk(content));
         if (!filepath.exists()) {
-            return null;
+            String errormsg = "Couldn't open \"" + filepath + "\", file does not exist";
+            log.warning(errormsg);
+            throw new FileNotFoundException(errormsg);
         }
         InputStream in = new FileInputStream(filepath);
         StreamUtils.skipExactly(in, offset);
@@ -56,6 +61,8 @@ public final class NUSDataProviderLocal extends NUSDataProvider {
         String h3Path = getLocalPath() + File.separator + String.format("%08X.h3", content.getID());
         File h3File = new File(h3Path);
         if (!h3File.exists()) {
+            String errormsg = "Couldn't open \"" + h3Path + "\", file does not exist";
+            log.warning(errormsg);
             return new byte[0];
         }
         return Files.readAllBytes(h3File.toPath());

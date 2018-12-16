@@ -166,6 +166,11 @@ public final class DecryptionService {
         NUSDataProvider dataProvider = getNUSTitle().getDataProvider();
 
         InputStream in = dataProvider.getInputStreamFromContent(c, fileOffsetBlock);
+        if (in == null) {
+            String errormsg = "Failed to open the content " + c.getFilename() + " as input stream.";
+            log.warning(errormsg);
+            throw new FileNotFoundException(errormsg);
+        }
 
         try {
             decryptFSTEntryFromStreams(in, outputStream, fileSize, fileOffset, c);
@@ -209,6 +214,7 @@ public final class DecryptionService {
             if (content.isHashed()) {
                 NUSDataProvider dataProvider = getNUSTitle().getDataProvider();
                 byte[] h3 = dataProvider.getContentH3Hash(content);
+                
                 nusdecryption.decryptFileStreamHashed(inputStream, outputStream, size, offset, (short) contentIndex, h3);
             } else {
                 nusdecryption.decryptFileStream(inputStream, outputStream, size, (short) contentIndex, content.getSHA2Hash(), encryptedFileSize);
