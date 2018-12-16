@@ -236,7 +236,7 @@ public final class HashUtil {
         if (!Arrays.equals(real_h0_hash, expected_h0_hash)) {
             throw new CheckSumWrongException("h0 checksumfail", real_h0_hash, expected_h0_hash);
         } else {
-            log.finest("h1 checksum right!");
+            log.finest("h0 checksum right!");
         }
 
         if ((block % 16) == 0) {

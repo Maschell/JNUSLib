@@ -90,7 +90,7 @@ public final class WoomyParser {
                 String entryName = entry.getName();
                 Matcher matcher = pattern.matcher(entryName);
                 if (matcher.matches()) {
-                    String[] tokens = entryName.split("[\\\\|/]"); // We only want the filename!
+                    String[] tokens = entryName.replace(File.separator, "\\").split("[\\\\|/]"); // We only want the filename!
                     String filename = tokens[tokens.length - 1];
                     result.put(filename.toLowerCase(Locale.ENGLISH), entry);
                 }

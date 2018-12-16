@@ -16,6 +16,7 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,8 +70,10 @@ public class NUSTitle {
     }
 
     public FSTEntry getFSTEntryByFullPath(String givenFullPath) {
-        String fullPath = givenFullPath.replaceAll("/", "\\\\");
-        if (!fullPath.startsWith("\\")) fullPath = "\\" + fullPath;
+        String fullPath = givenFullPath.replace("/", File.separator);
+        if (!fullPath.startsWith(File.separator)) {
+            fullPath = File.separator + fullPath;
+        }
         for (FSTEntry f : getAllFSTEntriesFlat()) {
             if (f.getFullPath().equals(fullPath)) {
                 return f;
@@ -86,7 +89,7 @@ public class NUSTitle {
         List<FSTEntry> result = new ArrayList<>();
 
         for (FSTEntry f : files) {
-            String match = f.getFullPath().replaceAll("\\\\", "/");
+            String match = f.getFullPath().replace(File.separator, "/");
             Matcher m = p.matcher(match);
             if (m.matches()) {
                 result.add(f);

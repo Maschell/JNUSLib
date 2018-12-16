@@ -16,6 +16,8 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.implementations.wud.parser;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -136,11 +138,11 @@ public final class WUDInfoParser {
 
         for (val dirChilden : siFST.getRoot().getDirChildren()) {
             // The SI partition contains the tmd, cert and tik for every GM partition.
-            byte[] rawTIK = getFSTEntryAsByte(dirChilden.getFullPath() + "\\" + WUD_TICKET_FILENAME, siPartition, siFST, wudInfo.getWUDDiscReader(),
+            byte[] rawTIK = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_TICKET_FILENAME, siPartition, siFST, wudInfo.getWUDDiscReader(),
                     wudInfo.getTitleKey());
-            byte[] rawTMD = getFSTEntryAsByte(dirChilden.getFullPath() + "\\" + WUD_TMD_FILENAME, siPartition, siFST, wudInfo.getWUDDiscReader(),
+            byte[] rawTMD = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_TMD_FILENAME, siPartition, siFST, wudInfo.getWUDDiscReader(),
                     wudInfo.getTitleKey());
-            byte[] rawCert = getFSTEntryAsByte(dirChilden.getFullPath() + "\\" + WUD_CERT_FILENAME, siPartition, siFST, wudInfo.getWUDDiscReader(),
+            byte[] rawCert = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_CERT_FILENAME, siPartition, siFST, wudInfo.getWUDDiscReader(),
                     wudInfo.getTitleKey());
 
             String partitionName = "GM" + Utils.ByteArrayToString(Arrays.copyOfRange(rawTIK, 0x1DC, 0x1DC + 0x08));
@@ -179,6 +181,11 @@ public final class WUDInfoParser {
 
     private static byte[] getFSTEntryAsByte(String filePath, WUDPartition partition, FST fst, WUDDiscReader discReader, byte[] key) throws IOException {
         FSTEntry entry = getEntryByFullPath(fst.getRoot(), filePath);
+        if(entry == null) {
+            String errormsg = "FSTEntry with name \"" + filePath + "\" not found.";
+            log.warning(errormsg);
+            throw new FileNotFoundException(errormsg);
+        }
 
         ContentFSTInfo info = fst.getContentFSTInfos().get((int) entry.getContentFSTID());
 
