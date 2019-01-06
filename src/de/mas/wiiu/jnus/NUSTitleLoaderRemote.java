@@ -39,7 +39,7 @@ public final class NUSTitleLoaderRemote extends NUSTitleLoader {
     }
 
     public static NUSTitle loadNUSTitle(long titleID, int version, Ticket ticket) throws Exception {
-        return loadNUSTitle(titleID, Settings.LATEST_TMD_VERSION, ticket, false);
+        return loadNUSTitle(titleID, version, ticket, false);
     }
 
     public static NUSTitle loadNUSTitle(long titleID, int version, Ticket ticket, boolean noEncryption) throws Exception {
