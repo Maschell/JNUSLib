@@ -154,6 +154,7 @@ public final class DecryptionService {
 
     public void decryptFSTEntryToStream(FSTEntry entry, OutputStream outputStream) throws IOException, CheckSumWrongException {
         if (entry.isNotInPackage() || entry.getContent() == null) {
+            outputStream.close();
             return;
         }
 
