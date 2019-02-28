@@ -16,6 +16,7 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.entities.fst;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +38,6 @@ public class FSTEntry {
     public static final byte FSTEntry_notInNUS = (byte) 0x80;
 
     @Getter private final String filename;
-    @Getter private final String path;
     @Getter private final FSTEntry parent;
 
     @Getter private final List<FSTEntry> children = new ArrayList<>();
@@ -89,6 +89,17 @@ public class FSTEntry {
 
     public String getFullPath() {
         return getPath() + getFilename();
+    }
+
+    private StringBuilder getPathInternal() {
+        if (parent != null) {
+            return parent.getPathInternal().append(parent.getFilename()).append(File.separator);
+        }
+        return new StringBuilder();
+    }
+
+    public String getPath() {
+        return getPathInternal().toString();
     }
 
     public int getEntryCount() {
@@ -174,14 +185,13 @@ public class FSTEntry {
 
     @Override
     public String toString() {
-        return "FSTEntry [filename=" + filename + ", path=" + path + ", flags=" + flags + ", filesize=" + fileSize + ", fileoffset=" + fileOffset + ", content="
-                + content + ", isDir=" + isDir + ", isRoot=" + isRoot + ", notInPackage=" + isNotInPackage + "]";
+        return "FSTEntry [filename=" + getFilename() + ", path=" + getPath() + ", flags=" + flags + ", filesize=" + fileSize + ", fileoffset=" + fileOffset
+                + ", content=" + content + ", isDir=" + isDir + ", isRoot=" + isRoot + ", notInPackage=" + isNotInPackage + "]";
     }
 
     @Data
     protected static class FSTEntryParam {
         private String filename = "";
-        private String path = "";
 
         private FSTEntry parent = null;
 

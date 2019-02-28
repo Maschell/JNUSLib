@@ -39,10 +39,6 @@ public final class FSTService {
         int level = 0;
         int[] LEntry = new int[16];
         int[] Entry = new int[16];
-        String[] pathStrings = new String[16];
-        for (int i = 0; i < 16; i++) {
-            pathStrings[i] = "";
-        }
 
         HashMap<Integer, FSTEntry> fstEntryToOffsetMap = new HashMap<>();
         Entry[level] = 0;
@@ -51,9 +47,7 @@ public final class FSTService {
         fstEntryToOffsetMap.put(0, rootEntry);
 
         int lastlevel = level;
-        String path = File.separator;
 
-        FSTEntry last = null;
         for (int i = 1; i < totalEntries; i++) {
 
             int entryOffset = i;
@@ -68,7 +62,6 @@ public final class FSTService {
             FSTEntryParam entryParam = new FSTEntry.FSTEntryParam();
 
             if (lastlevel != level) {
-                path = pathStrings[level] + getFullPath(level - 1, level, fstSection, namesSection, Entry);
                 lastlevel = level;
             }
 
@@ -92,7 +85,6 @@ public final class FSTService {
                 parent = fstEntryToOffsetMap.get(parentOffset);
                 Entry[level] = i;
                 LEntry[level++] = nextOffset;
-                pathStrings[level] = path;
 
                 if (level > 15) {
                     log.warning("level > 15");
@@ -107,7 +99,6 @@ public final class FSTService {
 
             entryParam.setFlags(flags);
             entryParam.setFilename(filename);
-            entryParam.setPath(path);
 
             if (contentsByIndex != null) {
                 Content content = contentsByIndex.get((int) contentIndex);
@@ -129,7 +120,6 @@ public final class FSTService {
             entryParam.setParent(parent);
 
             FSTEntry entry = new FSTEntry(entryParam);
-            last = entry;
             fstEntryToOffsetMap.put(entryOffset, entry);
         }
 
@@ -154,15 +144,4 @@ public final class FSTService {
         return (new String(Arrays.copyOfRange(namesSection, nameOffset, nameOffset + j)));
     }
 
-    public static String getFullPath(int startlevel, int endlevel, byte[] fstSection, byte[] namesSection, int[] Entry) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = startlevel; i < endlevel; i++) {
-            int entryOffset = Entry[i] * 0x10;
-            byte[] entryData = Arrays.copyOfRange(fstSection, entryOffset, entryOffset + 10);
-            String entryName = getName(entryData, namesSection);
-
-            sb.append(entryName).append(File.separator);
-        }
-        return sb.toString();
-    }
 }
