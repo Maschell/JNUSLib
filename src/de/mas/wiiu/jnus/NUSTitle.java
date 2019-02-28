@@ -100,24 +100,40 @@ public class NUSTitle {
     }
 
     public List<FSTEntry> getFSTEntriesByRegEx(String regEx) {
-        List<FSTEntry> files = getAllFSTEntriesFlat();
-        Pattern p = Pattern.compile(regEx);
-
-        List<FSTEntry> result = new ArrayList<>();
-
-        for (FSTEntry f : files) {
-            String match = f.getFullPath().replace(File.separator, "/");
-            Matcher m = p.matcher(match);
-            if (m.matches()) {
-                result.add(f);
-            }
-        }
-        return result;
+        return getFSTEntriesByRegEx(regEx, FST.getRoot());
     }
-    
+
+    public List<FSTEntry> getFSTEntriesByRegEx(String regEx, FSTEntry entry) {
+        return getFSTEntriesByRegEx(regEx, entry, true);
+    }
+
+    public List<FSTEntry> getFSTEntriesByRegEx(String regEx, boolean onlyInPackage) {
+        return getFSTEntriesByRegEx(regEx, FST.getRoot(), onlyInPackage);
+    }
+
+    public List<FSTEntry> getFSTEntriesByRegEx(String regEx, FSTEntry entry, boolean allowNotInPackage) {
+        Pattern p = Pattern.compile(regEx);
+        return getFSTEntriesByRegExStream(p, entry, allowNotInPackage).collect(Collectors.toList());
+    }
+
+    private Stream<FSTEntry> getFSTEntriesByRegExStream(Pattern p, FSTEntry entry, boolean allowNotInPackage) {
+        return entry.getChildren().stream()//
+                .filter(e -> allowNotInPackage || !e.isNotInPackage()) //
+                .flatMap(e -> {
+                    if (!e.isDir()) {
+                        if (p.matcher(entry.getFullPath().replace("/", File.separator)).matches()) {
+                            return Stream.of(entry);
+                        } else {
+                            return Stream.empty();
+                        }
+                    }
+                    return getFSTEntriesByRegExStream(p, e, allowNotInPackage);
+                });
+    }
+
     public Optional<FSTEntry> getFileEntryDir(String string) {
         return getFileEntryDir(string.replace("/", File.separator), FST.getRoot());
-    }    
+    }
 
     public Optional<FSTEntry> getFileEntryDir(String string, FSTEntry curEntry) {
         for (val curChild : curEntry.getDirChildren()) {
