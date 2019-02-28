@@ -16,7 +16,6 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.entities.fst;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +28,7 @@ import lombok.extern.java.Log;
 
 @Log
 public final class FSTService {
+
     private FSTService() {
     }
 
@@ -40,7 +40,7 @@ public final class FSTService {
         int[] LEntry = new int[16];
         int[] Entry = new int[16];
 
-        HashMap<Integer, FSTEntry> fstEntryToOffsetMap = new HashMap<>();
+        final HashMap<Integer, FSTEntry> fstEntryToOffsetMap = new HashMap<>();
         Entry[level] = 0;
         LEntry[level++] = 0;
 
@@ -64,8 +64,6 @@ public final class FSTService {
             if (lastlevel != level) {
                 lastlevel = level;
             }
-
-            String filename = getName(curEntry, namesSection);
 
             long fileOffset = ByteUtils.getIntFromBytes(curEntry, 0x04);
             long fileSize = ByteUtils.getUnsingedIntFromBytes(curEntry, 0x08);
@@ -98,7 +96,8 @@ public final class FSTService {
             }
 
             entryParam.setFlags(flags);
-            entryParam.setFilename(filename);
+            final int nameOffset = getNameOffset(curEntry);
+            entryParam.setFileNameSupplier(() -> getName(nameOffset, namesSection));
 
             if (contentsByIndex != null) {
                 Content content = contentsByIndex.get((int) contentIndex);
@@ -134,7 +133,10 @@ public final class FSTService {
     }
 
     public static String getName(byte[] data, byte[] namesSection) {
-        int nameOffset = getNameOffset(data);
+        return getName(getNameOffset(data), namesSection);
+    }
+
+    public static String getName(int nameOffset, byte[] namesSection) {
         int j = 0;
 
         while ((nameOffset + j) < namesSection.length && namesSection[nameOffset + j] != 0) {

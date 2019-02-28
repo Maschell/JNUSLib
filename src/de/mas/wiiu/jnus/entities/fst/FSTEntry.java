@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import de.mas.wiiu.jnus.entities.content.Content;
 import lombok.Data;
@@ -37,7 +38,9 @@ public class FSTEntry {
     public static final byte FSTEntry_DIR = (byte) 0x01;
     public static final byte FSTEntry_notInNUS = (byte) 0x80;
 
-    @Getter private final String filename;
+    private String filename = null;
+    private final Supplier<String> filenameSupplier;
+
     @Getter private final FSTEntry parent;
 
     @Getter private final List<FSTEntry> children = new ArrayList<>();
@@ -56,8 +59,7 @@ public class FSTEntry {
     @Getter private final short contentFSTID;
 
     protected FSTEntry(FSTEntryParam fstParam) {
-        this.filename = fstParam.getFilename();
-        this.path = fstParam.getPath();
+        this.filenameSupplier = fstParam.getFileNameSupplier();
         this.flags = fstParam.getFlags();
         this.parent = fstParam.getParent();
         if (parent != null) {
@@ -85,6 +87,13 @@ public class FSTEntry {
         param.setRoot(true);
         param.setDir(true);
         return new FSTEntry(param);
+    }
+
+    public String getFilename() {
+        if (filename == null) {
+            filename = filenameSupplier.get();
+        }
+        return filename;
     }
 
     public String getFullPath() {
@@ -163,7 +172,7 @@ public class FSTEntry {
     }
 
     public void printRecursive(int space) {
-        printRecursive(System.out,space);
+        printRecursive(System.out, space);
     }
 
     public void printRecursive(PrintStream out, int space) {
@@ -191,8 +200,7 @@ public class FSTEntry {
 
     @Data
     protected static class FSTEntryParam {
-        private String filename = "";
-
+        private Supplier<String> fileNameSupplier = () -> "";
         private FSTEntry parent = null;
 
         private short flags;
