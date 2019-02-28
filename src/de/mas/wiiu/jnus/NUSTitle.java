@@ -80,7 +80,7 @@ public class NUSTitle {
                 .filter(e -> allowNotInPackage || !e.isNotInPackage()) //
                 .flatMap(e -> {
                     if (!e.isDir()) {
-                        return Stream.empty();
+                        return Stream.of(e);
                     }
                     return getAllFSTEntryChildrenAsStream(e, allowNotInPackage);
                 });
