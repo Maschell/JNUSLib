@@ -50,16 +50,12 @@ import lombok.extern.java.Log;
 
 @Log
 public final class DecryptionService {
-    private static Map<NUSTitle, DecryptionService> instances = new HashMap<>();
     @Getter private final NUSTitle NUSTitle;
 
     private boolean parallelizable = false;
 
     public static DecryptionService getInstance(NUSTitle nustitle) {
-        if (!instances.containsKey(nustitle)) {
-            instances.put(nustitle, new DecryptionService(nustitle));
-        }
-        return instances.get(nustitle);
+        return new DecryptionService(nustitle);
     }
 
     private DecryptionService(NUSTitle nustitle) {
