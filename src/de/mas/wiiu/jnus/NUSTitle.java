@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.mas.wiiu.jnus.entities.TMD;
 import de.mas.wiiu.jnus.entities.Ticket;
@@ -64,6 +65,25 @@ public class NUSTitle {
 
     public List<FSTEntry> getAllFSTEntriesFlat() {
         return getFSTEntriesFlatByContents(new ArrayList<Content>(getTMD().getAllContents().values()));
+    }
+
+    public Stream<FSTEntry> getAllFSTEntriesAsStream() {
+        return getAllFSTEntryChildrenAsStream(FST.getRoot());
+    }
+
+    public Stream<FSTEntry> getAllFSTEntryChildrenAsStream(FSTEntry cur) {
+        return getAllFSTEntryChildrenAsStream(cur, false);
+    }
+
+    public Stream<FSTEntry> getAllFSTEntryChildrenAsStream(FSTEntry cur, boolean allowNotInPackage) {
+        return cur.getChildren().stream() //
+                .filter(e -> allowNotInPackage || !e.isNotInPackage()) //
+                .flatMap(e -> {
+                    if (!e.isDir()) {
+                        return Stream.empty();
+                    }
+                    return getAllFSTEntryChildrenAsStream(e, allowNotInPackage);
+                });
     }
 
     public FSTEntry getFSTEntryByFullPath(String givenFullPath) {
