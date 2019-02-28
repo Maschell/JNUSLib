@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import de.mas.wiiu.jnus.entities.TMD;
 import de.mas.wiiu.jnus.entities.Ticket;
@@ -58,13 +59,7 @@ public class NUSTitle {
     }
 
     public List<FSTEntry> getFSTEntriesFlatByContents(List<Content> list) {
-        List<FSTEntry> entries = new ArrayList<>();
-        for (Content c : list) {
-            for (FSTEntry f : c.getEntries()) {
-                entries.add(f);
-            }
-        }
-        return entries;
+        return list.stream().flatMap(c -> c.getEntries().stream()).collect(Collectors.toList());
     }
 
     public List<FSTEntry> getAllFSTEntriesFlat() {
