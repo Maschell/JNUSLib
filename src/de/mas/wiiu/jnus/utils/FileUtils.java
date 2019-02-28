@@ -17,7 +17,6 @@
 package de.mas.wiiu.jnus.utils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -100,7 +99,7 @@ public final class FileUtils {
         if (!filepath.exists()) {
             // Try to find it ignoring cases.
             File[] filesIngoringCases = new File(folder).listFiles(f -> f.getName().equalsIgnoreCase(filename));
-            if (filesIngoringCases.length == 1 && !filesIngoringCases[0].isDirectory()) {
+            if (filesIngoringCases != null && filesIngoringCases.length == 1 && !filesIngoringCases[0].isDirectory()) {
                 return filesIngoringCases[0].getAbsoluteFile();
             } else {
                 return null;
