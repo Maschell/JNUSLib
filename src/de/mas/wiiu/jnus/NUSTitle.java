@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,6 +35,7 @@ import de.mas.wiiu.jnus.entities.fst.FSTEntry;
 import de.mas.wiiu.jnus.implementations.NUSDataProvider;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.val;
 
 public class NUSTitle {
     @Getter @Setter private FST FST;
@@ -96,6 +98,22 @@ public class NUSTitle {
             }
         }
         return result;
+    }
+    
+    public Optional<FSTEntry> getFileEntryDir(String string) {
+        return getFileEntryDir(string.replace("/", File.separator), FST.getRoot());
+    }    
+
+    public Optional<FSTEntry> getFileEntryDir(String string, FSTEntry curEntry) {
+        for (val curChild : curEntry.getDirChildren()) {
+            if (string.startsWith(curChild.getFullPath())) {
+                if (string.equals(curChild.getFullPath())) {
+                    return Optional.of(curChild);
+                }
+                return getFileEntryDir(string, curChild);
+            }
+        }
+        return Optional.empty();
     }
 
     public void printFiles() {
