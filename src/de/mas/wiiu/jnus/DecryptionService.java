@@ -211,7 +211,7 @@ public final class DecryptionService {
             if (content.isHashed()) {
                 NUSDataProvider dataProvider = getNUSTitle().getDataProvider();
                 byte[] h3 = dataProvider.getContentH3Hash(content);
-                
+
                 nusdecryption.decryptFileStreamHashed(inputStream, outputStream, size, offset, (short) contentIndex, h3);
             } else {
                 nusdecryption.decryptFileStream(inputStream, outputStream, size, (short) contentIndex, content.getSHA2Hash(), encryptedFileSize);
@@ -315,11 +315,7 @@ public final class DecryptionService {
     // Decrypt FSTEntry to OutputStream
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     public void decryptFSTEntryTo(String entryFullPath, OutputStream outputStream) throws IOException, CheckSumWrongException {
-        FSTEntry entry = getNUSTitle().getFSTEntryByFullPath(entryFullPath);
-        if (entry == null) {
-            log.info("File not found");
-            throw new FileNotFoundException("File not found");
-        }
+        FSTEntry entry = getNUSTitle().getFSTEntryByFullPath(entryFullPath).orElseThrow(() -> new FileNotFoundException("File not found: " + entryFullPath));
 
         decryptFSTEntryToStream(entry, outputStream);
     }
@@ -342,11 +338,7 @@ public final class DecryptionService {
     public void decryptFSTEntryTo(boolean fullPath, String entryFullPath, String outputFolder, boolean skipExistingFiles)
             throws IOException, CheckSumWrongException {
 
-        FSTEntry entry = getNUSTitle().getFSTEntryByFullPath(entryFullPath);
-        if (entry == null) {
-            log.info("File not found");
-            CompletableFuture.completedFuture(null);
-        }
+        FSTEntry entry = getNUSTitle().getFSTEntryByFullPath(entryFullPath).orElseThrow(() -> new FileNotFoundException("File not found: " + entryFullPath));
 
         decryptFSTEntryTo(fullPath, entry, outputFolder, skipExistingFiles);
     }

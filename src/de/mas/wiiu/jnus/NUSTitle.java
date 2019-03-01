@@ -86,17 +86,20 @@ public class NUSTitle {
                 });
     }
 
-    public FSTEntry getFSTEntryByFullPath(String givenFullPath) {
+    public Optional<FSTEntry> getFSTEntryByFullPath(String givenFullPath) {
         String fullPath = givenFullPath.replace("/", File.separator);
         if (!fullPath.startsWith(File.separator)) {
             fullPath = File.separator + fullPath;
         }
-        for (FSTEntry f : getAllFSTEntriesFlat()) {
-            if (f.getFullPath().equals(fullPath)) {
-                return f;
-            }
+
+        String[] dirs = fullPath.split(Pattern.quote(File.separator));
+        if (dirs.length <= 1) {
+            return Optional.of(FST.getRoot());
         }
-        return null;
+        String dirPath = fullPath.substring(0, fullPath.length() - dirs[dirs.length - 1].length() - 1);
+
+        String path = fullPath;
+        return getFileEntryDir(dirPath).flatMap(e -> getAllFSTEntryChildrenAsStream(e).filter(en -> path.equals(en.getFullPath())).findAny());
     }
 
     public List<FSTEntry> getFSTEntriesByRegEx(String regEx) {
