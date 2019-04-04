@@ -125,7 +125,7 @@ public class NUSTitle {
                 .flatMap(e -> {
                     if (!e.isDir()) {
                         if (p.matcher(e.getFullPath().replace("/", File.separator)).matches()) {
-                            return Stream.of(entry);
+                            return Stream.of(e);
                         } else {
                             return Stream.empty();
                         }
