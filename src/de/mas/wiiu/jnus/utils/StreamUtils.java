@@ -35,7 +35,12 @@ public final class StreamUtils {
     public static byte[] getBytesFromStream(InputStream in, int size) throws IOException {
         synchronized (in) {
             byte[] result = new byte[size];
-            byte[] buffer = new byte[0x8000];
+            byte[] buffer = null;
+            if (size < 0x8000) {
+                buffer = new byte[size];
+            } else {
+                buffer = new byte[0x8000];
+            }
             int totalRead = 0;
             do {
                 int read = in.read(buffer);
