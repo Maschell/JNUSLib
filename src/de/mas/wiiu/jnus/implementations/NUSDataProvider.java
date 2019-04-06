@@ -26,6 +26,7 @@ import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.utils.FileUtils;
 import de.mas.wiiu.jnus.utils.HashUtil;
+import de.mas.wiiu.jnus.utils.StreamUtils;
 import de.mas.wiiu.jnus.utils.Utils;
 import lombok.Getter;
 import lombok.NonNull;
@@ -151,6 +152,10 @@ public abstract class NUSDataProvider {
             }
         }
 
+    }
+
+    public byte[] getChunkFromContent(Content content, long offset, int size) throws IOException {
+        return StreamUtils.getBytesFromStream(getInputStreamFromContent(content, offset), size);
     }
 
     /**
