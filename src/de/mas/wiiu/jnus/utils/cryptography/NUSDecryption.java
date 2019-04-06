@@ -116,7 +116,7 @@ public class NUSDecryption extends AESDecryption {
             // current IV.
             if (skipoffset > 0) {
                 int skippedBytes = StreamUtils.getChunkFromStream(inputStream, blockBuffer, overflow, skipoffset);
-                if (skippedBytes > 16) {
+                if (skippedBytes >= 16) {
                     IV = Arrays.copyOfRange(blockBuffer, skippedBytes - 16, skippedBytes);
                 }
                 skipoffset = 0;
