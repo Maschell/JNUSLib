@@ -45,9 +45,13 @@ public class NUSDataProviderWUDGI extends NUSDataProvider {
 
     @Override
     public InputStream getInputStreamFromContent(Content content, long fileOffsetBlock) throws IOException {
-        InputStream in = getGiPartitionTitle().getFileAsStream(content.getFilename(), getDiscReader(), titleKey);
-        in.skip(fileOffsetBlock);
+        InputStream in = getGiPartitionTitle().getFileAsStream(content.getFilename(), getDiscReader(), fileOffsetBlock, titleKey);
         return in;
+    }
+
+    @Override
+    public byte[] getChunkFromContent(Content content, long offset, int size) throws IOException {
+        return getGiPartitionTitle().getFileAsByte(content.getFilename(), getDiscReader(), offset, size, titleKey);
     }
 
     @Override
