@@ -302,7 +302,8 @@ public final class DecryptionService {
         return out.toByteArray();
 
     }
-    public InputStreamWithException getDecryptedOutputAsInputStream(FSTEntry fstEntry) throws IOException {
+
+    public PipedInputStreamWithException getDecryptedOutputAsInputStream(FSTEntry fstEntry) throws IOException {
         PipedInputStreamWithException in = new PipedInputStreamWithException();
         PipedOutputStream out = new PipedOutputStream(in);
 
