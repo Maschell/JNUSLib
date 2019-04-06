@@ -16,6 +16,7 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -25,9 +26,7 @@ import java.io.OutputStream;
 import java.io.PipedOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
@@ -149,16 +148,23 @@ public final class DecryptionService {
     }
 
     public void decryptFSTEntryToStream(FSTEntry entry, OutputStream outputStream) throws IOException, CheckSumWrongException {
+
+        long fileSize = entry.getFileSize();
+        long fileOffset = entry.getFileOffset();
+        long fileOffsetBlock = entry.getFileOffsetBlock();
+
+        decryptFSTEntryToStream(entry, outputStream, fileSize, fileOffset, fileOffsetBlock);
+
+    }
+
+    public void decryptFSTEntryToStream(FSTEntry entry, OutputStream outputStream, long fileSize, long fileOffset, long fileOffsetBlock)
+            throws IOException, CheckSumWrongException {
         if (entry.isNotInPackage() || entry.getContent() == null) {
             outputStream.close();
             return;
         }
 
         Content c = entry.getContent();
-
-        long fileSize = entry.getFileSize();
-        long fileOffset = entry.getFileOffset();
-        long fileOffsetBlock = entry.getFileOffsetBlock();
 
         NUSDataProvider dataProvider = getNUSTitle().getDataProvider();
 
@@ -278,6 +284,24 @@ public final class DecryptionService {
         decryptContentFromStream(inputStream, outputStream, content);
     }
 
+    public byte[] getChunkFromFile(FSTEntry entry, long offset, long size) throws IOException, CheckSumWrongException {
+        if(!entry.getContent().isHashed()) {
+            throw new IOException("Only files from hashed contents are currently supported");
+        }
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        long fileOffset = entry.getFileOffset() + offset;
+        long fileOffsetBlock = fileOffset;
+
+        if (entry.getContent().isHashed()) {
+            fileOffsetBlock = (fileOffset / 0xFC00) * 0x10000;
+        }
+
+        decryptFSTEntryToStream(entry, out, size, fileOffset, fileOffsetBlock);
+
+        return out.toByteArray();
+
+    }
     public InputStreamWithException getDecryptedOutputAsInputStream(FSTEntry fstEntry) throws IOException {
         PipedInputStreamWithException in = new PipedInputStreamWithException();
         PipedOutputStream out = new PipedOutputStream(in);
