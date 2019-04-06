@@ -54,10 +54,11 @@ public class NUSDecryption extends AESDecryption {
         return decrypt(blockBuffer, offset, BLOCKSIZE);
     }
 
-    public void decryptFileStream(InputStream inputStream, OutputStream outputStream, long filesize, short contentIndex, byte[] h3hash,
+    public void decryptFileStream(InputStream inputStream, OutputStream outputStream, long filesize, long fileOffset, short contentIndex, byte[] h3hash,
             long expectedSizeForHash) throws IOException, CheckSumWrongException {
         MessageDigest sha1 = null;
         MessageDigest sha1fallback = null;
+
         if (h3hash != null) {
             try {
                 sha1 = MessageDigest.getInstance("SHA1");
@@ -84,21 +85,64 @@ public class NUSDecryption extends AESDecryption {
         long written = 0;
         long writtenFallback = 0;
 
+        int skipoffset = (int) (fileOffset % 0x8000);
+
+        // If we are at the beginning of a block, but it's not the first one,
+        // we need to get the IV from the last 16 bytes of the previous block.
+        // while beeing paranoid to exactly read 16 bytes but not more. Reading more
+        // would destroy our input stream.
+        // The input stream has been prepared to start 16 bytes earlier on this case.
+        if (fileOffset >= 0x8000 && fileOffset % 0x8000 == 0) {
+            int toRead = 16;
+            byte[] data = new byte[toRead];
+            int readTotal = 0;
+            while (readTotal < toRead) {
+                int res = inputStream.read(data, readTotal, toRead - readTotal);
+                if (res < 0) {
+                    throw new IOException();
+                }
+                readTotal += res;
+            }
+            IV = Arrays.copyOfRange(data, 0, toRead);
+        }
+
         ByteArrayBuffer overflow = new ByteArrayBuffer(BLOCKSIZE);
 
+        // We can only decrypt multiples of 16. So we need to align it.
+        long toRead = Utils.align(filesize + 15, 16);
+
         do {
-            inBlockBuffer = StreamUtils.getChunkFromStream(inputStream, blockBuffer, overflow, BLOCKSIZE);
+            // In case we start on the middle of a block we need to consume the "garbage" and save the
+            // current IV.
+            if (skipoffset > 0) {
+                int skippedBytes = StreamUtils.getChunkFromStream(inputStream, blockBuffer, overflow, skipoffset);
+                if (skippedBytes > 16) {
+                    IV = Arrays.copyOfRange(blockBuffer, skippedBytes - 16, skippedBytes);
+                }
+                skipoffset = 0;
+            }
+
+            int curReadSize = BLOCKSIZE;
+            if (toRead < BLOCKSIZE) {
+                curReadSize = (int) toRead;
+            }
+
+            inBlockBuffer = StreamUtils.getChunkFromStream(inputStream, blockBuffer, overflow, curReadSize);
 
             byte[] output = decryptFileChunk(blockBuffer, (int) Utils.align(inBlockBuffer, 16), IV);
 
-            IV = Arrays.copyOfRange(blockBuffer, BLOCKSIZE - 16, BLOCKSIZE);
+            if (inBlockBuffer == BLOCKSIZE) {
+                IV = Arrays.copyOfRange(blockBuffer, BLOCKSIZE - 16, BLOCKSIZE);
+            }
 
             int toWrite = inBlockBuffer;
+
             if ((written + inBlockBuffer) > filesize) {
                 toWrite = (int) (filesize - written);
             }
 
             written += toWrite;
+            toRead -= toWrite;
 
             outputStream.write(output, 0, toWrite);
 
@@ -114,6 +158,9 @@ public class NUSDecryption extends AESDecryption {
                 sha1fallback.update(output, 0, (int) toFallback);
                 writtenFallback += toFallback;
             }
+            if (written >= filesize && h3hash == null) {
+                break;
+            }
         } while (inBlockBuffer == BLOCKSIZE);
 
         if (sha1 != null && sha1fallback != null) {
@@ -127,8 +174,8 @@ public class NUSDecryption extends AESDecryption {
             byte[] calculated_hash2 = sha1fallback.digest();
             byte[] expected_hash = h3hash;
             if (!Arrays.equals(calculated_hash1, expected_hash) && !Arrays.equals(calculated_hash2, expected_hash)) {
-                outputStream.close();
                 inputStream.close();
+                outputStream.close();
                 throw new CheckSumWrongException("hash checksum failed", calculated_hash1, expected_hash);
 
             } else {
@@ -136,8 +183,8 @@ public class NUSDecryption extends AESDecryption {
             }
         }
 
-        outputStream.close();
         inputStream.close();
+        outputStream.close();
     }
 
     public void decryptFileStreamHashed(InputStream inputStream, OutputStream outputStream, long filesize, long fileoffset, short contentIndex, byte[] h3Hash)

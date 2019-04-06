@@ -220,7 +220,19 @@ public final class DecryptionService {
 
                 nusdecryption.decryptFileStreamHashed(inputStream, outputStream, size, offset, (short) contentIndex, h3);
             } else {
-                nusdecryption.decryptFileStream(inputStream, outputStream, size, (short) contentIndex, content.getSHA2Hash(), encryptedFileSize);
+                try {
+                    byte[] h3Hash = content.getSHA2Hash();
+                    // We want to check if we read the whole file or just a part of it.
+                    // There should be only one actual file inside a non-hashed content.
+                    // But it could also contain a directory, so we need to filter.
+                    long fstFileSize = content.getEntries().stream().filter(f -> !f.isDir()).findFirst().map(f -> f.getFileSize()).orElse(0L);
+                    if (size > 0 && size < fstFileSize) {
+                        h3Hash = null;
+                    }
+                    nusdecryption.decryptFileStream(inputStream, outputStream, size, offset, (short) contentIndex, h3Hash, encryptedFileSize);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         } else {
             StreamUtils.saveInputStreamToOutputStreamWithHash(inputStream, outputStream, size, content.getSHA2Hash(), encryptedFileSize);
@@ -285,9 +297,6 @@ public final class DecryptionService {
     }
 
     public byte[] getChunkFromFile(FSTEntry entry, long offset, long size) throws IOException, CheckSumWrongException {
-        if(!entry.getContent().isHashed()) {
-            throw new IOException("Only files from hashed contents are currently supported");
-        }
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         long fileOffset = entry.getFileOffset() + offset;
@@ -295,10 +304,15 @@ public final class DecryptionService {
 
         if (entry.getContent().isHashed()) {
             fileOffsetBlock = (fileOffset / 0xFC00) * 0x10000;
+        } else {
+            fileOffsetBlock = (fileOffset / 0x8000) * 0x8000;
+            // We need the previous IV if we don't start at the first block.
+            if (fileOffset >= 0x8000 && fileOffset % 0x8000 == 0) {
+                fileOffsetBlock -= 16;
+            }
         }
 
         decryptFSTEntryToStream(entry, out, size, fileOffset, fileOffsetBlock);
-
         return out.toByteArray();
 
     }
