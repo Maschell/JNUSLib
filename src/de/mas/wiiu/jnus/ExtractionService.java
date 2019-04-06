@@ -166,4 +166,8 @@ public final class ExtractionService {
 
     }
 
+    public byte[] getBytesFromContent(Content c, long offset, long size) throws IOException {
+        return getDataProvider().getChunkFromContent(c, offset, (int) size);
+    }
+
 }
