@@ -23,10 +23,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.io.FilenameUtils;
 
 import de.mas.wiiu.jnus.entities.TMD;
 import de.mas.wiiu.jnus.entities.Ticket;
@@ -92,14 +93,15 @@ public class NUSTitle {
             fullPath = File.separator + fullPath;
         }
 
-        String[] dirs = fullPath.split(Pattern.quote(File.separator));
-        if (dirs.length <= 1) {
-            return Optional.of(FST.getRoot());
+        String dirPath = FilenameUtils.getFullPathNoEndSeparator(fullPath);
+        Optional<FSTEntry> pathOpt = Optional.of(FST.getRoot());
+        if (!dirPath.equals(File.separator)) {
+            pathOpt = getFileEntryDir(dirPath);
         }
-        String dirPath = fullPath.substring(0, fullPath.length() - dirs[dirs.length - 1].length() - 1);
 
         String path = fullPath;
-        return getFileEntryDir(dirPath).flatMap(e -> getAllFSTEntryChildrenAsStream(e).filter(en -> path.equals(en.getFullPath())).findAny());
+
+        return pathOpt.flatMap(e -> e.getChildren().stream().filter(c -> c.getFullPath().equals(path)).findAny());
     }
 
     public List<FSTEntry> getFSTEntriesByRegEx(String regEx) {
@@ -139,14 +141,22 @@ public class NUSTitle {
     }
 
     public Optional<FSTEntry> getFileEntryDir(String string, FSTEntry curEntry) {
+        if (!string.endsWith(File.separator)) {
+            string += File.separator;
+        }
         for (val curChild : curEntry.getDirChildren()) {
-            if (string.startsWith(curChild.getFullPath())) {
-                if (string.equals(curChild.getFullPath())) {
+            String compareTo = curChild.getFullPath();
+            if (!compareTo.endsWith(File.separator)) {
+                compareTo += File.separator;
+            }
+            if (string.startsWith(compareTo)) {
+                if (string.equals(compareTo)) {
                     return Optional.of(curChild);
                 }
                 return getFileEntryDir(string, curChild);
             }
         }
+
         return Optional.empty();
     }
 
