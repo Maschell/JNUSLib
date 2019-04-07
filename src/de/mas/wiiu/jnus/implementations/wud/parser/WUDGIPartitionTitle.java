@@ -31,12 +31,11 @@ public class WUDGIPartitionTitle {
     public InputStream getFileAsStream(String filename, WUDDiscReader discReader, long offsetInFile, byte[] titleKey) throws IOException {
         FSTEntry entry = getEntryByFilename(rootEntry, filename);
         ContentFSTInfo info = fst.getContentFSTInfos().get((int) entry.getContentFSTID());
-
-        return getFileAsStream(info.getOffset(), entry.getFileOffset() + offsetInFile, (int) entry.getFileSize(), discReader, titleKey);
+        return getFileAsStream(info.getOffset(), entry.getFileOffset() + offsetInFile, entry.getFileSize(), discReader, titleKey);
     }
 
     public InputStream getFileAsStream(long contentOffset, long fileoffset, long size, WUDDiscReader discReader, byte[] titleKey) throws IOException {
-        return discReader.readDecryptedToInputStream(getAbsoluteReadOffset() + contentOffset, fileoffset, (int) size, titleKey, null, false);
+        return discReader.readDecryptedToInputStream(getAbsoluteReadOffset() + contentOffset, fileoffset, size, titleKey, null, false);
     }
 
     public byte[] getFileAsData(long contentOffset, long fileoffset, long size, WUDDiscReader discReader, byte[] titleKey) throws IOException {
