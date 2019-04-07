@@ -19,6 +19,7 @@ package de.mas.wiiu.jnus.implementations;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 
 import de.mas.wiiu.jnus.NUSTitle;
 import de.mas.wiiu.jnus.Settings;
@@ -39,9 +40,9 @@ public class NUSDataProviderRemote extends NUSDataProvider implements Paralleliz
     }
 
     @Override
-    public InputStream getInputStreamFromContent(Content content, long fileOffsetBlock) throws IOException {
+    public InputStream getInputStreamFromContent(Content content, long fileOffsetBlock, Optional<Long> size) throws IOException {
         NUSDownloadService downloadService = NUSDownloadService.getDefaultInstance();
-        return downloadService.getInputStreamForURL(getRemoteURL(content), fileOffsetBlock);
+        return downloadService.getInputStreamForURL(getRemoteURL(content), fileOffsetBlock, size);
     }
 
     private String getRemoteURL(Content content) {

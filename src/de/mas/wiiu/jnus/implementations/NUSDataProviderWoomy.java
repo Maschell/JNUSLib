@@ -19,6 +19,7 @@ package de.mas.wiiu.jnus.implementations;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
@@ -44,7 +45,7 @@ public class NUSDataProviderWoomy extends NUSDataProvider {
     }
 
     @Override
-    public InputStream getInputStreamFromContent(@NonNull Content content, long fileOffsetBlock) throws IOException {
+    public InputStream getInputStreamFromContent(@NonNull Content content, long fileOffsetBlock, Optional<Long> size) throws IOException {
         WoomyZipFile zipFile = getSharedWoomyZipFile();
         ZipEntry entry = getWoomyInfo().getContentFiles().get(content.getFilename().toLowerCase());
         if (entry == null) {

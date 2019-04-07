@@ -18,6 +18,7 @@ package de.mas.wiiu.jnus.implementations;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 
 import de.mas.wiiu.jnus.NUSTitle;
 import de.mas.wiiu.jnus.Settings;
@@ -61,10 +62,14 @@ public class NUSDataProviderWUD extends NUSDataProvider {
     }
 
     @Override
-    public InputStream getInputStreamFromContent(Content content, long fileOffsetBlock) throws IOException {
+    public InputStream getInputStreamFromContent(Content content, long fileOffsetBlock, Optional<Long> size) throws IOException {
         WUDDiscReader discReader = getDiscReader();
         long offset = getOffsetInWUD(content) + fileOffsetBlock;
-        return discReader.readEncryptedToInputStream(offset, content.getEncryptedFileSize() - fileOffsetBlock);
+        long usedSize = content.getEncryptedFileSize() - fileOffsetBlock;
+        if(size.isPresent()) {
+            usedSize = size.get();
+        }
+        return discReader.readEncryptedToInputStream(offset, usedSize);
     }
 
     @Override

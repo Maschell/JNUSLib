@@ -18,6 +18,7 @@ package de.mas.wiiu.jnus.implementations;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 
 import de.mas.wiiu.jnus.NUSTitle;
 import de.mas.wiiu.jnus.Settings;
@@ -44,7 +45,7 @@ public class NUSDataProviderWUDGI extends NUSDataProvider {
     }
 
     @Override
-    public InputStream getInputStreamFromContent(Content content, long fileOffsetBlock) throws IOException {
+    public InputStream getInputStreamFromContent(Content content, long fileOffsetBlock, Optional<Long> size) throws IOException {
         InputStream in = getGiPartitionTitle().getFileAsStream(content.getFilename(), getDiscReader(), fileOffsetBlock, titleKey);
         return in;
     }

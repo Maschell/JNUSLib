@@ -22,6 +22,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.Optional;
 
 import de.mas.wiiu.jnus.NUSTitle;
 import de.mas.wiiu.jnus.Settings;
@@ -45,7 +46,7 @@ public final class NUSDataProviderLocal extends NUSDataProvider {
     }
 
     @Override
-    public InputStream getInputStreamFromContent(Content content, long offset) throws IOException {
+    public InputStream getInputStreamFromContent(Content content, long offset, Optional<Long> size) throws IOException {
         File filepath = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), content.getFilename());
         if (filepath == null || !filepath.exists()) {
             String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + content.getFilename() + "\", file does not exist";

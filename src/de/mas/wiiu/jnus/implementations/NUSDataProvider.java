@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Optional;
 
 import de.mas.wiiu.jnus.NUSTitle;
 import de.mas.wiiu.jnus.Settings;
@@ -155,7 +156,7 @@ public abstract class NUSDataProvider {
     }
 
     public byte[] getChunkFromContent(Content content, long offset, int size) throws IOException {
-        return StreamUtils.getBytesFromStream(getInputStreamFromContent(content, offset), size);
+        return StreamUtils.getBytesFromStream(getInputStreamFromContent(content, offset, Optional.of((long)size)), size);
     }
 
     /**
@@ -165,7 +166,11 @@ public abstract class NUSDataProvider {
      * @return
      * @throws IOException
      */
-    public abstract InputStream getInputStreamFromContent(Content content, long offset) throws IOException;
+    public abstract InputStream getInputStreamFromContent(Content content, long offset, Optional<Long> size) throws IOException;
+
+    public InputStream getInputStreamFromContent(Content content, long offset) throws IOException {
+        return getInputStreamFromContent(content, offset, Optional.empty());
+    }
 
     // TODO: JavaDocs
     public abstract byte[] getContentH3Hash(Content content) throws IOException;
