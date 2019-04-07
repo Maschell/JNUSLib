@@ -88,8 +88,17 @@ public final class StreamUtils {
                     System.arraycopy(overflowbuf, 0, output, inBlockBuffer, toRead);
                     inBlockBuffer += toRead;
 
-                    System.arraycopy(overflowbuf, toRead, overflowbuf, 0, tooMuch);
-                    overflowbuffer.setLengthOfDataInBuffer(tooMuch);
+                    if (tooMuch > 0) {
+                        System.arraycopy(overflowbuf, toRead, overflowbuf, 0, tooMuch);
+                        overflowbuffer.setLengthOfDataInBuffer(tooMuch);
+                    } else {
+                        // Moving into front.
+                        int missingLength = overflowbuffer.getLengthOfDataInBuffer() - toRead;
+                        if (missingLength > 0) {
+                            System.arraycopy(overflowbuf, toRead, overflowbuf, 0, missingLength);
+                            overflowbuffer.setLengthOfDataInBuffer(missingLength);
+                        }
+                    }
                 } else {
                     System.arraycopy(overflowbuf, 0, output, inBlockBuffer, overflowbuffer.getLengthOfDataInBuffer());
                     inBlockBuffer += overflowbuffer.getLengthOfDataInBuffer();
