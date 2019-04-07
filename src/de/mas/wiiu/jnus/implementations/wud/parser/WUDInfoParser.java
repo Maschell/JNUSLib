@@ -66,7 +66,7 @@ public final class WUDInfoParser {
         // verify DiscKey before proceeding
         if (!Arrays.equals(Arrays.copyOfRange(PartitionTocBlock, 0, 4), DECRYPTED_AREA_SIGNATURE)) {
             // log.info("Decryption of PartitionTocBlock failed");
-            throw new RuntimeException("Decryption of PartitionTocBlock failed");
+            throw new IOException("Decryption of PartitionTocBlock failed");
         }
 
         result.getPartitions().clear();
