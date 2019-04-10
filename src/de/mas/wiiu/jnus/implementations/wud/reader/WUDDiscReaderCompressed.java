@@ -70,6 +70,7 @@ public class WUDDiscReaderCompressed extends WUDDiscReader {
 
                 input.seek(offset2);
                 int read = input.read(buffer);
+
                 if (read < 0) return;
                 try {
                     out.write(Arrays.copyOfRange(buffer, 0, bytesToRead));
@@ -85,6 +86,9 @@ public class WUDDiscReaderCompressed extends WUDDiscReader {
                 usedOffset += bytesToRead;
             }
             input.close();
+        }
+        synchronized (out) {
+            out.close();
         }
     }
 }
