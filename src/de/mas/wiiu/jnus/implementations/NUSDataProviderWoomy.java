@@ -23,7 +23,6 @@ import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
-import de.mas.wiiu.jnus.NUSTitle;
 import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.implementations.woomy.WoomyInfo;

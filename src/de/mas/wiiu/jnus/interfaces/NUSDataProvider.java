@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 
-
 package de.mas.wiiu.jnus.interfaces;
 
 import java.io.IOException;

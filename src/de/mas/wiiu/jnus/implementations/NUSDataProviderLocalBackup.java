@@ -54,7 +54,7 @@ public class NUSDataProviderLocalBackup implements NUSDataProvider {
     public Optional<byte[]> getRawTMD() throws IOException {
         String inputPath = getLocalPath();
         String tmdPath = inputPath + File.separator + Settings.TMD_FILENAME;
-        if (titleVersion != Settings.LATEST_TMD_VERSION) {  
+        if (titleVersion != Settings.LATEST_TMD_VERSION) {
             tmdPath = inputPath + File.separator + "v" + titleVersion + File.separator + Settings.TMD_FILENAME;
         }
         File tmdFile = new File(tmdPath);

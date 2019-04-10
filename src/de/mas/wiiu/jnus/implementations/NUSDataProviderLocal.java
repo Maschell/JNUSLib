@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Optional;
 
-import de.mas.wiiu.jnus.NUSTitle;
 import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;

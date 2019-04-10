@@ -27,8 +27,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.io.FilenameUtils;
-
 import de.mas.wiiu.jnus.entities.TMD;
 import de.mas.wiiu.jnus.entities.Ticket;
 import de.mas.wiiu.jnus.entities.content.Content;
@@ -39,7 +37,6 @@ import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.FSTUtils;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.val;
 
 public class NUSTitle {
     @Getter @Setter private FST FST;

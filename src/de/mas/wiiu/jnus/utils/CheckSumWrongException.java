@@ -31,6 +31,5 @@ public class CheckSumWrongException extends Exception {
         super(string);
         this.givenHash = given;
         this.expectedHash = expected;
-
     }
 }

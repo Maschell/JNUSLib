@@ -19,7 +19,6 @@ package de.mas.wiiu.jnus;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -30,7 +29,6 @@ import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.entities.fst.FST;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.StreamUtils;
-import de.mas.wiiu.jnus.utils.Utils;
 import de.mas.wiiu.jnus.utils.cryptography.AESDecryption;
 
 public class NUSTitleLoader {

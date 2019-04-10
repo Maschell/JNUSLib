@@ -88,7 +88,7 @@ public final class NUSDownloadService extends Downloader {
         HttpURLConnection connection = (HttpURLConnection) url_obj.openConnection();
         connection.setRequestProperty("User-Agent", Settings.USER_AGENT);
         String sizeString = "";
-        if(size.isPresent()) {
+        if (size.isPresent()) {
             sizeString = Long.toString(size.get());
         }
         connection.setRequestProperty("Range", "bytes=" + offset + "-" + sizeString);

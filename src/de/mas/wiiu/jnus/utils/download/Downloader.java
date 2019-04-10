@@ -42,7 +42,6 @@ public abstract class Downloader {
         ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
 
         if (responseCode == HttpURLConnection.HTTP_OK) {
-
             InputStream inputStream = httpConn.getInputStream();
 
             int bytesRead = -1;
