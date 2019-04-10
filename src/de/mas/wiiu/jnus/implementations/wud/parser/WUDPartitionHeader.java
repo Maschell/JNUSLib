@@ -72,12 +72,7 @@ public final class WUDPartitionHeader {
 
         // We have to make sure, that the list is ordered by index
         List<Content> contents = new ArrayList<>(allContents.values());
-        Collections.sort(contents, new Comparator<Content>() {
-            @Override
-            public int compare(Content o1, Content o2) {
-                return Short.compare(o1.getIndex(), o2.getIndex());
-            }
-        });
+        Collections.sort(contents, (o1, o2) -> Short.compare(o1.getIndex(), o2.getIndex()));
 
         for (Content c : allContents.values()) {
             if (!c.isHashed() || !c.isEncrypted()) {
