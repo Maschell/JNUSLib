@@ -16,6 +16,7 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.implementations.wud.parser;
 
+import de.mas.wiiu.jnus.Settings;
 import lombok.Data;
 
 @Data
@@ -24,4 +25,8 @@ public class WUDPartition {
     private final long partitionOffset;
 
     private WUDPartitionHeader partitionHeader;
+
+    public long getAbsolutePartitionOffset() {
+        return Settings.WIIU_DECRYPTED_AREA_OFFSET + getPartitionOffset();
+    }
 }
