@@ -41,13 +41,17 @@ public final class StreamUtils {
             } else {
                 buffer = new byte[0x8000];
             }
-            int totalRead = 0;
+            int toRead = size;
+            int curReadChunk = buffer.length;
             do {
-                int read = in.read(buffer);
+                if (toRead < curReadChunk) {
+                    curReadChunk = toRead;
+                }
+                int read = in.read(buffer, 0, curReadChunk);
                 if (read < 0) break;
-                System.arraycopy(buffer, 0, result, totalRead, read);
-                totalRead += read;
-            } while (totalRead < size);
+                System.arraycopy(buffer, 0, result, size - toRead, read);
+                toRead -= read;
+            } while (toRead > 0);
             in.close();
             return result;
         }
@@ -61,7 +65,6 @@ public final class StreamUtils {
             do {
                 try {
                     bytesRead = inputStream.read(overflowbuf, overflowbuffer.getLengthOfDataInBuffer(), overflowbuffer.getSpaceLeft());
-
                 } catch (IOException e) {
                     log.info(e.getMessage());
                     if (!e.getMessage().equals("Write end dead")) {
