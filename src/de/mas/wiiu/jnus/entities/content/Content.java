@@ -17,6 +17,7 @@
 package de.mas.wiiu.jnus.entities.content;
 
 import java.nio.ByteBuffer;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -67,11 +68,12 @@ public class Content implements Comparable<Content> {
      * @param input
      *            0x30 byte of data from the TMD (starting at 0xB04)
      * @return content object
+     * @throws ParseException 
      */
-    public static Content parseContent(byte[] input) {
+    public static Content parseContent(byte[] input) throws ParseException {
         if (input == null || input.length != CONTENT_SIZE) {
             log.info("Error: invalid Content byte[] input");
-            return null;
+            throw new ParseException("Error: invalid Content byte[] input", 0);
         }
         ByteBuffer buffer = ByteBuffer.allocate(input.length);
         buffer.put(input);
