@@ -17,6 +17,8 @@
 package de.mas.wiiu.jnus.implementations.woomy;
 
 import java.io.InputStream;
+import java.text.ParseException;
+import java.util.Optional;
 
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -40,7 +42,7 @@ public final class WoomyMetaParser extends XMLParser {
     private WoomyMetaParser() {
     }
 
-    public static WoomyMeta parseMeta(InputStream data) {
+    public static WoomyMeta parseMeta(InputStream data) throws ParseException {
         XMLParser parser = new WoomyMetaParser();
         String resultName = "";
         int resultIcon = 0;
@@ -48,33 +50,27 @@ public final class WoomyMetaParser extends XMLParser {
             parser.loadDocument(data);
         } catch (Exception e) {
             log.info("Error while loading the data into the WoomyMetaParser");
-            return null;
+            throw new ParseException("Error while loading the data into the WoomyMetaParser", 0);
         }
 
-        String name = parser.getValueOfElement(WOOMY_METADATA_NAME);
-        if (name != null && !name.isEmpty()) {
-            resultName = name;
-        }
+        resultName = parser.getValueOfElement(WOOMY_METADATA_NAME).orElse("");
 
-        String icon = parser.getValueOfElement(WOOMY_METADATA_ICON);
-        if (icon != null && !icon.isEmpty()) {
-            int icon_val = Integer.parseInt(icon);
-            resultIcon = icon_val;
-        }
+        resultIcon = parser.getValueOfElementAsInt(WOOMY_METADATA_ICON).orElse(0);
 
         WoomyMeta result = new WoomyMeta(resultName, resultIcon);
 
-        Node entries_node = parser.getNodeByValue(WOOMY_METADATA_ENTRIES);
+        Optional<Node> entries_node = parser.getNodeByValue(WOOMY_METADATA_ENTRIES);
+        if (entries_node.isPresent()) {
+            NodeList entry_list = entries_node.get().getChildNodes();
+            for (int i = 0; i < entry_list.getLength(); i++) {
+                Node node = entry_list.item(i);
 
-        NodeList entry_list = entries_node.getChildNodes();
-        for (int i = 0; i < entry_list.getLength(); i++) {
-            Node node = entry_list.item(i);
-
-            String folder = getAttributeValueFromNode(node, WOOMY_METADATA_ENTRY_FOLDER);
-            String entry_name = getAttributeValueFromNode(node, WOOMY_METADATA_ENTRY_NAME);
-            String entry_count = getAttributeValueFromNode(node, WOOMY_METADATA_ENTRY_ENTRIES);
-            int entry_count_val = Integer.parseInt(entry_count);
-            result.addEntry(entry_name, folder, entry_count_val);
+                String folder = getAttributeValueFromNode(node, WOOMY_METADATA_ENTRY_FOLDER);
+                String entry_name = getAttributeValueFromNode(node, WOOMY_METADATA_ENTRY_NAME);
+                String entry_count = getAttributeValueFromNode(node, WOOMY_METADATA_ENTRY_ENTRIES);
+                int entry_count_val = Integer.parseInt(entry_count);
+                result.addEntry(entry_name, folder, entry_count_val);
+            }
         }
 
         return result;

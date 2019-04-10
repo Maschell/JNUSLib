@@ -18,6 +18,7 @@ package de.mas.wiiu.jnus.utils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -40,56 +41,53 @@ public class XMLParser {
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document document = builder.parse(inputStream);
         this.document = document;
-
     }
 
-    public long getValueOfElementAsInt(String element, int index) {
-        return Integer.parseInt(getValueOfElement(element, index));
+    public Optional<Integer> getValueOfElementAsInt(String element) {
+        return getValueOfElementAsInt(element, 0);
     }
 
-    public long getValueOfElementAsLong(String element, int index) {
-        return Long.parseLong(getValueOfElement(element, index));
+    public Optional<Integer> getValueOfElementAsInt(String element, int index) {
+        return getValueOfElement(element, index).map(intStr -> Integer.parseInt(intStr));
     }
 
-    public String getValueOfElement(String element) {
+    public Optional<Long> getValueOfElementAsLong(String element, int index) {
+        return getValueOfElement(element, index).map(longStr -> Long.parseLong(longStr));
+    }
+
+    public Optional<String> getValueOfElement(String element) {
         return getValueOfElement(element, 0);
     }
 
-    public Node getNodeByValue(String element) {
+    public Optional<Node> getNodeByValue(String element) {
         return getNodeByValue(element, 0);
     }
 
-    public Node getNodeByValue(String element, int index) {
+    public Optional<Node> getNodeByValue(String element, int index) {
         if (document == null) {
             log.info("Please load the document first.");
         }
         NodeList list = document.getElementsByTagName(element);
         if (list == null) {
-            return null;
+            return Optional.empty();
         }
-        return list.item(index);
+        Node res = list.item(index);
+        if (res == null) {
+            return Optional.empty();
+        }
+        return Optional.of(res);
     }
 
-    public String getValueOfElementAttribute(String element, int index, String attribute) {
-        Node node = getNodeByValue(element, index);
-        if (node == null) {
-            // log.info("Node is null");
-            return "";
-        }
-        return getAttributeValueFromNode(node, attribute);
+    public Optional<String> getValueOfElementAttribute(String element, int index, String attribute) {
+        return getNodeByValue(element, index).map(node -> getAttributeValueFromNode(node, attribute));
     }
 
     public static String getAttributeValueFromNode(@NonNull Node element, String attribute) {
         return element.getAttributes().getNamedItem(attribute).getTextContent().toString();
     }
 
-    public String getValueOfElement(String element, int index) {
-        Node node = getNodeByValue(element, index);
-        if (node == null) {
-            // log.info("Node is null");
-            return "";
-        }
-
-        return node.getTextContent().toString();
+    public Optional<String> getValueOfElement(String element, int index) {
+        return getNodeByValue(element, index).map(node -> node.getTextContent().toString());
     }
+
 }

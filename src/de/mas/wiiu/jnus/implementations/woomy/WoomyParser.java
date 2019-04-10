@@ -18,6 +18,7 @@ package de.mas.wiiu.jnus.implementations.woomy;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Locale;
@@ -48,7 +49,7 @@ public final class WoomyParser {
         //
     }
 
-    public static WoomyInfo createWoomyInfo(File woomyFile) throws IOException, ParserConfigurationException, SAXException {
+    public static WoomyInfo createWoomyInfo(File woomyFile) throws IOException, ParserConfigurationException, SAXException, ParseException {
         WoomyInfo result = new WoomyInfo();
         if (!woomyFile.exists()) {
             log.info("File does not exist." + woomyFile.getAbsolutePath());
