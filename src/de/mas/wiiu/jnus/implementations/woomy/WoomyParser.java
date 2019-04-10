@@ -17,6 +17,7 @@
 package de.mas.wiiu.jnus.implementations.woomy;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Enumeration;
@@ -53,14 +54,14 @@ public final class WoomyParser {
         WoomyInfo result = new WoomyInfo();
         if (!woomyFile.exists()) {
             log.info("File does not exist." + woomyFile.getAbsolutePath());
-            return null;
+            throw new FileNotFoundException("File does not exist." + woomyFile.getAbsolutePath());
         }
         try (ZipFile zipFile = new ZipFile(woomyFile)) {
             result.setWoomyFile(woomyFile);
             ZipEntry metaFile = zipFile.getEntry(Settings.WOOMY_METADATA_FILENAME);
             if (metaFile == null) {
                 log.info("No meta ");
-                return null;
+                throw new FileNotFoundException("No \""+ Settings.WOOMY_METADATA_FILENAME +"\" inside woomy was found.");
             }
             WoomyMeta meta = WoomyMetaParser.parseMeta(zipFile.getInputStream(metaFile));
 
@@ -68,7 +69,7 @@ public final class WoomyParser {
              * Currently we will only use the first entry in the metadata.xml
              */
             if (meta.getEntries().isEmpty()) {
-                return null;
+                throw new FileNotFoundException("WoomyMeta has no entries");
             }
             WoomyEntry entry = meta.getEntries().get(0);
             String regEx = entry.getFolder() + ".*"; // We want all files in the entry fodler
@@ -77,6 +78,7 @@ public final class WoomyParser {
 
         } catch (ZipException e) {
             log.info("Caught Execption : " + e.getMessage());
+            throw new ParseException("Failed to parse woomy:" + e.getMessage(), 0);
         }
         return result;
     }
