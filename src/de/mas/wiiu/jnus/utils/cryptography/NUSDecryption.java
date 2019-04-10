@@ -201,9 +201,8 @@ public class NUSDecryption extends AESDecryption {
 
         byte[] encryptedBlockBuffer = new byte[BLOCKSIZE];
         ByteArrayBuffer overflow = new ByteArrayBuffer(BLOCKSIZE);
-
         long wrote = 0;
-        int inBlockBuffer;
+        int inBlockBuffer = 0;
         do {
             inBlockBuffer = StreamUtils.getChunkFromStream(inputStream, encryptedBlockBuffer, overflow, BLOCKSIZE);
 
@@ -222,8 +221,15 @@ public class NUSDecryption extends AESDecryption {
                 writeSize = (int) (filesize - wrote);
             }
 
-            outputStream.write(output, (int) (0 + soffset), (int) writeSize);
-
+            try {
+                outputStream.write(output, (int) (0 + soffset), (int) writeSize);
+            } catch (IOException e) {
+                if (e.getMessage().equals("Pipe closed")) {
+                    break;
+                }
+                e.printStackTrace();
+                throw e;
+            }
             wrote += writeSize;
 
             block++;
