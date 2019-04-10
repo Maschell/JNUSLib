@@ -72,6 +72,9 @@ public class NUSTitleLoader {
 
         if (fstContent.isEncrypted()) {
             AESDecryption aesDecryption = new AESDecryption(ticket.getDecryptedKey(), new byte[0x10]);
+            if (fstBytes.length % 0x10 != 0) {
+                throw new IOException("FST length is not align to 16");
+            }
             fstBytes = aesDecryption.decrypt(fstBytes);
         }
 
