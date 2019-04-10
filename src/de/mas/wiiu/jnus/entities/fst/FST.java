@@ -16,6 +16,7 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.entities.fst;
 
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -52,12 +53,11 @@ public final class FST {
      * @param contentsMappedByIndex
      *            map of index/content
      * @return
+     * @throws ParseException 
      */
-    public static FST parseFST(byte[] fstData, Map<Integer, Content> contentsMappedByIndex) {
+    public static FST parseFST(byte[] fstData, Map<Integer, Content> contentsMappedByIndex) throws ParseException {
         if (!Arrays.equals(Arrays.copyOfRange(fstData, 0, 3), new byte[] { 0x46, 0x53, 0x54 })) {
-            throw new RuntimeException("Failed to parse FST");
-            // return null;
-            // throw new IllegalArgumentException("Not a FST. Maybe a wrong key?");
+            throw new ParseException("Failed to parse FST",0);
         }
 
         int sectorSize = ByteUtils.getIntFromBytes(fstData, 0x04);

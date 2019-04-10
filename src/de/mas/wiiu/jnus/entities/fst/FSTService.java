@@ -16,6 +16,7 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.entities.fst;
 
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +34,7 @@ public final class FSTService {
     }
 
     public static void parseFST(FSTEntry rootEntry, byte[] fstSection, byte[] namesSection, Map<Integer, Content> contentsByIndex,
-            Map<Integer, ContentFSTInfo> contentsFSTByIndex, int sectorSize) {
+            Map<Integer, ContentFSTInfo> contentsFSTByIndex, int sectorSize) throws ParseException {
         int totalEntries = ByteUtils.getIntFromBytes(fstSection, 0x08);
 
         int level = 0;
@@ -103,12 +104,14 @@ public final class FSTService {
                 Content content = contentsByIndex.get((int) contentIndex);
                 if (content == null) {
                     log.warning("Content for FST Entry not found");
+                    throw new ParseException("Content for FST Entry not found", 0);
                 } else {
                     entryParam.setContent(content);
 
                     ContentFSTInfo contentFSTInfo = contentsFSTByIndex.get((int) contentIndex);
                     if (contentFSTInfo == null) {
                         log.warning("ContentFSTInfo for FST Entry not found");
+                        throw new ParseException("ContentFSTInfo for FST Entry not found", 0);
                     } else {
                         content.setContentFSTInfo(contentFSTInfo);
                     }
