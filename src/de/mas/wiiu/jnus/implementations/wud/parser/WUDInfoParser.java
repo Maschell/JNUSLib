@@ -21,11 +21,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import de.mas.wiiu.jnus.FSTUtils;
 import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.content.ContentFSTInfo;
 import de.mas.wiiu.jnus.entities.fst.FST;
@@ -52,7 +55,7 @@ public final class WUDInfoParser {
         //
     }
 
-    public static WUDInfo createAndLoad(WUDDiscReader discReader, byte[] titleKey) throws IOException {
+    public static WUDInfo createAndLoad(WUDDiscReader discReader, byte[] titleKey) throws IOException, ParseException {
         WUDInfo result = new WUDInfo(titleKey, discReader);
 
         byte[] PartitionTocBlock;
@@ -66,15 +69,14 @@ public final class WUDInfoParser {
         // verify DiscKey before proceeding
         if (!Arrays.equals(Arrays.copyOfRange(PartitionTocBlock, 0, 4), DECRYPTED_AREA_SIGNATURE)) {
             // log.info("Decryption of PartitionTocBlock failed");
-            throw new IOException("Decryption of PartitionTocBlock failed");
+            throw new ParseException("Decryption of PartitionTocBlock failed", 0);
         }
 
-        result.getPartitions().clear();
-        result.getPartitions().putAll(readGamePartitions(result, PartitionTocBlock));
+        result.getPartitions().addAll(parsePartitions(result, PartitionTocBlock));
         return result;
     }
 
-    private static Map<String, WUDPartition> readGamePartitions(WUDInfo wudInfo, byte[] partitionTocBlock) throws IOException {
+    private static Collection<WUDPartition> parsePartitions(WUDInfo wudInfo, byte[] partitionTocBlock) throws IOException, ParseException {
         ByteBuffer buffer = ByteBuffer.allocate(partitionTocBlock.length);
 
         buffer.order(ByteOrder.BIG_ENDIAN);
@@ -83,8 +85,7 @@ public final class WUDInfoParser {
 
         int partitionCount = (int) ByteUtils.getUnsingedIntFromBytes(partitionTocBlock, 0x1C, ByteOrder.BIG_ENDIAN);
 
-        Map<String, WUDPartition> internalPartitions = new HashMap<>();
-        Map<String, WUDPartition> gamePartitions = new HashMap<>();
+        Map<String, Long> internalPartitions = new HashMap<>();
 
         // populate partition information from decrypted TOC
         for (int i = 0; i < partitionCount; i++) {
@@ -104,21 +105,14 @@ public final class WUDInfoParser {
 
             long partitionOffset = ((tmp * (long) 0x8000) - 0x10000);
 
-            WUDPartition partition = new WUDPartition(partitionName, partitionOffset);
-
-            byte[] header = wudInfo.getWUDDiscReader().readEncryptedToByteArray(partition.getPartitionOffset() + 0x10000, 0, 0x8000);
-            WUDPartitionHeader partitionHeader = WUDPartitionHeader.parseHeader(header);
-            partition.setPartitionHeader(partitionHeader);
-
-            internalPartitions.put(partitionName, partition);
+            internalPartitions.put(partitionName, partitionOffset);
         }
 
         val siPartitionOpt = internalPartitions.entrySet().stream().filter(e -> e.getKey().startsWith("SI")).findFirst();
-        val siPartitionPair = siPartitionOpt.orElseThrow(() -> new RuntimeException("SI partition not foud."));
+        val siPartitionPair = siPartitionOpt.orElseThrow(() -> new ParseException("SI partition not found.", 0));
 
         // siPartition
-        long siPartitionOffset = siPartitionPair.getValue().getPartitionOffset();
-        val siPartition = siPartitionPair.getValue();
+        long siPartitionOffset = siPartitionPair.getValue();
 
         byte[] fileTableBlock;
 
@@ -131,66 +125,73 @@ public final class WUDInfoParser {
 
         if (!Arrays.equals(Arrays.copyOfRange(fileTableBlock, 0, 4), PARTITION_FILE_TABLE_SIGNATURE)) {
             log.info("FST Decrpytion failed");
-            throw new RuntimeException("Failed to decrypt the FST of the SI partition.");
+            throw new ParseException("Failed to decrypt the FST of the SI partition.", 0);
         }
 
         FST siFST = FST.parseFST(fileTableBlock, null);
 
+        Map<String, WUDPartition> partitionsResult = new HashMap<>();
+
         for (val dirChilden : siFST.getRoot().getDirChildren()) {
             // The SI partition contains the tmd, cert and tik for every GM partition.
-            byte[] rawTIK = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_TICKET_FILENAME, siPartition, siFST, wudInfo.getWUDDiscReader(),
-                    wudInfo.getTitleKey());
-            byte[] rawTMD = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_TMD_FILENAME, siPartition, siFST, wudInfo.getWUDDiscReader(),
-                    wudInfo.getTitleKey());
-            byte[] rawCert = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_CERT_FILENAME, siPartition, siFST, wudInfo.getWUDDiscReader(),
-                    wudInfo.getTitleKey());
+            byte[] rawTIK = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_TICKET_FILENAME, siPartitionOffset, siFST,
+                    wudInfo.getWUDDiscReader(), wudInfo.getTitleKey());
+            byte[] rawTMD = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_TMD_FILENAME, siPartitionOffset, siFST,
+                    wudInfo.getWUDDiscReader(), wudInfo.getTitleKey());
+            byte[] rawCert = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_CERT_FILENAME, siPartitionOffset, siFST,
+                    wudInfo.getWUDDiscReader(), wudInfo.getTitleKey());
 
             String partitionName = "GM" + Utils.ByteArrayToString(Arrays.copyOfRange(rawTIK, 0x1DC, 0x1DC + 0x08));
 
             val curPartitionOpt = internalPartitions.entrySet().stream().filter(e -> e.getKey().startsWith(partitionName)).findFirst();
-            val curPartitionPair = curPartitionOpt.orElseThrow(() -> new RuntimeException("partition not foud."));
+            val curPartitionPair = curPartitionOpt.orElseThrow(() -> new ParseException("partition not foud.", 0));
+            long curPartitionOffset = curPartitionPair.getValue();
 
-            WUDGamePartition curPartition = new WUDGamePartition(curPartitionPair.getKey(), curPartitionPair.getValue().getPartitionOffset(), rawTMD, rawCert,
-                    rawTIK);
-            curPartition.setPartitionHeader(curPartitionPair.getValue().getPartitionHeader());
-            gamePartitions.put(curPartitionPair.getKey(), curPartition);
+            WUDGamePartition curPartition = new WUDGamePartition(curPartitionPair.getKey(), curPartitionOffset, rawTMD, rawCert, rawTIK);
+            byte[] header = wudInfo.getWUDDiscReader().readEncryptedToByteArray(curPartition.getPartitionOffset() + 0x10000, 0, 0x8000);
+            WUDPartitionHeader partitionHeader = WUDPartitionHeader.parseHeader(header);
+            curPartition.setPartitionHeader(partitionHeader);
+            partitionsResult.put(curPartitionPair.getKey(), curPartition);
         }
 
-        val giPartitions = internalPartitions.entrySet().stream().filter(e -> e.getKey().startsWith("GI")).collect(Collectors.toList());
-        for (val giPartition : giPartitions) {
-            String curPartionName = giPartition.getKey();
-            WUDPartition curPartition = giPartition.getValue();
+        val dataPartitions = internalPartitions.entrySet().stream().filter(e -> !e.getKey().startsWith("GM")).collect(Collectors.toList());
+        for (val dataPartition : dataPartitions) {
+            String curPartionName = dataPartition.getKey();
+            long partitionOffset = dataPartition.getValue();
 
-            byte[] curFileTableBlock = wudInfo.getWUDDiscReader().readDecryptedToByteArray(
-                    Settings.WIIU_DECRYPTED_AREA_OFFSET + curPartition.getPartitionOffset(), 0, 0x8000, wudInfo.getTitleKey(), null, true);
+            byte[] curFileTableBlock;
+            if (wudInfo.getTitleKey() == null) {
+                curFileTableBlock = wudInfo.getWUDDiscReader().readEncryptedToByteArray(Settings.WIIU_DECRYPTED_AREA_OFFSET + partitionOffset, 0, 0x8000);
+            } else {
+                curFileTableBlock = wudInfo.getWUDDiscReader().readDecryptedToByteArray(Settings.WIIU_DECRYPTED_AREA_OFFSET + partitionOffset, 0, 0x8000,
+                        wudInfo.getTitleKey(), null, true);
+            }
             if (!Arrays.equals(Arrays.copyOfRange(curFileTableBlock, 0, 4), WUDInfoParser.PARTITION_FILE_TABLE_SIGNATURE)) {
                 log.info("FST Decrpytion failed");
-                throw new RuntimeException("Failed to decrypt the FST of the SI partition.");
+                throw new ParseException("Failed to decrypt the FST of the " + curPartionName + " partition.", 0);
             }
 
             FST curFST = FST.parseFST(curFileTableBlock, null);
 
-            WUDGIPartition curNewPartition = new WUDGIPartition(curPartionName, curPartition.getPartitionOffset(), curFST);
-            curPartition.setPartitionHeader(curPartition.getPartitionHeader());
+            WUDDataPartition curDataPartition = new WUDDataPartition(curPartionName, partitionOffset, curFST);
 
-            gamePartitions.put(curPartionName, curNewPartition);
+            byte[] header = wudInfo.getWUDDiscReader().readEncryptedToByteArray(curDataPartition.getPartitionOffset() + 0x10000, 0, 0x8000);
+            WUDPartitionHeader partitionHeader = WUDPartitionHeader.parseHeader(header);
+            curDataPartition.setPartitionHeader(partitionHeader);
+
+            partitionsResult.put(curPartionName, curDataPartition);
         }
 
-        return gamePartitions;
+        return partitionsResult.values();
     }
 
-    private static byte[] getFSTEntryAsByte(String filePath, WUDPartition partition, FST fst, WUDDiscReader discReader, byte[] key) throws IOException {
-        FSTEntry entry = getEntryByFullPath(fst.getRoot(), filePath);
-        if(entry == null) {
-            String errormsg = "FSTEntry with name \"" + filePath + "\" not found.";
-            log.warning(errormsg);
-            throw new FileNotFoundException(errormsg);
-        }
+    private static byte[] getFSTEntryAsByte(String filePath, long partitionOffset, FST fst, WUDDiscReader discReader, byte[] key) throws IOException {
+        FSTEntry entry = FSTUtils.getEntryByFullPath(fst.getRoot(), filePath).orElseThrow(() -> new FileNotFoundException(filePath + " was not found."));
 
         ContentFSTInfo info = fst.getContentFSTInfos().get((int) entry.getContentFSTID());
 
         if (key == null) {
-            return discReader.readEncryptedToByteArray(Settings.WIIU_DECRYPTED_AREA_OFFSET + (long) partition.getPartitionOffset() + (long) info.getOffset(),
+            return discReader.readEncryptedToByteArray(((long) Settings.WIIU_DECRYPTED_AREA_OFFSET) + partitionOffset + (long) info.getOffset(),
                     entry.getFileOffset(), (int) entry.getFileSize());
         }
 
@@ -199,22 +200,8 @@ public final class WUDInfoParser {
         byteBuffer.position(0x08);
         byte[] IV = byteBuffer.putLong(entry.getFileOffset() >> 16).array();
 
-        return discReader.readDecryptedToByteArray(Settings.WIIU_DECRYPTED_AREA_OFFSET + (long) partition.getPartitionOffset() + (long) info.getOffset(),
-                entry.getFileOffset(), (int) entry.getFileSize(), key, IV, false);
+        return discReader.readDecryptedToByteArray(((long) Settings.WIIU_DECRYPTED_AREA_OFFSET) + partitionOffset + info.getOffset(), entry.getFileOffset(),
+                (int) entry.getFileSize(), key, IV, false);
     }
 
-    private static FSTEntry getEntryByFullPath(FSTEntry root, String filePath) {
-        for (FSTEntry cur : root.getFileChildren()) {
-            if (cur.getFullPath().equals(filePath)) {
-                return cur;
-            }
-        }
-        for (FSTEntry cur : root.getDirChildren()) {
-            FSTEntry dir_result = getEntryByFullPath(cur, filePath);
-            if (dir_result != null) {
-                return dir_result;
-            }
-        }
-        return null;
-    }
 }

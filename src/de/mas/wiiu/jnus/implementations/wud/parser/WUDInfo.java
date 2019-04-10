@@ -16,36 +16,25 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.implementations.wud.parser;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReader;
-import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
 
 @Data
 public class WUDInfo {
-    private final byte[] titleKey;
-
+    @Getter private final byte[] titleKey;
     private final WUDDiscReader WUDDiscReader;
-    private final Map<String, WUDPartition> partitions = new HashMap<>();
-
-    @Getter(AccessLevel.PRIVATE) @Setter(AccessLevel.PROTECTED) private String gamePartitionName;
-
-    public void addPartion(String partitionName, WUDGamePartition partition) {
-        getPartitions().put(partitionName, partition);
-    }
+    private final List<WUDPartition> partitions = new ArrayList<>();
 
     public List<WUDGamePartition> getGamePartitions() {
-        return partitions.values().stream().filter(p -> p instanceof WUDGamePartition).map(p -> (WUDGamePartition) p).collect(Collectors.toList());
+        return partitions.stream().filter(p -> p instanceof WUDGamePartition).map(p -> (WUDGamePartition) p).collect(Collectors.toList());
     }
 
-    public List<WUDGIPartitionTitle> getGIPartitionTitles() {
-        return partitions.values().stream().filter(p -> p instanceof WUDGIPartition).flatMap(p -> ((WUDGIPartition) p).getTitles().stream())
-                .collect(Collectors.toList());
+    public List<WUDDataPartition> getDataPartitions() {
+        return partitions.stream().filter(p -> p instanceof WUDDataPartition).map(p -> ((WUDDataPartition) p)).collect(Collectors.toList());
     }
 }
