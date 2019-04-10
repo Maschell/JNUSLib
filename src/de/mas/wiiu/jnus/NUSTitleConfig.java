@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (C) 2016-2018 Maschell
+ * Copyright (C) 2016-2019 Maschell
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,23 +17,11 @@
 package de.mas.wiiu.jnus;
 
 import de.mas.wiiu.jnus.entities.Ticket;
-import de.mas.wiiu.jnus.implementations.woomy.WoomyInfo;
-import de.mas.wiiu.jnus.implementations.wud.parser.WUDGIPartitionTitle;
-import de.mas.wiiu.jnus.implementations.wud.parser.WUDGamePartition;
-import de.mas.wiiu.jnus.implementations.wud.parser.WUDInfo;
 import lombok.Data;
 
 @Data
 public class NUSTitleConfig {
-    private String inputPath;
-    private WUDGamePartition WUDGamePartition = null;
-    private WUDGIPartitionTitle WUDGIPartitionTitle = null;
-    private WUDInfo WUDInfo;
     private Ticket ticket;
-
-    private int version = Settings.LATEST_TMD_VERSION;
-    private long titleID = 0x0L;
-
-    private WoomyInfo woomyInfo;
     private boolean noDecryption;
+    private byte[] commonKey; 
 }

@@ -16,8 +16,13 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 import de.mas.wiiu.jnus.entities.TMD;
 import de.mas.wiiu.jnus.entities.Ticket;
@@ -25,19 +30,19 @@ import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.entities.fst.FST;
 import de.mas.wiiu.jnus.implementations.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.StreamUtils;
+import de.mas.wiiu.jnus.utils.Utils;
 import de.mas.wiiu.jnus.utils.cryptography.AESDecryption;
-import lombok.extern.java.Log;
 
-@Log
-abstract class NUSTitleLoader {
-    protected NUSTitleLoader() {
+public class NUSTitleLoader {
+    private NUSTitleLoader() {
         // should be empty
     }
 
-    public NUSTitle loadNusTitle(NUSTitleConfig config) throws Exception {
+    public static NUSTitle loadNusTitle(NUSTitleConfig config, Supplier<NUSDataProvider> dataProviderFunction)
+            throws IOException, ParseException {
         NUSTitle result = new NUSTitle();
 
-        NUSDataProvider dataProvider = getDataProvider(result, config);
+        NUSDataProvider dataProvider = dataProviderFunction.get();
         result.setDataProvider(dataProvider);
 
         byte[] tmdData = dataProvider.getRawTMD().orElseThrow(() -> new ParseException("No TMD data found", 0));
@@ -79,6 +84,4 @@ abstract class NUSTitleLoader {
 
         return result;
     }
-
-    protected abstract NUSDataProvider getDataProvider(NUSTitle title, NUSTitleConfig config);
 }

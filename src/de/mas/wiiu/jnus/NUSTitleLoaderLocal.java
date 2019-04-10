@@ -16,35 +16,34 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus;
 
+import java.io.IOException;
+import java.text.ParseException;
+
 import de.mas.wiiu.jnus.entities.Ticket;
-import de.mas.wiiu.jnus.implementations.NUSDataProvider;
 import de.mas.wiiu.jnus.implementations.NUSDataProviderLocal;
 
-public final class NUSTitleLoaderLocal extends NUSTitleLoader {
+public final class NUSTitleLoaderLocal {
 
-    private NUSTitleLoaderLocal() {
-        super();
+    public static NUSTitle loadNUSTitle(String inputPath, byte[] commonKey) throws Exception {
+        return loadNUSTitle(inputPath, null, commonKey);
     }
 
-    public static NUSTitle loadNUSTitle(String inputPath) throws Exception {
-        return loadNUSTitle(inputPath, null);
+    public static NUSTitle loadNUSTitle(String inputPath, Ticket ticket) throws IOException, ParseException {
+        return loadNUSTitle(inputPath, ticket, null);
     }
 
-    public static NUSTitle loadNUSTitle(String inputPath, Ticket ticket) throws Exception {
-        NUSTitleLoader loader = new NUSTitleLoaderLocal();
+    public static NUSTitle loadNUSTitle(String inputPath, Ticket ticket, byte[] commonKey) throws IOException, ParseException {
         NUSTitleConfig config = new NUSTitleConfig();
+
+        config.setCommonKey(commonKey);
 
         if (ticket != null) {
             config.setTicket(ticket);
+        } else if (commonKey == null) {
+            throw new IOException("Ticket was null and no commonKey was given");
         }
-        config.setInputPath(inputPath);
 
-        return loader.loadNusTitle(config);
-    }
-
-    @Override
-    protected NUSDataProvider getDataProvider(NUSTitle title, NUSTitleConfig config) {
-        return new NUSDataProviderLocal(title, config.getInputPath());
+        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderLocal(inputPath));
     }
 
 }

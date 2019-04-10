@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (C) 2016-2018 Maschell
+ * Copyright (C) 2016-2019 Maschell
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,32 +17,29 @@
 package de.mas.wiiu.jnus;
 
 import java.io.File;
+import java.io.IOException;
+import java.text.ParseException;
 
-import de.mas.wiiu.jnus.implementations.NUSDataProvider;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
+
 import de.mas.wiiu.jnus.implementations.NUSDataProviderWoomy;
 import de.mas.wiiu.jnus.implementations.woomy.WoomyInfo;
 import de.mas.wiiu.jnus.implementations.woomy.WoomyParser;
-import lombok.extern.java.Log;
 
-@Log
-public final class NUSTitleLoaderWoomy extends NUSTitleLoader {
+public final class NUSTitleLoaderWoomy {
 
-    public static NUSTitle loadNUSTitle(String inputFile) throws Exception {
-        NUSTitleLoaderWoomy loader = new NUSTitleLoaderWoomy();
+    private NUSTitleLoaderWoomy() {
+
+    }
+
+    public static NUSTitle loadNUSTitle(String inputFile) throws IOException, ParserConfigurationException, SAXException, ParseException {
         NUSTitleConfig config = new NUSTitleConfig();
 
         WoomyInfo woomyInfo = WoomyParser.createWoomyInfo(new File(inputFile));
-        if (woomyInfo == null) {
-            log.info("Created woomy is null.");
-            return null;
-        }
-        config.setWoomyInfo(woomyInfo);
-        return loader.loadNusTitle(config);
-    }
 
-    @Override
-    protected NUSDataProvider getDataProvider(NUSTitle title, NUSTitleConfig config) {
-        return new NUSDataProviderWoomy(title, config.getWoomyInfo());
+        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderWoomy(woomyInfo));
     }
 
 }

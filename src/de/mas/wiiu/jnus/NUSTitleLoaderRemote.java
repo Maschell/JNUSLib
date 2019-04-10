@@ -16,22 +16,23 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus;
 
+import java.io.IOException;
+import java.text.ParseException;
+
 import de.mas.wiiu.jnus.entities.Ticket;
-import de.mas.wiiu.jnus.implementations.NUSDataProvider;
 import de.mas.wiiu.jnus.implementations.NUSDataProviderRemote;
 
-public final class NUSTitleLoaderRemote extends NUSTitleLoader {
+public final class NUSTitleLoaderRemote {
 
     private NUSTitleLoaderRemote() {
-        super();
     }
 
-    public static NUSTitle loadNUSTitle(long titleID) throws Exception {
-        return loadNUSTitle(titleID, Settings.LATEST_TMD_VERSION, null);
+    public static NUSTitle loadNUSTitle(long titleID, byte[] commonKey) throws Exception {
+        return loadNUSTitle(titleID, Settings.LATEST_TMD_VERSION, commonKey);
     }
 
-    public static NUSTitle loadNUSTitle(long titleID, int version) throws Exception {
-        return loadNUSTitle(titleID, version, null);
+    public static NUSTitle loadNUSTitle(long titleID, int version, byte[] commonKey) throws Exception {
+        return loadNUSTitle(titleID, version, null, false, commonKey);
     }
 
     public static NUSTitle loadNUSTitle(long titleID, Ticket ticket) throws Exception {
@@ -39,24 +40,20 @@ public final class NUSTitleLoaderRemote extends NUSTitleLoader {
     }
 
     public static NUSTitle loadNUSTitle(long titleID, int version, Ticket ticket) throws Exception {
-        return loadNUSTitle(titleID, version, ticket, false);
+        return loadNUSTitle(titleID, version, ticket, false, null);
     }
 
-    public static NUSTitle loadNUSTitle(long titleID, int version, Ticket ticket, boolean noEncryption) throws Exception {
-        NUSTitleLoader loader = new NUSTitleLoaderRemote();
+    public static NUSTitle loadNUSTitle(long titleID, int version, Ticket ticket, boolean noEncryption, byte[] commonKey) throws IOException, ParseException {
         NUSTitleConfig config = new NUSTitleConfig();
 
-        config.setVersion(version);
-        config.setTitleID(titleID);
         config.setTicket(ticket);
         config.setNoDecryption(noEncryption);
+        config.setCommonKey(commonKey);
+        if (ticket == null && !noEncryption && commonKey == null) {
+            throw new IOException("Ticket was null and no commonKey was given");
+        }
 
-        return loader.loadNusTitle(config);
-    }
-
-    @Override
-    protected NUSDataProvider getDataProvider(NUSTitle title, NUSTitleConfig config) {
-        return new NUSDataProviderRemote(title, config.getVersion(), config.getTitleID());
+        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderRemote(version, titleID));
     }
 
 }

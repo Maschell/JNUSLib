@@ -22,7 +22,6 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.Arrays;
 
-import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.utils.Utils;
 import de.mas.wiiu.jnus.utils.cryptography.AESDecryption;
 import lombok.Getter;
@@ -44,17 +43,17 @@ public final class Ticket {
         this.IV = IV;
     }
 
-    public static Ticket parseTicket(File ticket) throws IOException {
+    public static Ticket parseTicket(File ticket, byte[] commonKey) throws IOException {
         if (ticket == null || !ticket.exists()) {
             log.warning("Ticket input file null or doesn't exist.");
-            return null;
+            throw new IOException("Ticket input file null or doesn't exist.");
         }
-        return parseTicket(Files.readAllBytes(ticket.toPath()));
+        return parseTicket(Files.readAllBytes(ticket.toPath()), commonKey);
     }
 
-    public static Ticket parseTicket(byte[] ticket) throws IOException {
+    public static Ticket parseTicket(byte[] ticket, byte[] commonKey) throws IOException {
         if (ticket == null) {
-            return null;
+            throw new IOException("Ticket input file null or doesn't exist.");
         }
 
         ByteBuffer buffer = ByteBuffer.allocate(ticket.length);
@@ -69,20 +68,20 @@ public final class Ticket {
         buffer.position(POSITION_TITLEID);
         long titleID = buffer.getLong();
 
-        Ticket result = createTicket(encryptedKey, titleID);
+        Ticket result = createTicket(encryptedKey, titleID, commonKey);
 
         return result;
     }
 
-    public static Ticket createTicket(byte[] encryptedKey, long titleID) {
+    public static Ticket createTicket(byte[] encryptedKey, long titleID, byte[] commonKey) {
         byte[] IV = ByteBuffer.allocate(0x10).putLong(titleID).array();
-        byte[] decryptedKey = calculateDecryptedKey(encryptedKey, IV);
+        byte[] decryptedKey = calculateDecryptedKey(encryptedKey, IV, commonKey);
 
         return new Ticket(encryptedKey, decryptedKey, IV);
     }
 
-    private static byte[] calculateDecryptedKey(byte[] encryptedKey, byte[] IV) {
-        AESDecryption decryption = new AESDecryption(Settings.commonKey, IV);
+    private static byte[] calculateDecryptedKey(byte[] encryptedKey, byte[] IV, byte[] commonKey) {
+        AESDecryption decryption = new AESDecryption(commonKey, IV);
         return decryption.decrypt(encryptedKey);
     }
 
@@ -107,4 +106,5 @@ public final class Ticket {
     public String toString() {
         return "Ticket [encryptedKey=" + Utils.ByteArrayToString(encryptedKey) + ", decryptedKey=" + Utils.ByteArrayToString(decryptedKey) + "]";
     }
+
 }
