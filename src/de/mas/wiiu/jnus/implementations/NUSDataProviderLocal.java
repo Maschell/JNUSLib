@@ -27,6 +27,7 @@ import java.util.Optional;
 import de.mas.wiiu.jnus.NUSTitle;
 import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.content.Content;
+import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.FileUtils;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 import lombok.Getter;

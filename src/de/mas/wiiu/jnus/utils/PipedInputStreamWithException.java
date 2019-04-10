@@ -14,12 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
-package de.mas.wiiu.jnus;
+package de.mas.wiiu.jnus.utils;
 
 import java.io.IOException;
 import java.io.PipedInputStream;
 
-import de.mas.wiiu.jnus.utils.Utils;
+import de.mas.wiiu.jnus.interfaces.InputStreamWithException;
 import lombok.extern.java.Log;
 
 @Log

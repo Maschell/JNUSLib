@@ -29,7 +29,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
 import de.mas.wiiu.jnus.entities.content.Content;
-import de.mas.wiiu.jnus.implementations.NUSDataProvider;
+import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.DataProviderUtils;
 import de.mas.wiiu.jnus.utils.FileUtils;
 import de.mas.wiiu.jnus.utils.Parallelizable;

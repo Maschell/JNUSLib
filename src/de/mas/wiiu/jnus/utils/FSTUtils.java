@@ -1,7 +1,6 @@
-package de.mas.wiiu.jnus;
+package de.mas.wiiu.jnus.utils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -9,7 +8,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.filefilter.RegexFileFilter;
 
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
 import lombok.val;

@@ -28,6 +28,7 @@ import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.implementations.woomy.WoomyInfo;
 import de.mas.wiiu.jnus.implementations.woomy.WoomyZipFile;
+import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;

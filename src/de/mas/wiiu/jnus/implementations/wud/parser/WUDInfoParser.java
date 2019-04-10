@@ -28,13 +28,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import de.mas.wiiu.jnus.FSTUtils;
 import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.content.ContentFSTInfo;
 import de.mas.wiiu.jnus.entities.fst.FST;
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
 import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReader;
 import de.mas.wiiu.jnus.utils.ByteUtils;
+import de.mas.wiiu.jnus.utils.FSTUtils;
 import de.mas.wiiu.jnus.utils.Utils;
 import lombok.val;
 import lombok.extern.java.Log;

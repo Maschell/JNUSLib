@@ -24,6 +24,7 @@ import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.implementations.wud.parser.WUDGamePartition;
 import de.mas.wiiu.jnus.implementations.wud.parser.WUDPartitionHeader;
 import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReader;
+import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import lombok.Getter;
 import lombok.extern.java.Log;
 

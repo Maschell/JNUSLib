@@ -22,6 +22,7 @@ import java.util.Optional;
 
 import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.content.Content;
+import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.Parallelizable;
 import de.mas.wiiu.jnus.utils.download.NUSDownloadService;
 import lombok.Getter;

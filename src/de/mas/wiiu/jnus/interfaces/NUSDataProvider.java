@@ -16,7 +16,7 @@
  ****************************************************************************/
 
 
-package de.mas.wiiu.jnus.implementations;
+package de.mas.wiiu.jnus.interfaces;
 
 import java.io.IOException;
 import java.io.InputStream;
