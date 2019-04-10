@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (C) 2016-2018 Maschell
+ * Copyright (C) 2016-2019 Maschell
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ import de.mas.wiiu.jnus.Settings;
 import lombok.Data;
 
 @Data
-public class WUDPartition {
+public abstract class WUDPartition {
     private final String partitionName;
     private final long partitionOffset;
 
