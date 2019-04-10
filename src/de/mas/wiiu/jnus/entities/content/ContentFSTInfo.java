@@ -17,6 +17,7 @@
 package de.mas.wiiu.jnus.entities.content;
 
 import java.nio.ByteBuffer;
+import java.text.ParseException;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -54,11 +55,12 @@ public final class ContentFSTInfo {
      * @param input
      *            0x20 byte of data from the FST (starting at 0x20)
      * @return ContentFSTInfo object
+     * @throws ParseException 
      */
-    public static ContentFSTInfo parseContentFST(byte[] input) {
+    public static ContentFSTInfo parseContentFST(byte[] input) throws ParseException {
         if (input == null || input.length != 0x20) {
             log.info("Error: invalid ContentFSTInfo byte[] input");
-            return null;
+            throw new ParseException("Failed to parse ContentFSTInfo", 0);
         }
         ContentFSTInfoParam param = new ContentFSTInfoParam();
         ByteBuffer buffer = ByteBuffer.allocate(input.length);
