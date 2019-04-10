@@ -17,6 +17,7 @@
 package de.mas.wiiu.jnus.entities.content;
 
 import java.nio.ByteBuffer;
+import java.text.ParseException;
 import java.util.Arrays;
 
 import lombok.EqualsAndHashCode;
@@ -62,11 +63,12 @@ public class ContentInfo {
      * @param input
      *            0x24 byte of data from the TMD (starting at 0x208)
      * @return ContentFSTInfo object
+     * @throws ParseException 
      */
-    public static ContentInfo parseContentInfo(byte[] input) {
+    public static ContentInfo parseContentInfo(byte[] input) throws ParseException {
         if (input == null || input.length != CONTENT_INFO_SIZE) {
             log.info("Error: invalid ContentInfo byte[] input");
-            return null;
+            throw new ParseException("Error: invalid ContentInfo byte[] input", 0);
         }
 
         ByteBuffer buffer = ByteBuffer.allocate(input.length);
