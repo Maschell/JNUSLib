@@ -33,11 +33,10 @@ import lombok.Getter;
 import lombok.extern.java.Log;
 
 @Log
-public final class NUSDataProviderLocal extends NUSDataProvider {
+public final class NUSDataProviderLocal implements NUSDataProvider {
     @Getter private final String localPath;
 
-    public NUSDataProviderLocal(NUSTitle nustitle, String localPath) {
-        super(nustitle);
+    public NUSDataProviderLocal(String localPath) {
         this.localPath = localPath;
     }
 
@@ -59,48 +58,48 @@ public final class NUSDataProviderLocal extends NUSDataProvider {
     }
 
     @Override
-    public byte[] getContentH3Hash(Content content) throws IOException {
+    public Optional<byte[]> getContentH3Hash(Content content) throws IOException {
         String h3Filename = String.format("%08X%s", content.getID(), Settings.H3_EXTENTION);
         File filepath = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), h3Filename);
         if (filepath == null || !filepath.exists()) {
             String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + h3Filename + "\", file does not exist";
             log.warning(errormsg);
-            return new byte[0];
+            throw new FileNotFoundException(errormsg);
         }
-        return Files.readAllBytes(filepath.toPath());
+        return Optional.of(Files.readAllBytes(filepath.toPath()));
     }
 
     @Override
-    public byte[] getRawTMD() throws IOException {
+    public Optional<byte[]> getRawTMD() throws IOException {
         File file = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), Settings.TMD_FILENAME);
         if (file == null || !file.exists()) {
             String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + Settings.TMD_FILENAME + "\", file does not exist";
             log.warning(errormsg);
             throw new FileNotFoundException(errormsg);
         }
-        return Files.readAllBytes(file.toPath());
+        return Optional.of(Files.readAllBytes(file.toPath()));
     }
 
     @Override
-    public byte[] getRawTicket() throws IOException {
+    public Optional<byte[]> getRawTicket() throws IOException {
         File file = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), Settings.TICKET_FILENAME);
         if (file == null || !file.exists()) {
             String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + Settings.TICKET_FILENAME + "\", file does not exist";
             log.warning(errormsg);
             throw new FileNotFoundException(errormsg);
         }
-        return Files.readAllBytes(file.toPath());
+        return Optional.of(Files.readAllBytes(file.toPath()));
     }
 
     @Override
-    public byte[] getRawCert() throws IOException {
+    public Optional<byte[]> getRawCert() throws IOException {
         File file = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), Settings.CERT_FILENAME);
         if (file == null || !file.exists()) {
             String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + Settings.CERT_FILENAME + "\", file does not exist";
             log.warning(errormsg);
             throw new FileNotFoundException(errormsg);
         }
-        return Files.readAllBytes(file.toPath());
+        return Optional.of(Files.readAllBytes(file.toPath()));
     }
 
     @Override

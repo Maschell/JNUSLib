@@ -40,13 +40,10 @@ abstract class NUSTitleLoader {
         NUSDataProvider dataProvider = getDataProvider(result, config);
         result.setDataProvider(dataProvider);
 
-        TMD tmd = TMD.parseTMD(dataProvider.getRawTMD());
-        result.setTMD(tmd);
+        byte[] tmdData = dataProvider.getRawTMD().orElseThrow(() -> new ParseException("No TMD data found", 0));
 
-        if (tmd == null) {
-            log.info("TMD not found.");
-            throw new Exception();
-        }
+        TMD tmd = TMD.parseTMD(tmdData);
+        result.setTMD(tmd);
 
         if (config.isNoDecryption()) {
             return result;
@@ -54,17 +51,19 @@ abstract class NUSTitleLoader {
 
         Ticket ticket = config.getTicket();
         if (ticket == null) {
-            ticket = Ticket.parseTicket(dataProvider.getRawTicket());
+            Optional<byte[]> ticketOpt = dataProvider.getRawTicket();
+            if (ticketOpt.isPresent()) {             
+                ticket = Ticket.parseTicket(ticketOpt.get(), config.getCommonKey());
+            }
+        }
+        if(ticket == null) {
+            new ParseException("Failed to get ticket data",0);
         }
         result.setTicket(ticket);
 
         Content fstContent = tmd.getContentByIndex(0);
 
-        InputStream fstContentEncryptedStream = dataProvider.getInputStreamFromContent(fstContent, 0);
-        if (fstContentEncryptedStream == null) {
-            log.warning("FST is null");
-            return null;
-        }
+        InputStream fstContentEncryptedStream = dataProvider.getInputStreamFromContent(fstContent, 0, Optional.of(fstContent.getEncryptedFileSize()));
 
         byte[] fstBytes = StreamUtils.getBytesFromStream(fstContentEncryptedStream, (int) fstContent.getEncryptedFileSize());
 

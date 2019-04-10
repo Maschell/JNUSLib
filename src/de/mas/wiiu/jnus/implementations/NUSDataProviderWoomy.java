@@ -35,12 +35,11 @@ import lombok.Setter;
 import lombok.extern.java.Log;
 
 @Log
-public class NUSDataProviderWoomy extends NUSDataProvider {
+public class NUSDataProviderWoomy implements NUSDataProvider {
     @Getter private final WoomyInfo woomyInfo;
     @Setter(AccessLevel.PRIVATE) private WoomyZipFile woomyZipFile;
 
-    public NUSDataProviderWoomy(NUSTitle title, WoomyInfo woomyInfo) {
-        super(title);
+    public NUSDataProviderWoomy(WoomyInfo woomyInfo) {
         this.woomyInfo = woomyInfo;
     }
 
@@ -56,19 +55,19 @@ public class NUSDataProviderWoomy extends NUSDataProvider {
     }
 
     @Override
-    public byte[] getContentH3Hash(Content content) throws IOException {
+    public Optional<byte[]> getContentH3Hash(Content content) throws IOException {
         ZipEntry entry = getWoomyInfo().getContentFiles().get(content.getFilename().toLowerCase());
         if (entry != null) {
             WoomyZipFile zipFile = getNewWoomyZipFile();
             byte[] result = zipFile.getEntryAsByte(entry);
             zipFile.close();
-            return result;
+            return Optional.of(result);
         }
-        return new byte[0];
+        return Optional.empty();
     }
 
     @Override
-    public byte[] getRawTMD() throws IOException {
+    public Optional<byte[]> getRawTMD() throws IOException {
         ZipEntry entry = getWoomyInfo().getContentFiles().get(Settings.TMD_FILENAME);
         if (entry == null) {
             log.warning(Settings.TMD_FILENAME + " not found in woomy file");
@@ -77,11 +76,11 @@ public class NUSDataProviderWoomy extends NUSDataProvider {
         WoomyZipFile zipFile = getNewWoomyZipFile();
         byte[] result = zipFile.getEntryAsByte(entry);
         zipFile.close();
-        return result;
+        return Optional.of(result);
     }
 
     @Override
-    public byte[] getRawTicket() throws IOException {
+    public Optional<byte[]> getRawTicket() throws IOException {
         ZipEntry entry = getWoomyInfo().getContentFiles().get(Settings.TICKET_FILENAME);
         if (entry == null) {
             log.warning(Settings.TICKET_FILENAME + " not found in woomy file");
@@ -91,7 +90,7 @@ public class NUSDataProviderWoomy extends NUSDataProvider {
         WoomyZipFile zipFile = getNewWoomyZipFile();
         byte[] result = zipFile.getEntryAsByte(entry);
         zipFile.close();
-        return result;
+        return Optional.of(result);
     }
 
     public WoomyZipFile getSharedWoomyZipFile() throws ZipException, IOException {
@@ -113,7 +112,7 @@ public class NUSDataProviderWoomy extends NUSDataProvider {
     }
 
     @Override
-    public byte[] getRawCert() throws IOException {
-        return new byte[0];
+    public Optional<byte[]> getRawCert() throws IOException {
+        return Optional.empty();
     }
 }

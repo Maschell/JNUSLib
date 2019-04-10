@@ -17,17 +17,20 @@
 package de.mas.wiiu.jnus;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.implementations.NUSDataProvider;
+import de.mas.wiiu.jnus.utils.DataProviderUtils;
 import de.mas.wiiu.jnus.utils.FileUtils;
 import de.mas.wiiu.jnus.utils.Parallelizable;
 import de.mas.wiiu.jnus.utils.Utils;
@@ -68,7 +71,7 @@ public final class ExtractionService {
         Utils.createDir(outputFolder);
         NUSDataProvider dataProvider = getDataProvider();
         for (Content c : list) {
-            dataProvider.saveContentH3Hash(c, outputFolder);
+            DataProviderUtils.saveContentH3Hash(dataProvider, c, outputFolder);
         }
     }
 
@@ -87,9 +90,9 @@ public final class ExtractionService {
     public void extractEncryptedContentTo(Content content, String outputFolder, boolean withHashes) throws IOException {
         NUSDataProvider dataProvider = getDataProvider();
         if (withHashes) {
-            dataProvider.saveEncryptedContentWithH3Hash(content, outputFolder);
+            DataProviderUtils.saveEncryptedContentWithH3Hash(dataProvider, content, outputFolder);
         } else {
-            dataProvider.saveEncryptedContent(content, outputFolder);
+            DataProviderUtils.saveEncryptedContent(dataProvider, content, outputFolder);
         }
     }
 
@@ -117,12 +120,7 @@ public final class ExtractionService {
     public void extractTMDTo(String output) throws IOException {
         Utils.createDir(output);
 
-        byte[] rawTMD = getDataProvider().getRawTMD();
-
-        if (rawTMD == null || rawTMD.length == 0) {
-            log.info("Couldn't write TMD: No TMD loaded");
-            return;
-        }
+        byte[] rawTMD = getDataProvider().getRawTMD().orElseThrow(() -> new FileNotFoundException("TMD not found"));
         String tmd_path = output + File.separator + Settings.TMD_FILENAME;
         log.info("Extracting TMD to: " + tmd_path);
         FileUtils.saveByteArrayToFile(tmd_path, rawTMD);
@@ -131,29 +129,25 @@ public final class ExtractionService {
     public boolean extractTicketTo(String output) throws IOException {
         Utils.createDir(output);
 
-        byte[] rawTicket = getDataProvider().getRawTicket();
+        byte[] rawTicket = getDataProvider().getRawTicket().orElseThrow(() -> new FileNotFoundException("Ticket not found"));
 
-        if (rawTicket == null || rawTicket.length == 0) {
-            log.info("Couldn't write Ticket: No Ticket loaded");
-            return false;
-        }
         String ticket_path = output + File.separator + Settings.TICKET_FILENAME;
         log.info("Extracting Ticket to: " + ticket_path);
         return FileUtils.saveByteArrayToFile(ticket_path, rawTicket);
     }
 
-    public void extractCertTo(String output) throws IOException {
+    public boolean extractCertTo(String output) throws IOException {
         Utils.createDir(output);
 
-        byte[] rawCert = getDataProvider().getRawCert();
+        Optional<byte[]> dataOpt = getDataProvider().getRawCert();
 
-        if (rawCert == null || rawCert.length == 0) {
-            log.info("Couldn't write Cert: No Cert loaded");
-            return;
+        if (!dataOpt.isPresent()) {
+            return false;
         }
-        String cert_path = output + File.separator + Settings.CERT_FILENAME;
-        log.info("Extracting Cert to: " + cert_path);
-        FileUtils.saveByteArrayToFile(cert_path, rawCert);
+
+        String path = output + File.separator + Settings.CERT_FILENAME;
+        log.info("Extracting Cert to: " + path);
+        return FileUtils.saveByteArrayToFile(path, dataOpt.get());
     }
 
     public void extractAll(String outputFolder) throws IOException {
@@ -166,8 +160,5 @@ public final class ExtractionService {
 
     }
 
-    public byte[] getBytesFromContent(Content c, long offset, long size) throws IOException {
-        return getDataProvider().getChunkFromContent(c, offset, (int) size);
-    }
 
 }

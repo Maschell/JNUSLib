@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (C) 2016-2018 Maschell
+ * Copyright (C) 2016-2019 Maschell
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,10 +19,10 @@ package de.mas.wiiu.jnus.implementations.wud.parser;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.utils.ByteUtils;
@@ -52,13 +52,13 @@ public final class WUDPartitionHeader {
         getH3Hashes().put(index, hash);
     }
 
-    public byte[] getH3Hash(Content content) {
+    public Optional<byte[]> getH3Hash(Content content) {
         if (content == null) {
             log.info("Can't find h3 hash, given content is null.");
-            return null;
+            return Optional.empty();
         }
 
-        return getH3Hashes().get(content.getIndex());
+        return Optional.of(getH3Hashes().get(content.getIndex()));
     }
 
     public void calculateHashes(Map<Integer, Content> allContents) {
