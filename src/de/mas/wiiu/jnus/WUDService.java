@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
@@ -52,23 +53,23 @@ public final class WUDService {
         // Just an utility class
     }
 
-    public static File compressWUDToWUX(WUDImage image, String outputFolder) throws IOException {
+    public static Optional<File> compressWUDToWUX(WUDImage image, String outputFolder) throws IOException {
         return compressWUDToWUX(image, outputFolder, "game.wux", false);
     }
 
-    public static File compressWUDToWUX(WUDImage image, String outputFolder, boolean overwrite) throws IOException {
+    public static Optional<File> compressWUDToWUX(WUDImage image, String outputFolder, boolean overwrite) throws IOException {
         return compressWUDToWUX(image, outputFolder, "game.wux", overwrite);
     }
 
-    public static File compressWUDToWUX(WUDImage image, String outputFolder, String filename, boolean overwrite) throws IOException {
+    public static Optional<File> compressWUDToWUX(WUDImage image, String outputFolder, String filename, boolean overwrite) throws IOException {
         if (image.isCompressed()) {
             log.info("Given image is already compressed");
-            return null;
+            return Optional.empty();
         }
 
         if (image.getWUDFileSize() != WUDImage.WUD_FILESIZE) {
             log.info("Given WUD has not the expected filesize");
-            return null;
+            return Optional.empty();
         }
 
         String usedOutputFolder = outputFolder;
@@ -86,7 +87,7 @@ public final class WUDService {
 
         if (outputFile.exists() && !overwrite) {
             log.info("Couldn't compress wud, target file already exists (" + outputFile.getAbsolutePath() + ")");
-            return null;
+            return Optional.empty();
         }
 
         log.info("Writing compressed file to: " + outputFile.getAbsolutePath());
@@ -159,7 +160,7 @@ public final class WUDService {
         fileOutput.write(buffer.array());
         fileOutput.close();
 
-        return outputFile;
+        return Optional.of(outputFile);
     }
 
     public static boolean compareWUDImage(WUDImage firstImage, WUDImage secondImage) throws IOException {
@@ -210,23 +211,23 @@ public final class WUDService {
         return result;
     }
 
-    public static File decompressWUX(WUDImage image, String outputFolder) throws IOException {
+    public static Optional<File> decompressWUX(WUDImage image, String outputFolder) throws IOException {
         return decompressWUX(image, outputFolder, "game.wud", false);
     }
 
-    public static File decompressWUX(WUDImage image, String outputFolder, boolean overwrite) throws IOException {
+    public static Optional<File> decompressWUX(WUDImage image, String outputFolder, boolean overwrite) throws IOException {
         return decompressWUX(image, outputFolder, "game.wud", overwrite);
     }
 
-    public static File decompressWUX(WUDImage image, String outputFolder, String filename, boolean overwrite) throws IOException {
+    public static Optional<File> decompressWUX(WUDImage image, String outputFolder, String filename, boolean overwrite) throws IOException {
         if (!image.isCompressed()) {
             log.info("Given image is already decompressed (a wud file)");
-            return null;
+            return Optional.empty();
         }
 
         if (image.getWUDFileSize() != WUDImage.WUD_FILESIZE) {
             log.info("Given WUX has not the expected filesize");
-            return null;
+            return Optional.empty();
         }
 
         String usedOutputFolder = outputFolder;
@@ -244,7 +245,7 @@ public final class WUDService {
 
         if (outputFile.exists() && !overwrite) {
             log.info("Couldn't decompress wux, target file already exists (" + outputFile.getAbsolutePath() + ")");
-            return null;
+            return Optional.empty();
         }
 
         log.info("Writing decompressed file to: " + outputFile.getAbsolutePath());
@@ -279,13 +280,13 @@ public final class WUDService {
         in.close();
         out.close();
 
-        return outputFile;
+        return Optional.of(outputFile);
     }
 
     public static HashResult hashWUDImage(WUDImage image) throws IOException {
         if (image == null) {
             log.info("Failed to calculate the hash of the given image: input was null.");
-            return null;
+            throw new IOException("Failed to calculate the hash of the given image: input was null.");
         }
 
         if (image.isCompressed()) {
