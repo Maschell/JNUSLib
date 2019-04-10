@@ -17,6 +17,7 @@
 package de.mas.wiiu.jnus.implementations.wud.reader;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
@@ -105,7 +106,7 @@ public class WUDDiscReaderSplitted extends WUDDiscReader {
 
         if (!part.exists()) {
             log.info("File does not exist");
-            return null;
+            throw new FileNotFoundException(part.getAbsolutePath() + " does not exist");
         }
         RandomAccessFile result = new RandomAccessFile(part, "r");
         result.seek(getOffsetInFilePart(filePart, offset));
