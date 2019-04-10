@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -102,17 +103,17 @@ public final class TMD {
         this.cert2 = param.getCert2();
     }
 
-    public static TMD parseTMD(File tmd) throws IOException {
+    public static TMD parseTMD(File tmd) throws IOException, ParseException {
         if (tmd == null || !tmd.exists()) {
             log.info("TMD input file null or doesn't exist.");
-            return null;
+            throw new   IOException("TMD input file null or doesn't exist.");
         }
         return parseTMD(Files.readAllBytes(tmd.toPath()));
     }
 
-    public static TMD parseTMD(byte[] input) {
+    public static TMD parseTMD(byte[] input) throws ParseException {
         if (input == null || input.length == 0) {
-            throw new RuntimeException("Invalid TMD file.");
+            throw new ParseException("Invalid TMD file.", 0);
         }
         byte[] signature = new byte[SIGNATURE_LENGTH];
         byte[] issuer = new byte[ISSUER_LENGTH];
