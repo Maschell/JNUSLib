@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (C) 2016-2018 Maschell
+ * Copyright (C) 2016-2019 Maschell
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 
+import de.mas.wiiu.jnus.interfaces.CheckedFunction;
 import lombok.NonNull;
 
 public final class FileUtils {

@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (C) 2016-2018 Maschell
+ * Copyright (C) 2016-2019 Maschell
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,13 +61,13 @@ public abstract class WUDDiscReader {
         return out.toByteArray();
     }
 
-    public InputStream readDecryptedToInputStream(long offset, long fileoffset, long size, byte[] key, byte[] IV, boolean useFixedIV) throws IOException {
+    public InputStream readDecryptedToInputStream(long clusterOffset, long offset, long size, byte[] key, byte[] IV, boolean useFixedIV) throws IOException {
         PipedInputStream in = new PipedInputStream();
         PipedOutputStream out = new PipedOutputStream(in);
 
         new Thread(() -> {
             try {
-                readDecryptedToOutputStream(out, offset, fileoffset, size, key, IV, useFixedIV);
+                readDecryptedToOutputStream(out, clusterOffset, offset, size, key, IV, useFixedIV);
             } catch (IOException e) {
                 e.printStackTrace();
             }

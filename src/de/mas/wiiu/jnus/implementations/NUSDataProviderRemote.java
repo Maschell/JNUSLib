@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (C) 2016-2018 Maschell
+ * Copyright (C) 2016-2019 Maschell
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import java.util.Optional;
 import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
-import de.mas.wiiu.jnus.utils.Parallelizable;
+import de.mas.wiiu.jnus.interfaces.Parallelizable;
 import de.mas.wiiu.jnus.utils.download.NUSDownloadService;
 import lombok.Getter;
 

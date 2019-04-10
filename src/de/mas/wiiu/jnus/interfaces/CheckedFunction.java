@@ -14,17 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
-package de.mas.wiiu.jnus.implementations.woomy;
+package de.mas.wiiu.jnus.interfaces;
 
-import java.io.File;
-import java.util.Map;
-import java.util.zip.ZipEntry;
+import java.io.IOException;
 
-import lombok.Data;
-
-@Data
-public class WoomyInfo {
-    private String name;
-    private File woomyFile;
-    private Map<String, ZipEntry> contentFiles;
+@FunctionalInterface
+public interface CheckedFunction<T> {
+    void apply(T t) throws IOException;
 }

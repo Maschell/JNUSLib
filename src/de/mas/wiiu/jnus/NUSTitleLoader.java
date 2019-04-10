@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (C) 2016-2018 Maschell
+ * Copyright (C) 2016-2019 Maschell
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,8 +36,7 @@ public class NUSTitleLoader {
         // should be empty
     }
 
-    public static NUSTitle loadNusTitle(NUSTitleConfig config, Supplier<NUSDataProvider> dataProviderFunction)
-            throws IOException, ParseException {
+    public static NUSTitle loadNusTitle(NUSTitleConfig config, Supplier<NUSDataProvider> dataProviderFunction) throws IOException, ParseException {
         NUSTitle result = new NUSTitle();
 
         NUSDataProvider dataProvider = dataProviderFunction.get();
@@ -55,12 +54,12 @@ public class NUSTitleLoader {
         Ticket ticket = config.getTicket();
         if (ticket == null) {
             Optional<byte[]> ticketOpt = dataProvider.getRawTicket();
-            if (ticketOpt.isPresent()) {             
+            if (ticketOpt.isPresent()) {
                 ticket = Ticket.parseTicket(ticketOpt.get(), config.getCommonKey());
             }
         }
-        if(ticket == null) {
-            new ParseException("Failed to get ticket data",0);
+        if (ticket == null) {
+            new ParseException("Failed to get ticket data", 0);
         }
         result.setTicket(ticket);
 
@@ -69,7 +68,7 @@ public class NUSTitleLoader {
         InputStream fstContentEncryptedStream = dataProvider.getInputStreamFromContent(fstContent, 0, Optional.of(fstContent.getEncryptedFileSize()));
 
         byte[] fstBytes = StreamUtils.getBytesFromStream(fstContentEncryptedStream, (int) fstContent.getEncryptedFileSize());
-
+        
         if (fstContent.isEncrypted()) {
             AESDecryption aesDecryption = new AESDecryption(ticket.getDecryptedKey(), new byte[0x10]);
             if (fstBytes.length % 0x10 != 0) {
