@@ -87,23 +87,6 @@ public class NUSTitle {
                 });
     }
 
-    public Optional<FSTEntry> getFSTEntryByFullPath(String givenFullPath) {
-        String fullPath = givenFullPath.replace("/", File.separator);
-        if (!fullPath.startsWith(File.separator)) {
-            fullPath = File.separator + fullPath;
-        }
-
-        String dirPath = FilenameUtils.getFullPathNoEndSeparator(fullPath);
-        Optional<FSTEntry> pathOpt = Optional.of(FST.getRoot());
-        if (!dirPath.equals(File.separator)) {
-            pathOpt = getFileEntryDir(dirPath);
-        }
-
-        String path = fullPath;
-
-        return pathOpt.flatMap(e -> e.getChildren().stream().filter(c -> c.getFullPath().equals(path)).findAny());
-    }
-
     public List<FSTEntry> getFSTEntriesByRegEx(String regEx) {
         return getFSTEntriesByRegEx(regEx, FST.getRoot());
     }
@@ -134,30 +117,6 @@ public class NUSTitle {
                     }
                     return getFSTEntriesByRegExStream(p, e, allowNotInPackage);
                 });
-    }
-
-    public Optional<FSTEntry> getFileEntryDir(String string) {
-        return getFileEntryDir(string.replace("/", File.separator), FST.getRoot());
-    }
-
-    public Optional<FSTEntry> getFileEntryDir(String string, FSTEntry curEntry) {
-        if (!string.endsWith(File.separator)) {
-            string += File.separator;
-        }
-        for (val curChild : curEntry.getDirChildren()) {
-            String compareTo = curChild.getFullPath();
-            if (!compareTo.endsWith(File.separator)) {
-                compareTo += File.separator;
-            }
-            if (string.startsWith(compareTo)) {
-                if (string.equals(compareTo)) {
-                    return Optional.of(curChild);
-                }
-                return getFileEntryDir(string, curChild);
-            }
-        }
-
-        return Optional.empty();
     }
 
     public void printFiles() {
@@ -200,5 +159,13 @@ public class NUSTitle {
     @Override
     public String toString() {
         return "NUSTitle [dataProvider=" + dataProvider + "]";
+    }
+
+    public Optional<FSTEntry> getFSTEntryByFullPath(String entryFullPath) {
+        return FSTUtils.getFSTEntryByFullPath(FST.getRoot(), entryFullPath);
+    }
+
+    public Optional<FSTEntry> getFileEntryDir(String path) {
+        return FSTUtils.getFileEntryDir(FST.getRoot(), path);
     }
 }
