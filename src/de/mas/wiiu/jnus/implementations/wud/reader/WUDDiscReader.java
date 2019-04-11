@@ -21,13 +21,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import de.mas.wiiu.jnus.implementations.wud.WUDImage;
+import de.mas.wiiu.jnus.utils.PipedInputStreamWithException;
 import de.mas.wiiu.jnus.utils.cryptography.AESDecryption;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -40,40 +40,10 @@ public abstract class WUDDiscReader {
         this.image = image;
     }
 
-    public InputStream readEncryptedToInputStream(long offset, long size) throws IOException {
-        PipedInputStream in = new PipedInputStream();
-        PipedOutputStream out = new PipedOutputStream(in);
-
-        new Thread(() -> {
-            try {
-                readEncryptedToOutputStream(out, offset, size);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }, "readEncryptedToInputStream@" + this.hashCode()).start();
-
-        return in;
-    }
-
     public byte[] readEncryptedToByteArray(long offset, long fileoffset, long size) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        readEncryptedToOutputStream(out, offset + fileoffset, size);
+        readEncryptedToStream(out, offset + fileoffset, size);
         return out.toByteArray();
-    }
-
-    public InputStream readDecryptedToInputStream(long clusterOffset, long offset, long size, byte[] key, byte[] IV, boolean useFixedIV) throws IOException {
-        PipedInputStream in = new PipedInputStream();
-        PipedOutputStream out = new PipedOutputStream(in);
-
-        new Thread(() -> {
-            try {
-                readDecryptedToOutputStream(out, clusterOffset, offset, size, key, IV, useFixedIV);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }, "readDecryptedToInputStream@" + this.hashCode()).start();
-
-        return in;
     }
 
     public byte[] readDecryptedToByteArray(long offset, long fileoffset, long size, byte[] key, byte[] IV, boolean useFixedIV) throws IOException {
@@ -83,7 +53,23 @@ public abstract class WUDDiscReader {
         return out.toByteArray();
     }
 
-    public abstract void readEncryptedToOutputStream(OutputStream out, long offset, long size) throws IOException;
+    public abstract void readEncryptedToStream(OutputStream out, long offset, long size) throws IOException;
+
+    public InputStream readEncryptedToStream(long offset, long size) throws IOException {
+        PipedInputStreamWithException in = new PipedInputStreamWithException();
+        PipedOutputStream out = new PipedOutputStream(in);
+
+        new Thread(() -> {
+            try {
+                readEncryptedToStream(out, offset, size);
+                in.throwException(null);
+            } catch (Exception e) {
+                in.throwException(e);
+            }
+        }).start();
+
+        return in;
+    }
 
     /**
      * 

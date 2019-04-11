@@ -58,7 +58,7 @@ public class NUSDataProviderWUD implements NUSDataProvider {
         if (size.isPresent()) {
             usedSize = size.get();
         }
-        return discReader.readEncryptedToInputStream(offset, usedSize);
+        return discReader.readEncryptedToStream(offset, usedSize);
     }
 
     @Override

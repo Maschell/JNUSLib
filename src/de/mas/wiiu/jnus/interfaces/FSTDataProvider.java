@@ -19,9 +19,11 @@ package de.mas.wiiu.jnus.interfaces;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PipedOutputStream;
 import java.util.Optional;
 
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
+import de.mas.wiiu.jnus.utils.PipedInputStreamWithException;
 
 public interface FSTDataProvider {
     public String getName();
@@ -34,8 +36,26 @@ public interface FSTDataProvider {
 
     public byte[] readFile(FSTEntry entry, long offset, long size) throws IOException;
 
-    public InputStream readFileAsStream(FSTEntry entry, long offset, Optional<Long> size) throws IOException;
+    default public InputStream readFileAsStream(FSTEntry entry, long offset, Optional<Long> size) throws IOException {
+        PipedInputStreamWithException in = new PipedInputStreamWithException();
+        PipedOutputStream out = new PipedOutputStream(in);
 
-    public void readFileToStream(OutputStream out, FSTEntry entry) throws IOException;
+        new Thread(() -> {
+            try {
+                readFileToStream(out, entry, offset, size);
+                in.throwException(null);
+            } catch (Exception e) {
+                in.throwException(e);
+            }
+        }).start();
+
+        return in;
+    }
+
+    default public void readFileToStream(OutputStream out, FSTEntry entry, long offset) throws IOException {
+        readFileToStream(out, entry, offset, Optional.empty());
+    }
+
+    public void readFileToStream(OutputStream out, FSTEntry entry, long offset, Optional<Long> size) throws IOException;
 
 }

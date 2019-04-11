@@ -17,11 +17,9 @@
 package de.mas.wiiu.jnus.implementations;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PipedOutputStream;
 import java.util.Optional;
 
 import de.mas.wiiu.jnus.NUSTitle;
@@ -31,8 +29,6 @@ import de.mas.wiiu.jnus.interfaces.FSTDataProvider;
 import de.mas.wiiu.jnus.interfaces.HasNUSTitle;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.CheckSumWrongException;
-import de.mas.wiiu.jnus.utils.PipedInputStreamWithException;
-import de.mas.wiiu.jnus.utils.StreamUtils;
 import de.mas.wiiu.jnus.utils.Utils;
 import de.mas.wiiu.jnus.utils.cryptography.NUSDecryption;
 import lombok.Getter;
@@ -57,52 +53,17 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
     @Override
     public byte[] readFile(FSTEntry entry, long offset, long size) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try {
-            readFileToOutputStream(out, entry, offset, size);
-        } catch (CheckSumWrongException e) {
-            throw new IOException(e);
-        }
+
+        readFileToStream(out, entry, offset, Optional.of(size));
+
         return out.toByteArray();
     }
 
     @Override
-    public InputStream readFileAsStream(FSTEntry entry, long offset, Optional<Long> size) throws IOException {
-        long filesize = size.orElse(entry.getFileSize());
-        try {
-            return readFileAsInputStream(entry, offset, filesize);
-        } catch (CheckSumWrongException e) {
-            throw new IOException(e);
-        }
-    }
-
-    public PipedInputStreamWithException readFileAsInputStream(FSTEntry entry, long offset, long size) throws IOException, CheckSumWrongException {
-        PipedInputStreamWithException in = new PipedInputStreamWithException();
-        PipedOutputStream out = new PipedOutputStream(in);
-
-        new Thread(() -> {
-            try {
-                readFileToOutputStream(out, entry, offset, size);
-                in.throwException(null);
-            } catch (Exception e) {
-                in.throwException(e);
-            }
-        }).start();
-
-        return in;
-    }
-
-    @Override
-    public void readFileToStream(OutputStream outputStream, FSTEntry entry) throws IOException {
-        try {
-            readFileToOutputStream(outputStream, entry, 0, entry.getFileSize());
-        } catch (CheckSumWrongException e) {
-            throw new IOException(e);
-        }
-    }
-
-    public boolean readFileToOutputStream(OutputStream out, FSTEntry entry, long offset, long size) throws IOException, CheckSumWrongException {
+    public void readFileToStream(OutputStream out, FSTEntry entry, long offset, Optional<Long> size) throws IOException {
         long fileOffset = entry.getFileOffset() + offset;
         long fileOffsetBlock = fileOffset;
+        long usedSize = size.orElse(entry.getFileSize());
 
         if (entry.getContent().isHashed()) {
             fileOffsetBlock = (fileOffset / 0xFC00) * 0x10000;
@@ -113,10 +74,14 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
                 fileOffsetBlock -= 16;
             }
         }
-        return decryptFSTEntryToStream(entry, out, size, fileOffset, fileOffsetBlock);
+        try {
+            decryptFSTEntryToStream(entry, out, fileOffsetBlock, fileOffset, usedSize);
+        } catch (CheckSumWrongException e) {
+            throw new IOException(e);
+        }
     }
 
-    public boolean decryptFSTEntryToStream(FSTEntry entry, OutputStream outputStream, long fileSize, long fileOffset, long fileOffsetBlock)
+    private boolean decryptFSTEntryToStream(FSTEntry entry, OutputStream outputStream, long fileOffsetBlock, long fileOffset, long fileSize)
             throws IOException, CheckSumWrongException {
         if (entry.isNotInPackage() || entry.getContent() == null) {
             outputStream.close();
@@ -195,5 +160,4 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
     public NUSTitle getNUSTitle() {
         return title;
     }
-
 }

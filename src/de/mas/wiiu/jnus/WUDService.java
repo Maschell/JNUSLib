@@ -110,7 +110,7 @@ public final class WUDService {
         Map<ByteArrayWrapper, Integer> sectorHashes = new HashMap<>();
         Map<Integer, Integer> sectorMapping = new TreeMap<>();
 
-        InputStream in = image.getWUDDiscReader().readEncryptedToInputStream(0, image.getWUDFileSize());
+        InputStream in = image.getWUDDiscReader().readEncryptedToStream(0, image.getWUDFileSize());
 
         int bufferSize = WUDImageCompressedInfo.SECTOR_SIZE;
         byte[] blockBuffer = new byte[bufferSize];
@@ -168,8 +168,8 @@ public final class WUDService {
             log.warning("Filesize is different");
             return false;
         }
-        InputStream in1 = firstImage.getWUDDiscReader().readEncryptedToInputStream(0, WUDImage.WUD_FILESIZE);
-        InputStream in2 = secondImage.getWUDDiscReader().readEncryptedToInputStream(0, WUDImage.WUD_FILESIZE);
+        InputStream in1 = firstImage.getWUDDiscReader().readEncryptedToStream(0, WUDImage.WUD_FILESIZE);
+        InputStream in2 = secondImage.getWUDDiscReader().readEncryptedToStream(0, WUDImage.WUD_FILESIZE);
 
         boolean result = true;
         int bufferSize = 1024 * 1024 + 19;
@@ -249,7 +249,7 @@ public final class WUDService {
         }
 
         log.info("Writing decompressed file to: " + outputFile.getAbsolutePath());
-        InputStream in = image.getWUDDiscReader().readEncryptedToInputStream(0, WUDImage.WUD_FILESIZE);
+        InputStream in = image.getWUDDiscReader().readEncryptedToStream(0, WUDImage.WUD_FILESIZE);
         OutputStream out = new FileOutputStream(outputFile);
 
         int bufferSize = 1024 * 1024;
@@ -295,7 +295,7 @@ public final class WUDService {
             log.info("The input file is splitted. The calculated hash is the hash of the corresponding .wud file, not this splitted .wud");
         }
 
-        InputStream in = image.getWUDDiscReader().readEncryptedToInputStream(0, WUDImage.WUD_FILESIZE);
+        InputStream in = image.getWUDDiscReader().readEncryptedToStream(0, WUDImage.WUD_FILESIZE);
 
         int bufferSize = 1024 * 1024 * 10;
         long totalread = 0;
