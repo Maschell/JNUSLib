@@ -95,7 +95,12 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
         InputStream in = dataProvider.getInputStreamFromContent(c, fileOffsetBlock);
 
         try {
-            return decryptStreams(in, outputStream, fileSize, fileOffset, c);
+            NUSDecryption nusdecryption = new NUSDecryption(title.getTicket());
+            Optional<byte[]> h3HashedOpt = Optional.empty();
+            if (c.isHashed()) {
+                h3HashedOpt = dataProvider.getContentH3Hash(c);
+            }
+            return nusdecryption.decryptStreams(in, outputStream, fileSize, fileOffset, c, h3HashedOpt);
         } catch (CheckSumWrongException e) {
             if (entry.getContent().isUNKNWNFlag1Set()) {
                 log.info("Hash doesn't match. But file is optional. Don't worry.");
@@ -113,47 +118,6 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
             }
         }
         return false;
-    }
-
-    private boolean decryptStreams(InputStream inputStream, OutputStream outputStream, long size, long offset, Content content)
-            throws IOException, CheckSumWrongException {
-        NUSDecryption nusdecryption = new NUSDecryption(title.getTicket());
-        short contentIndex = (short) content.getIndex();
-
-        long encryptedFileSize = content.getEncryptedFileSize();
-
-        if (content.isEncrypted()) {
-            if (content.isHashed()) {
-                NUSDataProvider dataProvider = title.getDataProvider();
-                byte[] h3 = dataProvider.getContentH3Hash(content).orElseThrow(() -> new FileNotFoundException("h3 hash not found."));
-
-                nusdecryption.decryptFileStreamHashed(inputStream, outputStream, size, offset, (short) contentIndex, h3);
-            } else {
-                try {
-                    byte[] h3Hash = content.getSHA2Hash();
-                    // We want to check if we read the whole file or just a part of it.
-                    // There should be only one actual file inside a non-hashed content.
-                    // But it could also contain a directory, so we need to filter.
-                    long fstFileSize = content.getEntries().stream().filter(f -> !f.isDir()).findFirst().map(f -> f.getFileSize()).orElse(0L);
-                    if (size > 0 && size < fstFileSize) {
-                        h3Hash = null;
-                    }
-                    nusdecryption.decryptFileStream(inputStream, outputStream, size, offset, (short) contentIndex, h3Hash, encryptedFileSize);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        } else {
-            StreamUtils.saveInputStreamToOutputStreamWithHash(inputStream, outputStream, size, content.getSHA2Hash(), encryptedFileSize);
-        }
-
-        synchronized (inputStream) {
-            inputStream.close();
-        }
-        synchronized (outputStream) {
-            outputStream.close();
-        }
-        return true;
     }
 
     @Override

@@ -16,6 +16,7 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.utils.cryptography;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,8 +24,10 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Optional;
 
 import de.mas.wiiu.jnus.entities.Ticket;
+import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.utils.ByteArrayBuffer;
 import de.mas.wiiu.jnus.utils.CheckSumWrongException;
 import de.mas.wiiu.jnus.utils.HashUtil;
@@ -262,5 +265,45 @@ public class NUSDecryption extends AESDecryption {
         HashUtil.checkFileChunkHashes(hashes, h3_hashes, output, block);
 
         return output;
+    }
+
+    public boolean decryptStreams(InputStream inputStream, OutputStream outputStream, long size, long offset, Content content, Optional<byte[]> h3HashHashed)
+            throws IOException, CheckSumWrongException {
+
+        short contentIndex = (short) content.getIndex();
+
+        long encryptedFileSize = content.getEncryptedFileSize();
+
+        if (content.isEncrypted()) {
+            if (content.isHashed()) {
+                byte[] h3 = h3HashHashed.orElseThrow(() -> new FileNotFoundException("h3 hash not found."));
+
+                decryptFileStreamHashed(inputStream, outputStream, size, offset, (short) contentIndex, h3);
+            } else {
+                try {
+                    byte[] h3Hash = content.getSHA2Hash();
+                    // We want to check if we read the whole file or just a part of it.
+                    // There should be only one actual file inside a non-hashed content.
+                    // But it could also contain a directory, so we need to filter.
+                    long fstFileSize = content.getEntries().stream().filter(f -> !f.isDir()).findFirst().map(f -> f.getFileSize()).orElse(0L);
+                    if (size > 0 && size < fstFileSize) {
+                        h3Hash = null;
+                    }
+                    decryptFileStream(inputStream, outputStream, size, offset, (short) contentIndex, h3Hash, encryptedFileSize);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            StreamUtils.saveInputStreamToOutputStreamWithHash(inputStream, outputStream, size, content.getSHA2Hash(), encryptedFileSize);
+        }
+
+        synchronized (inputStream) {
+            inputStream.close();
+        }
+        synchronized (outputStream) {
+            outputStream.close();
+        }
+        return true;
     }
 }
