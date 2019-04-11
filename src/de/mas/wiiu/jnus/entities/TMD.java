@@ -147,6 +147,9 @@ public final class TMD {
         buffer.position(0x184);
         long systemVersion = buffer.getLong();
         long titleID = buffer.getLong();
+        if((titleID & 0x0005000000000000L) != 0x0005000000000000L) {
+            throw new ParseException("Invalid TMD file. This is not a Wii U TMD", 0);
+        }
         int titleType = buffer.getInt();
         short groupID = buffer.getShort();
 
