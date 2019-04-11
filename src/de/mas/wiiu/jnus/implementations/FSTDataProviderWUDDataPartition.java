@@ -18,6 +18,7 @@ package de.mas.wiiu.jnus.implementations;
  ****************************************************************************/
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Optional;
 
 import de.mas.wiiu.jnus.entities.content.ContentFSTInfo;
@@ -51,6 +52,16 @@ public class FSTDataProviderWUDDataPartition implements FSTDataProvider {
     public byte[] readFile(FSTEntry entry, long offset, long size) throws IOException {
         ContentFSTInfo info = partition.getFST().getContentFSTInfos().get((int) entry.getContentFSTID());
         return getChunkOfData(info.getOffset(), entry.getFileOffset() + offset, size, discReader, titleKey);
+    }
+
+    @Override
+    public void readFileToStream(OutputStream out, FSTEntry entry) throws IOException {
+        ContentFSTInfo info = partition.getFST().getContentFSTInfos().get((int) entry.getContentFSTID());
+        if (titleKey == null) {
+            discReader.readEncryptedToOutputStream(out, partition.getAbsolutePartitionOffset() + info.getOffset() + entry.getFileOffset(), entry.getFileSize());
+        }
+        discReader.readDecryptedToOutputStream(out, partition.getAbsolutePartitionOffset() + info.getOffset(), entry.getFileOffset(), entry.getFileSize(),
+                titleKey, null, false);
     }
 
     @Override

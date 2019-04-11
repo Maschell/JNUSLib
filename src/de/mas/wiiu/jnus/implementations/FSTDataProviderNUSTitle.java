@@ -91,6 +91,15 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
         return in;
     }
 
+    @Override
+    public void readFileToStream(OutputStream outputStream, FSTEntry entry) throws IOException {
+        try {
+            readFileToOutputStream(outputStream, entry, 0, entry.getFileSize());
+        } catch (CheckSumWrongException e) {
+            throw new IOException(e);
+        }
+    }
+
     public boolean readFileToOutputStream(OutputStream out, FSTEntry entry, long offset, long size) throws IOException, CheckSumWrongException {
         long fileOffset = entry.getFileOffset() + offset;
         long fileOffsetBlock = fileOffset;

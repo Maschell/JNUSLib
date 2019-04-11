@@ -83,7 +83,7 @@ public abstract class WUDDiscReader {
         return out.toByteArray();
     }
 
-    protected abstract void readEncryptedToOutputStream(OutputStream out, long offset, long size) throws IOException;
+    public abstract void readEncryptedToOutputStream(OutputStream out, long offset, long size) throws IOException;
 
     /**
      * 

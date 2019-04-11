@@ -30,7 +30,7 @@ public class WUDDiscReaderUncompressed extends WUDDiscReader {
     }
 
     @Override
-    protected void readEncryptedToOutputStream(OutputStream outputStream, long offset, long size) throws IOException {
+    public void readEncryptedToOutputStream(OutputStream outputStream, long offset, long size) throws IOException {
 
         FileInputStream input = new FileInputStream(getImage().getFileHandle());
 

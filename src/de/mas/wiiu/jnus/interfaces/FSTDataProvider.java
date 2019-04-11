@@ -18,6 +18,7 @@ package de.mas.wiiu.jnus.interfaces;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Optional;
 
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
@@ -34,5 +35,7 @@ public interface FSTDataProvider {
     public byte[] readFile(FSTEntry entry, long offset, long size) throws IOException;
 
     public InputStream readFileAsStream(FSTEntry entry, long offset, Optional<Long> size) throws IOException;
+
+    public void readFileToStream(OutputStream out, FSTEntry entry) throws IOException;
 
 }

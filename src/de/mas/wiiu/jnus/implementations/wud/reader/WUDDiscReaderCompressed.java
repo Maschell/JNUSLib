@@ -36,7 +36,7 @@ public class WUDDiscReaderCompressed extends WUDDiscReader {
      * Expects the .wux format by Exzap. You can more infos about it here. https://gbatemp.net/threads/wii-u-image-wud-compression-tool.397901/
      */
     @Override
-    protected void readEncryptedToOutputStream(OutputStream out, long offset, long size) throws IOException {
+    public void readEncryptedToOutputStream(OutputStream out, long offset, long size) throws IOException {
         // make sure there is no out-of-bounds read
         WUDImageCompressedInfo info = getImage().getCompressedInfo();
 
