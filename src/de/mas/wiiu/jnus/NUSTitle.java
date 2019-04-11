@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -34,7 +33,6 @@ import de.mas.wiiu.jnus.entities.content.ContentFSTInfo;
 import de.mas.wiiu.jnus.entities.fst.FST;
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
-import de.mas.wiiu.jnus.utils.FSTUtils;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -157,13 +155,5 @@ public class NUSTitle {
     @Override
     public String toString() {
         return "NUSTitle [dataProvider=" + dataProvider + "]";
-    }
-
-    public Optional<FSTEntry> getFSTEntryByFullPath(String entryFullPath) {
-        return FSTUtils.getFSTEntryByFullPath(FST.getRoot(), entryFullPath);
-    }
-
-    public Optional<FSTEntry> getFileEntryDir(String path) {
-        return FSTUtils.getFileEntryDir(FST.getRoot(), path);
     }
 }
