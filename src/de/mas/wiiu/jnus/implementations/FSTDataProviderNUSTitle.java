@@ -21,9 +21,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import de.mas.wiiu.jnus.NUSTitle;
 import de.mas.wiiu.jnus.entities.content.Content;
+import de.mas.wiiu.jnus.entities.fst.FST;
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
 import de.mas.wiiu.jnus.interfaces.FSTDataProvider;
 import de.mas.wiiu.jnus.interfaces.HasNUSTitle;
@@ -38,16 +40,30 @@ import lombok.extern.java.Log;
 @Log
 public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
     private final NUSTitle title;
+    private final FSTEntry rootEntry;
     @Getter @Setter private String name;
 
     public FSTDataProviderNUSTitle(NUSTitle title) {
         this.title = title;
         this.name = String.format("%016X", title.getTMD().getTitleID());
+
+        FST fst = title.getFST();
+        if (fst != null) {
+            rootEntry = title.getFST().getRoot();
+        } else if (title.getTMD().getContentCount() == 1) {
+            // If the tmd has only one content file, it has not FST. We have to create our own FST.
+            Content c = title.getTMD().getAllContents().values().stream().collect(Collectors.toList()).get(0);
+            FSTEntry root = FSTEntry.getRootFSTEntry();
+            FSTEntry.createFSTEntry(root, "data.bin", c); // Will add this title root.
+            rootEntry = root;
+        } else {
+            rootEntry = null;
+        }
     }
 
     @Override
     public FSTEntry getRoot() {
-        return title.getFST().getRoot();
+        return rootEntry;
     }
 
     @Override

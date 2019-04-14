@@ -88,6 +88,16 @@ public class FSTEntry {
         param.setDir(true);
         return new FSTEntry(param);
     }
+    
+    public static FSTEntry createFSTEntry(FSTEntry parent, String filename, Content content) {
+        FSTEntryParam param = new FSTEntryParam();
+        param.setFileNameSupplier(() -> filename);
+        param.setFileSize(content.getDecryptedFileSize());
+        param.setContent(content);
+        param.setDir(false);
+        param.setParent(parent);
+        return new FSTEntry(param);
+    }
 
     public String getFilename() {
         if (filename == null) {

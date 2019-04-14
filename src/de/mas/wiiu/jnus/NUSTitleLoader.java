@@ -27,6 +27,9 @@ import de.mas.wiiu.jnus.entities.TMD;
 import de.mas.wiiu.jnus.entities.Ticket;
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.entities.fst.FST;
+import de.mas.wiiu.jnus.entities.fst.FSTEntry;
+import de.mas.wiiu.jnus.implementations.FSTDataProviderNUSTitle;
+import de.mas.wiiu.jnus.interfaces.FSTDataProvider;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 import de.mas.wiiu.jnus.utils.cryptography.AESDecryption;
@@ -63,12 +66,22 @@ public class NUSTitleLoader {
         }
         result.setTicket(ticket);
 
+        // If we have just content, we don't have a FST.
+        if (tmd.getAllContents().size() == 1) { 
+            // The only way to check if the key is right, is by trying to decrypt the whole thing.
+            FSTDataProvider dp = new FSTDataProviderNUSTitle(result);
+            for (FSTEntry children : dp.getRoot().getChildren()) {
+                dp.readFile(children);
+            }
+            return result;
+        }
+        // If we have more than one content, the index 0 is the FST.
         Content fstContent = tmd.getContentByIndex(0);
 
         InputStream fstContentEncryptedStream = dataProvider.getInputStreamFromContent(fstContent, 0, Optional.of(fstContent.getEncryptedFileSize()));
 
         byte[] fstBytes = StreamUtils.getBytesFromStream(fstContentEncryptedStream, (int) fstContent.getEncryptedFileSize());
-        
+
         if (fstContent.isEncrypted()) {
             AESDecryption aesDecryption = new AESDecryption(ticket.getDecryptedKey(), new byte[0x10]);
             if (fstBytes.length % 0x10 != 0) {
