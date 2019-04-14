@@ -56,9 +56,9 @@ public class FSTDataProviderWUDDataPartition implements FSTDataProvider {
 
     public byte[] getChunkOfData(long contentOffset, long fileoffset, long size, WUDDiscReader discReader, byte[] titleKey) throws IOException {
         if (titleKey == null) {
-            return discReader.readEncryptedToByteArray(partition.getAbsolutePartitionOffset() + contentOffset, fileoffset, (int) size);
+            return discReader.readEncryptedToByteArray(partition.getPartitionOffset() + contentOffset, fileoffset, (int) size);
         }
-        return discReader.readDecryptedToByteArray(partition.getAbsolutePartitionOffset() + contentOffset, fileoffset, (int) size, titleKey, null, false);
+        return discReader.readDecryptedToByteArray(partition.getPartitionOffset() + contentOffset, fileoffset, (int) size, titleKey, null, false);
     }
 
     @Override
@@ -66,9 +66,9 @@ public class FSTDataProviderWUDDataPartition implements FSTDataProvider {
         ContentFSTInfo info = partition.getFST().getContentFSTInfos().get((int) entry.getContentFSTID());
         long usedSize = size.orElse(entry.getFileSize());
         if (titleKey == null) {
-            discReader.readEncryptedToStream(out, partition.getAbsolutePartitionOffset() + info.getOffset() + entry.getFileOffset() + offset, usedSize);
+            discReader.readEncryptedToStream(out, partition.getPartitionOffset() + info.getOffset() + entry.getFileOffset() + offset, usedSize);
         }
-        discReader.readDecryptedToOutputStream(out, partition.getAbsolutePartitionOffset() + info.getOffset(), entry.getFileOffset() + offset, usedSize,
+        discReader.readDecryptedToOutputStream(out, partition.getPartitionOffset() + info.getOffset(), entry.getFileOffset() + offset, usedSize,
                 titleKey, null, false);
     }
 
@@ -77,7 +77,7 @@ public class FSTDataProviderWUDDataPartition implements FSTDataProvider {
         if (titleKey == null) {
             ContentFSTInfo info = partition.getFST().getContentFSTInfos().get((int) entry.getContentFSTID());
             long usedSize = size.orElse(entry.getFileSize());
-            return discReader.readEncryptedToStream(partition.getAbsolutePartitionOffset() + info.getOffset() + entry.getFileOffset() + offset, usedSize);
+            return discReader.readEncryptedToStream(partition.getPartitionOffset() + info.getOffset() + entry.getFileOffset() + offset, usedSize);
         }
 
         return FSTDataProvider.super.readFileAsStream(entry, offset, size);

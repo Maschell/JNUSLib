@@ -25,13 +25,18 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class WUDGamePartition extends WUDPartition {
+
+    private final WUDPartitionHeader partitionHeader;
+
     private final TMD tmd;
     private final byte[] rawTMD;
     private final byte[] rawCert;
     private final byte[] rawTicket;
 
-    public WUDGamePartition(String partitionName, long partitionOffset, byte[] rawTMD, byte[] rawCert, byte[] rawTicket) throws ParseException {
+    public WUDGamePartition(String partitionName, long partitionOffset, WUDPartitionHeader partitionHeader, byte[] rawTMD, byte[] rawCert, byte[] rawTicket)
+            throws ParseException {
         super(partitionName, partitionOffset);
+        this.partitionHeader = partitionHeader;
         this.rawTMD = rawTMD;
         this.tmd = TMD.parseTMD(rawTMD);
         this.rawCert = rawCert;

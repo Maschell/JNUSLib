@@ -40,9 +40,9 @@ public class NUSDataProviderWUD implements NUSDataProvider {
 
     public long getOffsetInWUD(Content content) {
         if (content.getIndex() == 0) { // Index 0 is the FST which is at the beginning of the partion;
-            return getGamePartition().getAbsolutePartitionOffset();
+            return getGamePartition().getPartitionOffset();
         }
-        return getGamePartition().getAbsolutePartitionOffset() + content.getContentFSTInfo().getOffset();
+        return getGamePartition().getPartitionOffset() + content.getContentFSTInfo().getOffset();
     }
 
     @Override
