@@ -36,6 +36,11 @@ public interface FSTDataProvider {
 
     public byte[] readFile(FSTEntry entry, long offset, long size) throws IOException;
 
+    
+    default public InputStream readFileAsStream(FSTEntry entry) throws IOException {
+        return readFileAsStream(entry, 0, Optional.empty());
+    }
+    
     default public InputStream readFileAsStream(FSTEntry entry, long offset, Optional<Long> size) throws IOException {
         PipedInputStreamWithException in = new PipedInputStreamWithException();
         PipedOutputStream out = new PipedOutputStream(in);
@@ -57,5 +62,7 @@ public interface FSTDataProvider {
     }
 
     public void readFileToStream(OutputStream out, FSTEntry entry, long offset, Optional<Long> size) throws IOException;
+
+   
 
 }
