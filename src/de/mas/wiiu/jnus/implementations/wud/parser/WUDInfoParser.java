@@ -108,50 +108,52 @@ public final class WUDInfoParser {
             internalPartitions.put(partitionName, partitionOffset);
         }
 
-        val siPartitionOpt = internalPartitions.entrySet().stream().filter(e -> e.getKey().startsWith("SI")).findFirst();
-        val siPartitionPair = siPartitionOpt.orElseThrow(() -> new ParseException("SI partition not found.", 0));
-
-        // siPartition
-        long siPartitionOffset = siPartitionPair.getValue();
-
-        byte[] fileTableBlock;
-
-        if (wudInfo.getTitleKey() == null) {
-            fileTableBlock = wudInfo.getWUDDiscReader().readEncryptedToByteArray(Settings.WIIU_DECRYPTED_AREA_OFFSET + siPartitionOffset, 0, 0x8000);
-        } else {
-            fileTableBlock = wudInfo.getWUDDiscReader().readDecryptedToByteArray(Settings.WIIU_DECRYPTED_AREA_OFFSET + siPartitionOffset, 0, 0x8000,
-                    wudInfo.getTitleKey(), null, true);
-        }
-
-        if (!Arrays.equals(Arrays.copyOfRange(fileTableBlock, 0, 4), PARTITION_FILE_TABLE_SIGNATURE)) {
-            log.info("FST Decrpytion failed");
-            throw new ParseException("Failed to decrypt the FST of the SI partition.", 0);
-        }
-
-        FST siFST = FST.parseFST(fileTableBlock, null);
-
         Map<String, WUDPartition> partitionsResult = new HashMap<>();
 
-        for (val dirChilden : siFST.getRoot().getDirChildren()) {
-            // The SI partition contains the tmd, cert and tik for every GM partition.
-            byte[] rawTIK = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_TICKET_FILENAME, siPartitionOffset, siFST,
-                    wudInfo.getWUDDiscReader(), wudInfo.getTitleKey());
-            byte[] rawTMD = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_TMD_FILENAME, siPartitionOffset, siFST,
-                    wudInfo.getWUDDiscReader(), wudInfo.getTitleKey());
-            byte[] rawCert = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_CERT_FILENAME, siPartitionOffset, siFST,
-                    wudInfo.getWUDDiscReader(), wudInfo.getTitleKey());
+        val siPartitionOpt = internalPartitions.entrySet().stream().filter(e -> e.getKey().startsWith("SI")).findFirst();
+        if (siPartitionOpt.isPresent()) {
+            val siPartitionPair = siPartitionOpt.orElseThrow(() -> new ParseException("SI partition not found.", 0));
 
-            String partitionName = "GM" + Utils.ByteArrayToString(Arrays.copyOfRange(rawTIK, 0x1DC, 0x1DC + 0x08));
+            // siPartition
+            long siPartitionOffset = siPartitionPair.getValue();
 
-            val curPartitionOpt = internalPartitions.entrySet().stream().filter(e -> e.getKey().startsWith(partitionName)).findFirst();
-            val curPartitionPair = curPartitionOpt.orElseThrow(() -> new ParseException("partition not foud.", 0));
-            long curPartitionOffset = curPartitionPair.getValue();
+            byte[] fileTableBlock;
 
-            WUDGamePartition curPartition = new WUDGamePartition(curPartitionPair.getKey(), curPartitionOffset, rawTMD, rawCert, rawTIK);
-            byte[] header = wudInfo.getWUDDiscReader().readEncryptedToByteArray(curPartition.getPartitionOffset() + 0x10000, 0, 0x8000);
-            WUDPartitionHeader partitionHeader = WUDPartitionHeader.parseHeader(header);
-            curPartition.setPartitionHeader(partitionHeader);
-            partitionsResult.put(curPartitionPair.getKey(), curPartition);
+            if (wudInfo.getTitleKey() == null) {
+                fileTableBlock = wudInfo.getWUDDiscReader().readEncryptedToByteArray(Settings.WIIU_DECRYPTED_AREA_OFFSET + siPartitionOffset, 0, 0x8000);
+            } else {
+                fileTableBlock = wudInfo.getWUDDiscReader().readDecryptedToByteArray(Settings.WIIU_DECRYPTED_AREA_OFFSET + siPartitionOffset, 0, 0x8000,
+                        wudInfo.getTitleKey(), null, true);
+            }
+
+            if (!Arrays.equals(Arrays.copyOfRange(fileTableBlock, 0, 4), PARTITION_FILE_TABLE_SIGNATURE)) {
+                log.info("FST Decrpytion failed");
+                throw new ParseException("Failed to decrypt the FST of the SI partition.", 0);
+            }
+
+            FST siFST = FST.parseFST(fileTableBlock, null);
+
+            for (val dirChilden : siFST.getRoot().getDirChildren()) {
+                // The SI partition contains the tmd, cert and tik for every GM partition.
+                byte[] rawTIK = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_TICKET_FILENAME, siPartitionOffset, siFST,
+                        wudInfo.getWUDDiscReader(), wudInfo.getTitleKey());
+                byte[] rawTMD = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_TMD_FILENAME, siPartitionOffset, siFST,
+                        wudInfo.getWUDDiscReader(), wudInfo.getTitleKey());
+                byte[] rawCert = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_CERT_FILENAME, siPartitionOffset, siFST,
+                        wudInfo.getWUDDiscReader(), wudInfo.getTitleKey());
+
+                String partitionName = "GM" + Utils.ByteArrayToString(Arrays.copyOfRange(rawTIK, 0x1DC, 0x1DC + 0x08));
+
+                val curPartitionOpt = internalPartitions.entrySet().stream().filter(e -> e.getKey().startsWith(partitionName)).findFirst();
+                val curPartitionPair = curPartitionOpt.orElseThrow(() -> new ParseException("partition not foud.", 0));
+                long curPartitionOffset = curPartitionPair.getValue();
+
+                WUDGamePartition curPartition = new WUDGamePartition(curPartitionPair.getKey(), curPartitionOffset, rawTMD, rawCert, rawTIK);
+                byte[] header = wudInfo.getWUDDiscReader().readEncryptedToByteArray(curPartition.getPartitionOffset() + 0x10000, 0, 0x8000);
+                WUDPartitionHeader partitionHeader = WUDPartitionHeader.parseHeader(header);
+                curPartition.setPartitionHeader(partitionHeader);
+                partitionsResult.put(curPartitionPair.getKey(), curPartition);
+            }
         }
 
         val dataPartitions = internalPartitions.entrySet().stream().filter(e -> !e.getKey().startsWith("GM")).collect(Collectors.toList());
