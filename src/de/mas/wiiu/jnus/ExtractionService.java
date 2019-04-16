@@ -117,23 +117,30 @@ public final class ExtractionService {
         }
     }
 
-    public void extractTMDTo(String output) throws IOException {
+    public boolean extractTMDTo(String output) throws IOException {
         Utils.createDir(output);
 
-        byte[] rawTMD = getDataProvider().getRawTMD().orElseThrow(() -> new FileNotFoundException("TMD not found"));
+        Optional<byte[]> rawTMD = getDataProvider().getRawTMD();
+        if (!rawTMD.isPresent()) {
+            return false;
+        }
+
         String tmd_path = output + File.separator + Settings.TMD_FILENAME;
         log.info("Extracting TMD to: " + tmd_path);
-        FileUtils.saveByteArrayToFile(tmd_path, rawTMD);
+        return FileUtils.saveByteArrayToFile(tmd_path, rawTMD.get());
     }
 
     public boolean extractTicketTo(String output) throws IOException {
         Utils.createDir(output);
 
-        byte[] rawTicket = getDataProvider().getRawTicket().orElseThrow(() -> new FileNotFoundException("Ticket not found"));
+        Optional<byte[]> rawTicket = getDataProvider().getRawTicket();
+        if (!rawTicket.isPresent()) {
+            return false;
+        }
 
         String ticket_path = output + File.separator + Settings.TICKET_FILENAME;
         log.info("Extracting Ticket to: " + ticket_path);
-        return FileUtils.saveByteArrayToFile(ticket_path, rawTicket);
+        return FileUtils.saveByteArrayToFile(ticket_path, rawTicket.get());
     }
 
     public boolean extractCertTo(String output) throws IOException {
@@ -159,6 +166,5 @@ public final class ExtractionService {
         extractTicketTo(outputFolder);
 
     }
-
 
 }
