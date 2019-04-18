@@ -19,6 +19,7 @@ package de.mas.wiiu.jnus.entities.content;
 import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Optional;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -37,7 +38,7 @@ public class ContentInfo {
 
     @Getter private final short indexOffset;
     @Getter private final short commandCount;
-    @Getter private final byte[] SHA2Hash;
+    @Getter private final Optional<byte[]> SHA2Hash;
 
     public ContentInfo() {
         this((short) 0);
@@ -54,7 +55,11 @@ public class ContentInfo {
     public ContentInfo(short indexOffset, short commandCount, byte[] SHA2Hash) {
         this.indexOffset = indexOffset;
         this.commandCount = commandCount;
-        this.SHA2Hash = SHA2Hash;
+        if (SHA2Hash == null) {
+            this.SHA2Hash = Optional.empty();
+        } else {
+            this.SHA2Hash = Optional.of(SHA2Hash);
+        }
     }
 
     /**
@@ -63,7 +68,7 @@ public class ContentInfo {
      * @param input
      *            0x24 byte of data from the TMD (starting at 0x208)
      * @return ContentFSTInfo object
-     * @throws ParseException 
+     * @throws ParseException
      */
     public static ContentInfo parseContentInfo(byte[] input) throws ParseException {
         if (input == null || input.length != CONTENT_INFO_SIZE) {
@@ -86,6 +91,6 @@ public class ContentInfo {
 
     @Override
     public String toString() {
-        return "ContentInfo [indexOffset=" + indexOffset + ", commandCount=" + commandCount + ", SHA2Hash=" + Arrays.toString(SHA2Hash) + "]";
+        return "ContentInfo [indexOffset=" + indexOffset + ", commandCount=" + commandCount + ", SHA2Hash=" + SHA2Hash + "]";
     }
 }
