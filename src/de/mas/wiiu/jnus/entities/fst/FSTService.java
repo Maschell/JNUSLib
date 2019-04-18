@@ -103,11 +103,13 @@ public final class FSTService {
             if (contentsByIndex != null) {
                 Content content = contentsByIndex.get((int) contentIndex);
                 if (content == null) {
-                    log.warning("Content for FST Entry not found");
-                    throw new ParseException("Content for FST Entry not found", 0);
+                    if (!entryParam.isDir() || entryParam.isNotInPackage()) {
+                        log.warning("Content for FST Entry not found");                       
+                        throw new ParseException("Content for FST Entry not found", 0);
+                    }
                 } else {
+                    // TODO: make content attribute in a fstentry optional
                     entryParam.setContent(content);
-
                     ContentFSTInfo contentFSTInfo = contentsFSTByIndex.get((int) contentIndex);
                     if (contentFSTInfo == null) {
                         log.warning("ContentFSTInfo for FST Entry not found");
