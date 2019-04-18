@@ -40,15 +40,9 @@ public class NUSTitleLoader {
     }
 
     public static NUSTitle loadNusTitle(NUSTitleConfig config, Supplier<NUSDataProvider> dataProviderFunction) throws IOException, ParseException {
-        NUSTitle result = new NUSTitle();
-
         NUSDataProvider dataProvider = dataProviderFunction.get();
-        result.setDataProvider(dataProvider);
 
-        byte[] tmdData = dataProvider.getRawTMD().orElseThrow(() -> new ParseException("No TMD data found", 0));
-
-        TMD tmd = TMD.parseTMD(tmdData);
-        result.setTMD(tmd);
+        NUSTitle result = new NUSTitle(dataProvider);
 
         if (config.isNoDecryption()) {
             return result;
@@ -64,19 +58,20 @@ public class NUSTitleLoader {
         if (ticket == null) {
             new ParseException("Failed to get ticket data", 0);
         }
-        result.setTicket(ticket);
+        result.setTicket(Optional.of(ticket));
 
         // If we have just content, we don't have a FST.
-        if (tmd.getAllContents().size() == 1) { 
+        if (result.getTMD().getAllContents().size() == 1) {
             // The only way to check if the key is right, is by trying to decrypt the whole thing.
             FSTDataProvider dp = new FSTDataProviderNUSTitle(result);
             for (FSTEntry children : dp.getRoot().getChildren()) {
                 dp.readFile(children);
             }
+
             return result;
         }
         // If we have more than one content, the index 0 is the FST.
-        Content fstContent = tmd.getContentByIndex(0);
+        Content fstContent = result.getTMD().getContentByIndex(0);
 
         InputStream fstContentEncryptedStream = dataProvider.getInputStreamFromContent(fstContent, 0, Optional.of(fstContent.getEncryptedFileSize()));
 
@@ -90,10 +85,10 @@ public class NUSTitleLoader {
             fstBytes = aesDecryption.decrypt(fstBytes);
         }
 
-        Map<Integer, Content> contents = tmd.getAllContents();
+        Map<Integer, Content> contents = result.getTMD().getAllContents();
 
         FST fst = FST.parseFST(fstBytes, contents);
-        result.setFST(fst);
+        result.setFST(Optional.of(fst));
 
         return result;
     }

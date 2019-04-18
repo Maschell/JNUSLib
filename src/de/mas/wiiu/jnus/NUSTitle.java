@@ -18,10 +18,12 @@ package de.mas.wiiu.jnus;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -34,15 +36,24 @@ import de.mas.wiiu.jnus.entities.fst.FST;
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 
 public class NUSTitle {
-    @Getter @Setter private FST FST;
-    @Getter @Setter private TMD TMD;
-    @Getter @Setter private Ticket ticket;
+    @Getter @Setter private Optional<FST> FST = Optional.empty();
+    @Getter @Setter private Optional<Ticket> ticket;
+
+    @Getter private final TMD TMD;
 
     @Getter @Setter private boolean skipExistingFiles = true;
-    @Getter @Setter private NUSDataProvider dataProvider = null;
+    @Getter private final NUSDataProvider dataProvider;
+
+    public NUSTitle(@NonNull NUSDataProvider dataProvider) throws ParseException, IOException {
+        byte[] tmdData = dataProvider.getRawTMD().orElseThrow(() -> new ParseException("No TMD data found", 0));
+        this.TMD = de.mas.wiiu.jnus.entities.TMD.parseTMD(tmdData);
+        this.dataProvider = dataProvider;
+
+    }
 
     public List<FSTEntry> getAllFSTEntriesFlatByContentID(short ID) {
         return getFSTEntriesFlatByContent(getTMD().getContentByID((int) ID));
@@ -65,7 +76,10 @@ public class NUSTitle {
     }
 
     public Stream<FSTEntry> getAllFSTEntriesAsStream() {
-        return getAllFSTEntryChildrenAsStream(FST.getRoot());
+        if (!FST.isPresent()) {
+            return Stream.empty();
+        }
+        return getAllFSTEntryChildrenAsStream(FST.get().getRoot());
     }
 
     public Stream<FSTEntry> getAllFSTEntryChildrenAsStream(FSTEntry cur) {
@@ -84,7 +98,11 @@ public class NUSTitle {
     }
 
     public List<FSTEntry> getFSTEntriesByRegEx(String regEx) {
-        return getFSTEntriesByRegEx(regEx, FST.getRoot());
+        if (!FST.isPresent()) {
+            return new ArrayList<>();
+        }
+
+        return getFSTEntriesByRegEx(regEx, FST.get().getRoot());
     }
 
     public List<FSTEntry> getFSTEntriesByRegEx(String regEx, FSTEntry entry) {
@@ -92,7 +110,10 @@ public class NUSTitle {
     }
 
     public List<FSTEntry> getFSTEntriesByRegEx(String regEx, boolean onlyInPackage) {
-        return getFSTEntriesByRegEx(regEx, FST.getRoot(), onlyInPackage);
+        if (!FST.isPresent()) {
+            return new ArrayList<>();
+        }
+        return getFSTEntriesByRegEx(regEx, FST.get().getRoot(), onlyInPackage);
     }
 
     public List<FSTEntry> getFSTEntriesByRegEx(String regEx, FSTEntry entry, boolean allowNotInPackage) {
@@ -116,13 +137,18 @@ public class NUSTitle {
     }
 
     public void printFiles() {
-        getFST().getRoot().printRecursive(0);
+        if (FST.isPresent()) {
+            FST.get().getRoot().printRecursive(0);
+        }
     }
 
     public void printContentFSTInfos() {
-        for (Entry<Integer, ContentFSTInfo> e : getFST().getContentFSTInfos().entrySet()) {
-            System.out.println(String.format("%08X", e.getKey()) + ": " + e.getValue());
+        if (FST.isPresent()) {
+            for (Entry<Integer, ContentFSTInfo> e : FST.get().getContentFSTInfos().entrySet()) {
+                System.out.println(String.format("%08X", e.getKey()) + ": " + e.getValue());
+            }
         }
+
     }
 
     public void printContentInfos() {

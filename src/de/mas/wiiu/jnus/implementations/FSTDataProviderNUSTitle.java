@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 
 import de.mas.wiiu.jnus.NUSTitle;
 import de.mas.wiiu.jnus.entities.content.Content;
-import de.mas.wiiu.jnus.entities.fst.FST;
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
 import de.mas.wiiu.jnus.interfaces.FSTDataProvider;
 import de.mas.wiiu.jnus.interfaces.HasNUSTitle;
@@ -47,9 +46,8 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
         this.title = title;
         this.name = String.format("%016X", title.getTMD().getTitleID());
 
-        FST fst = title.getFST();
-        if (fst != null) {
-            rootEntry = title.getFST().getRoot();
+        if (title.getFST().isPresent()) {
+            rootEntry = title.getFST().get().getRoot();
         } else if (title.getTMD().getContentCount() == 1) {
             // If the tmd has only one content file, it has not FST. We have to create our own FST.
             Content c = title.getTMD().getAllContents().values().stream().collect(Collectors.toList()).get(0);
@@ -99,7 +97,15 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
 
     private boolean decryptFSTEntryToStream(FSTEntry entry, OutputStream outputStream, long fileOffsetBlock, long fileOffset, long fileSize)
             throws IOException, CheckSumWrongException {
-        if (entry.isNotInPackage() || entry.getContent() == null) {
+        if (entry.isNotInPackage() || entry.getContent() == null || !title.getTicket().isPresent()) {
+            if (!title.getTicket().isPresent()) {
+                log.info("Decryption not possible because no ticket was set.");
+            }else if(entry.isNotInPackage()) {
+                log.info("Decryption not possible because the FSTEntry is not in this package");
+            }else if(entry.getContent() == null) {
+                // TODO: convert it to an Optional
+                log.info("Decryption not possible because the Content was null");
+            }
             outputStream.close();
             return false;
         }
@@ -111,7 +117,7 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
         InputStream in = dataProvider.getInputStreamFromContent(c, fileOffsetBlock);
 
         try {
-            NUSDecryption nusdecryption = new NUSDecryption(title.getTicket());
+            NUSDecryption nusdecryption = new NUSDecryption(title.getTicket().get());
             Optional<byte[]> h3HashedOpt = Optional.empty();
             if (c.isHashed()) {
                 h3HashedOpt = dataProvider.getContentH3Hash(c);
