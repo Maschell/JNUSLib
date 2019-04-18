@@ -96,10 +96,10 @@ public final class WUDInfoParser {
             String partitionName = new String(Arrays.copyOfRange(partitionIdentifier, 0, j));
 
             // calculate partition offset from decrypted TOC
-            long tmp = ByteUtils.getUnsingedIntFromBytes(partitionTocBlock, (PARTITION_TOC_OFFSET + (i * PARTITION_TOC_ENTRY_SIZE) + 0x20),
+            long offsetInSector = ByteUtils.getUnsingedIntFromBytes(partitionTocBlock, (PARTITION_TOC_OFFSET + (i * PARTITION_TOC_ENTRY_SIZE) + 0x20),
                     ByteOrder.BIG_ENDIAN);
 
-            long partitionOffset = (tmp * (long) 0x8000);
+            long partitionOffset = (offsetInSector * (long) SECTOR_SIZE);
 
             internalPartitions.put(partitionName, partitionOffset);
         }
