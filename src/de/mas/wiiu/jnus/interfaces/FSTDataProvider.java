@@ -57,11 +57,11 @@ public interface FSTDataProvider {
         return in;
     }
 
-    default public void readFileToStream(OutputStream out, FSTEntry entry, long offset) throws IOException {
-        readFileToStream(out, entry, offset, Optional.empty());
+    default public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset) throws IOException {
+        return readFileToStream(out, entry, offset, Optional.empty());
     }
 
-    public void readFileToStream(OutputStream out, FSTEntry entry, long offset, Optional<Long> size) throws IOException;
+    public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset, Optional<Long> size) throws IOException;
 
    
 

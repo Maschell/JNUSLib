@@ -31,7 +31,7 @@ public class WUDDiscReaderUncompressed extends WUDDiscReader {
     }
 
     @Override
-    public void readEncryptedToStream(OutputStream outputStream, long offset, long size) throws IOException {
+    public boolean readEncryptedToStream(OutputStream outputStream, long offset, long size) throws IOException {
 
         FileInputStream input = new FileInputStream(getImage().getFileHandle());
 
@@ -42,7 +42,9 @@ public class WUDDiscReaderUncompressed extends WUDDiscReader {
         long totalread = 0;
         do {
             int read = input.read(buffer);
-            if (read < 0) break;
+            if (read < 0) {
+                break;
+            }
             if (totalread + read > size) {
                 read = (int) (size - totalread);
             }
@@ -60,6 +62,7 @@ public class WUDDiscReaderUncompressed extends WUDDiscReader {
         } while (totalread < size);
         input.close();
         outputStream.close();
+        return totalread >= size;
     }
 
     @Override

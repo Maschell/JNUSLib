@@ -62,14 +62,14 @@ public class FSTDataProviderWUDDataPartition implements FSTDataProvider {
     }
 
     @Override
-    public void readFileToStream(OutputStream out, FSTEntry entry, long offset, Optional<Long> size) throws IOException {
+    public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset, Optional<Long> size) throws IOException {
         ContentFSTInfo info = partition.getFST().getContentFSTInfos().get((int) entry.getContentFSTID());
         long usedSize = size.orElse(entry.getFileSize());
         if (titleKey == null) {
-            discReader.readEncryptedToStream(out, partition.getPartitionOffset() + info.getOffset() + entry.getFileOffset() + offset, usedSize);
+            return discReader.readEncryptedToStream(out, partition.getPartitionOffset() + info.getOffset() + entry.getFileOffset() + offset, usedSize);
         }
-        discReader.readDecryptedToOutputStream(out, partition.getPartitionOffset() + info.getOffset(), entry.getFileOffset() + offset, usedSize,
-                titleKey, null, false);
+        return discReader.readDecryptedToOutputStream(out, partition.getPartitionOffset() + info.getOffset(), entry.getFileOffset() + offset, usedSize, titleKey, null,
+                false);
     }
 
     @Override

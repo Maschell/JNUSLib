@@ -53,7 +53,7 @@ public abstract class WUDDiscReader {
         return out.toByteArray();
     }
 
-    public abstract void readEncryptedToStream(OutputStream out, long offset, long size) throws IOException;
+    public abstract boolean readEncryptedToStream(OutputStream out, long offset, long size) throws IOException;
 
     public InputStream readEncryptedToStream(long offset, long size) throws IOException {
         PipedInputStreamWithException in = new PipedInputStreamWithException();
@@ -92,7 +92,7 @@ public abstract class WUDDiscReader {
         return decryptedChunk;
     }
 
-    public void readDecryptedToOutputStream(OutputStream outputStream, long clusterOffset, long fileOffset, long size, byte[] key, byte[] IV,
+    public boolean readDecryptedToOutputStream(OutputStream outputStream, long clusterOffset, long fileOffset, long size, byte[] key, byte[] IV,
             boolean useFixedIV) throws IOException {
         byte[] usedIV = null;
         if (useFixedIV) {
@@ -149,6 +149,7 @@ public abstract class WUDDiscReader {
         } while (totalread < size);
 
         outputStream.close();
+        return totalread >= size;
     }
 
     /**

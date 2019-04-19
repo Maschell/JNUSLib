@@ -23,9 +23,7 @@ import java.util.Arrays;
 
 import de.mas.wiiu.jnus.implementations.wud.WUDImage;
 import de.mas.wiiu.jnus.implementations.wud.WUDImageCompressedInfo;
-import lombok.extern.java.Log;
 
-@Log
 public class WUDDiscReaderCompressed extends WUDDiscReader {
 
     public WUDDiscReaderCompressed(WUDImage image) {
@@ -36,7 +34,7 @@ public class WUDDiscReaderCompressed extends WUDDiscReader {
      * Expects the .wux format by Exzap. You can more infos about it here. https://gbatemp.net/threads/wii-u-image-wud-compression-tool.397901/
      */
     @Override
-    public void readEncryptedToStream(OutputStream out, long offset, long size) throws IOException {
+    public boolean readEncryptedToStream(OutputStream out, long offset, long size) throws IOException {
         // make sure there is no out-of-bounds read
         WUDImageCompressedInfo info = getImage().getCompressedInfo();
 
@@ -92,5 +90,6 @@ public class WUDDiscReaderCompressed extends WUDDiscReader {
         synchronized (out) {
             out.close();
         }
+        return usedSize == 0;
     }
 }

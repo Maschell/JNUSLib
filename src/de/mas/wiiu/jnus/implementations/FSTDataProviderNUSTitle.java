@@ -74,7 +74,7 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
     }
 
     @Override
-    public void readFileToStream(OutputStream out, FSTEntry entry, long offset, Optional<Long> size) throws IOException {
+    public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset, Optional<Long> size) throws IOException {
         if (!entry.getContent().isPresent()) {
             out.close();
             throw new IOException("Content for the FSTEntry not found: " + entry);
@@ -94,7 +94,7 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
             }
         }
         try {
-            decryptFSTEntryToStream(entry, out, fileOffsetBlock, fileOffset, usedSize);
+            return decryptFSTEntryToStream(entry, out, fileOffsetBlock, fileOffset, usedSize);
         } catch (CheckSumWrongException e) {
             throw new IOException(e);
         }
