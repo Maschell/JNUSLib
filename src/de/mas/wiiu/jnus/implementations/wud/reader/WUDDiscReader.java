@@ -161,7 +161,7 @@ public abstract class WUDDiscReader {
     public RandomAccessFile getRandomAccessFileStream() throws FileNotFoundException {
         if (getImage() == null || getImage().getFileHandle() == null) {
             log.warning("No image or image filehandle set.");
-            System.exit(1); // TODO: NOOOOOOOOOOOOO
+            throw new FileNotFoundException("No image or image filehandle set.");
         }
         return new RandomAccessFile(getImage().getFileHandle(), "r");
     }
