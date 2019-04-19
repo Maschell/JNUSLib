@@ -42,7 +42,7 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
     private final FSTEntry rootEntry;
     @Getter @Setter private String name;
 
-    public FSTDataProviderNUSTitle(NUSTitle title) {
+    public FSTDataProviderNUSTitle(NUSTitle title) throws IOException {
         this.title = title;
         this.name = String.format("%016X", title.getTMD().getTitleID());
 
@@ -55,7 +55,7 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
             FSTEntry.createFSTEntry(root, "data.bin", c); // Will add this title root.
             rootEntry = root;
         } else {
-            rootEntry = null;
+            throw new IOException("No FST root entry was found");
         }
     }
 
