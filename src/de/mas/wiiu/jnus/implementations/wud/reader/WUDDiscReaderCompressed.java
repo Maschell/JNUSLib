@@ -46,8 +46,7 @@ public class WUDDiscReaderCompressed extends WUDDiscReader {
         long usedSize = size;
 
         if (fileBytesLeft <= 0) {
-            log.warning("offset too big");
-            System.exit(1);
+            throw new IOException("Offset was to big.");
         }
         if (fileBytesLeft < usedSize) {
             usedSize = fileBytesLeft;
