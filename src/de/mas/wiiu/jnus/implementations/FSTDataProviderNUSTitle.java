@@ -107,9 +107,8 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
                 log.info("Decryption not possible because no ticket was set.");
             } else if (entry.isNotInPackage()) {
                 log.info("Decryption not possible because the FSTEntry is not in this package");
-            } else if (entry.getContent() == null) {
-                // TODO: convert it to an Optional
-                log.info("Decryption not possible because the Content was null");
+            } else if (!entry.getContent().isPresent()) {
+                log.info("Decryption not possible because the Content was empty");
             }
             outputStream.close();
             return false;
