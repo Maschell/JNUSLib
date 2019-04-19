@@ -130,7 +130,7 @@ public final class WUDInfoParser {
                 throw new ParseException("Failed to decrypt the FST of the SI partition.", 0);
             }
 
-            FST siFST = FST.parseFST(fileTableBlock, null);
+            FST siFST = FST.parseFST(fileTableBlock, new HashMap<>());
 
             for (val dirChilden : siFST.getRoot().getDirChildren()) {
                 // The SI partition contains the tmd, cert and tik for every GM partition.
@@ -188,7 +188,7 @@ public final class WUDInfoParser {
                 throw new IOException("FST Decrpytion failed");
             }
 
-            FST curFST = FST.parseFST(curFileTableBlock, null);
+            FST curFST = FST.parseFST(curFileTableBlock, new HashMap<>());
 
             WUDDataPartition curDataPartition = new WUDDataPartition(curPartionName, partitionOffset + headerSize, curFST);
 
