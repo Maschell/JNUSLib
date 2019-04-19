@@ -18,7 +18,6 @@ package de.mas.wiiu.jnus.entities.content;
 
 import java.nio.ByteBuffer;
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.Optional;
 
 import lombok.EqualsAndHashCode;

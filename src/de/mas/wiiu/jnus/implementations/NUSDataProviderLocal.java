@@ -72,6 +72,7 @@ public final class NUSDataProviderLocal implements NUSDataProvider {
     @Override
     public Optional<byte[]> getRawTMD() throws IOException {
         File file = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), Settings.TMD_FILENAME);
+
         if (file == null || !file.exists()) {
             String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + Settings.TMD_FILENAME + "\", file does not exist";
             log.warning(errormsg);
