@@ -16,6 +16,7 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.implementations.wud.parser;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -85,8 +86,12 @@ public final class WUDPartitionHeader {
             byte[] hash = Arrays.copyOfRange(header, start_offset + offset * 0x14, start_offset + (offset + cnt_hashes) * 0x14);
 
             // Checking the hash of the h3 file.
-            if (!Arrays.equals(HashUtil.hashSHA1(hash), c.getSHA2Hash())) {
-                log.info("h3 incorrect from WUD");
+            try {
+                if (!Arrays.equals(HashUtil.hashSHA1(hash), c.getSHA2Hash())) {
+                    log.info("h3 incorrect from WUD");
+                }
+            } catch (NoSuchAlgorithmException e) {
+                log.warning(e.getMessage());
             }
 
             addH3Hashes(c.getIndex(), hash);

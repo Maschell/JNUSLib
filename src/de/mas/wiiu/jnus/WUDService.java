@@ -124,7 +124,12 @@ public final class WUDService {
         Integer oldOffset = null;
         do {
             int read = StreamUtils.getChunkFromStream(in, blockBuffer, overflow, bufferSize);
-            ByteArrayWrapper hash = new ByteArrayWrapper(HashUtil.hashSHA1(blockBuffer));
+            ByteArrayWrapper hash;
+            try {
+                hash = new ByteArrayWrapper(HashUtil.hashSHA1(blockBuffer));
+            } catch (NoSuchAlgorithmException e1) {
+                throw new IOException(e1);
+            }
 
             if ((oldOffset = sectorHashes.get(hash)) == null) {
                 sectorMapping.put(curSector, realSector);

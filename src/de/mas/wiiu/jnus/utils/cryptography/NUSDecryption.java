@@ -192,7 +192,7 @@ public class NUSDecryption extends AESDecryption {
     }
 
     public void decryptFileStreamHashed(InputStream inputStream, OutputStream outputStream, long filesize, long fileoffset, short contentIndex, byte[] h3Hash)
-            throws IOException, CheckSumWrongException {
+            throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
         int BLOCKSIZE = 0x10000;
         int HASHBLOCKSIZE = 0xFC00;
 
@@ -215,7 +215,7 @@ public class NUSDecryption extends AESDecryption {
                 byte[] output;
                 try {
                     output = decryptFileChunkHash(encryptedBlockBuffer, (int) block, contentIndex, h3Hash);
-                } catch (CheckSumWrongException e) {
+                } catch (CheckSumWrongException | NoSuchAlgorithmException e) {
                     throw e;
                 }
 
@@ -247,7 +247,8 @@ public class NUSDecryption extends AESDecryption {
         }
     }
 
-    private byte[] decryptFileChunkHash(byte[] blockBuffer, int block, int contentIndex, byte[] h3_hashes) throws CheckSumWrongException {
+    private byte[] decryptFileChunkHash(byte[] blockBuffer, int block, int contentIndex, byte[] h3_hashes)
+            throws CheckSumWrongException, NoSuchAlgorithmException {
         int hashSize = 0x400;
         int blocksize = 0xFC00;
         byte[] IV = ByteBuffer.allocate(16).putShort((short) contentIndex).array();
@@ -268,7 +269,7 @@ public class NUSDecryption extends AESDecryption {
     }
 
     public boolean decryptStreams(InputStream inputStream, OutputStream outputStream, long size, long offset, Content content, Optional<byte[]> h3HashHashed)
-            throws IOException, CheckSumWrongException {
+            throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
 
         short contentIndex = (short) content.getIndex();
 
@@ -278,7 +279,6 @@ public class NUSDecryption extends AESDecryption {
             if (content.isEncrypted()) {
                 if (content.isHashed()) {
                     byte[] h3 = h3HashHashed.orElseThrow(() -> new FileNotFoundException("h3 hash not found."));
-
                     decryptFileStreamHashed(inputStream, outputStream, size, offset, (short) contentIndex, h3);
                 } else {
                     byte[] h3Hash = content.getSHA2Hash();

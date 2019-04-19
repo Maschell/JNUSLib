@@ -20,6 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -95,13 +96,13 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
         }
         try {
             return decryptFSTEntryToStream(entry, out, fileOffsetBlock, fileOffset, usedSize);
-        } catch (CheckSumWrongException e) {
+        } catch (CheckSumWrongException | NoSuchAlgorithmException e) {
             throw new IOException(e);
         }
     }
 
     private boolean decryptFSTEntryToStream(FSTEntry entry, OutputStream outputStream, long fileOffsetBlock, long fileOffset, long fileSize)
-            throws IOException, CheckSumWrongException {
+            throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
         if (entry.isNotInPackage() || !entry.getContent().isPresent() || !title.getTicket().isPresent()) {
             if (!title.getTicket().isPresent()) {
                 log.info("Decryption not possible because no ticket was set.");

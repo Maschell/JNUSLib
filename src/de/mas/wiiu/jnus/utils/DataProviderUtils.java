@@ -19,6 +19,7 @@ package de.mas.wiiu.jnus.utils;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -75,15 +76,20 @@ public class DataProviderUtils {
         File output = new File(outputFolder + File.separator + h3Filename);
 
         if (output.exists()) {
-            if (Arrays.equals(content.getSHA2Hash(), HashUtil.hashSHA1(output))) {
-                log.fine(h3Filename + " already exists");
-                return false;
-            } else {
-                if (Arrays.equals(content.getSHA2Hash(), Arrays.copyOf(HashUtil.hashSHA256(output), 20))) { // 0005000c1f941200 used sha256 instead of SHA1
+            try {
+                if (Arrays.equals(content.getSHA2Hash(), HashUtil.hashSHA1(output))) {
                     log.fine(h3Filename + " already exists");
                     return false;
+                } else {
+                    if (Arrays.equals(content.getSHA2Hash(), Arrays.copyOf(HashUtil.hashSHA256(output), 20))) { // 0005000c1f941200 used sha256 instead of SHA1
+                        log.fine(h3Filename + " already exists");
+                        return false;
+                    }
+                    log.warning(h3Filename + " already exists but hash is differrent than expected.");
                 }
-                log.warning(h3Filename + " already exists but hash is differrent than expected.");
+            } catch (NoSuchAlgorithmException e) {
+                log.warning(e.getMessage());
+                return false;
             }
         }
 

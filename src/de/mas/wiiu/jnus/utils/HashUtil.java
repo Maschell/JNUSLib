@@ -68,50 +68,31 @@ public final class HashUtil {
         return hash;
     }
 
-    public static byte[] hashSHA1(byte[] data) {
-        MessageDigest sha1;
-        try {
-            sha1 = MessageDigest.getInstance("SHA1");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            return new byte[0x14];
-        }
+    public static byte[] hashSHA1(byte[] data) throws NoSuchAlgorithmException {
+        MessageDigest sha1 = MessageDigest.getInstance("SHA1");
 
         return sha1.digest(data);
     }
 
-    public static byte[] hashSHA1(InputStream in, long length) {
+    public static byte[] hashSHA1(InputStream in, long length) throws NoSuchAlgorithmException, IOException {
         return hashSHA1(in, length, 0);
     }
 
-    public static byte[] hashSHA1(InputStream in, long length, int aligmnent) {
+    public static byte[] hashSHA1(InputStream in, long length, int aligmnent) throws IOException, NoSuchAlgorithmException {
         byte[] hash = new byte[0x14];
-        MessageDigest sha1 = null;
-        try {
-            sha1 = MessageDigest.getInstance("SHA1");
-            hash = hash(sha1, in, length, 0x8000, aligmnent);
-        } catch (NoSuchAlgorithmException | FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        MessageDigest sha1 = MessageDigest.getInstance("SHA1");
+        hash = hash(sha1, in, length, 0x8000, aligmnent);
 
         return hash;
     }
 
-    public static byte[] hashSHA1(File file) {
+    public static byte[] hashSHA1(File file) throws NoSuchAlgorithmException, IOException {
         return hashSHA1(file, 0);
     }
 
-    public static byte[] hashSHA1(File file, int aligmnent) {
-        InputStream in;
-        try {
-            in = new FileInputStream(file);
-            return hashSHA1(in, file.length(), aligmnent);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        return null;
+    public static byte[] hashSHA1(File file, int aligmnent) throws NoSuchAlgorithmException, IOException {
+        InputStream in = new FileInputStream(file);
+        return hashSHA1(in, file.length(), aligmnent);
     }
 
     public static byte[] hash(MessageDigest digest, InputStream in, long inputSize1, int bufferSize, int alignment) throws IOException {
@@ -142,7 +123,7 @@ public final class HashUtil {
         return digest.digest();
     }
 
-    public static boolean compareHashFolder(File input1, File input2) {
+    public static boolean compareHashFolder(File input1, File input2) throws NoSuchAlgorithmException, IOException {
         List<File> expectedFiles = getInputFilesForFolder(input1);
         List<File> givenFiles = getInputFilesForFolder(input2);
         String regexInput = input1.getAbsolutePath().toLowerCase();
@@ -193,7 +174,7 @@ public final class HashUtil {
         return result;
     }
 
-    private static boolean compareHashFile(File file1, File file2) {
+    private static boolean compareHashFile(File file1, File file2) throws NoSuchAlgorithmException, IOException {
         if (file1 == null || !file1.exists() || file2 == null || !file2.exists()) {
             return false;
         }
@@ -226,7 +207,7 @@ public final class HashUtil {
         return result;
     }
 
-    public static void checkFileChunkHashes(byte[] hashes, byte[] h3Hashes, byte[] output, int block) throws CheckSumWrongException {
+    public static void checkFileChunkHashes(byte[] hashes, byte[] h3Hashes, byte[] output, int block) throws CheckSumWrongException, NoSuchAlgorithmException {
         int H0_start = (block % 16) * 20;
         int H1_start = (16 + (block / 16) % 16) * 20;
         int H2_start = (32 + (block / 256) % 16) * 20;
@@ -277,5 +258,6 @@ public final class HashUtil {
                 log.finest("h3 checksum right!");
             }
         }
+
     }
 }
