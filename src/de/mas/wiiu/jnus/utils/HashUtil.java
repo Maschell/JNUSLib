@@ -120,22 +120,24 @@ public final class HashUtil {
         int inBlockBufferRead = 0;
         byte[] blockBuffer = new byte[bufferSize];
         ByteArrayBuffer overflow = new ByteArrayBuffer(bufferSize);
-        do {
-            inBlockBufferRead = StreamUtils.getChunkFromStream(in, blockBuffer, overflow, bufferSize);
+        try {
+            do {
+                inBlockBufferRead = StreamUtils.getChunkFromStream(in, blockBuffer, overflow, bufferSize);
 
-            if (inBlockBufferRead <= 0) break;
+                if (inBlockBufferRead <= 0) break;
 
-            digest.update(blockBuffer, 0, inBlockBufferRead);
-            cur_position += inBlockBufferRead;
+                digest.update(blockBuffer, 0, inBlockBufferRead);
+                cur_position += inBlockBufferRead;
 
-        } while (cur_position < target_size);
-        long missing_bytes = target_size - cur_position;
-        if (missing_bytes > 0) {
-            byte[] missing = new byte[(int) missing_bytes];
-            digest.update(missing, 0, (int) missing_bytes);
+            } while (cur_position < target_size);
+            long missing_bytes = target_size - cur_position;
+            if (missing_bytes > 0) {
+                byte[] missing = new byte[(int) missing_bytes];
+                digest.update(missing, 0, (int) missing_bytes);
+            }
+        } finally {
+            in.close();
         }
-
-        in.close();
 
         return digest.digest();
     }

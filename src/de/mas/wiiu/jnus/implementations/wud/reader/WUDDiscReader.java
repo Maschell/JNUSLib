@@ -28,6 +28,7 @@ import java.util.Arrays;
 
 import de.mas.wiiu.jnus.implementations.wud.WUDImage;
 import de.mas.wiiu.jnus.utils.PipedInputStreamWithException;
+import de.mas.wiiu.jnus.utils.StreamUtils;
 import de.mas.wiiu.jnus.utils.cryptography.AESDecryption;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -114,41 +115,44 @@ public abstract class WUDDiscReader {
         final int BLOCK_SIZE = 0x10000;
         long totalread = 0;
 
-        do {
-            long blockNumber = (usedFileOffset / BLOCK_SIZE);
-            long blockOffset = (usedFileOffset % BLOCK_SIZE);
+        try {
+            do {
+                long blockNumber = (usedFileOffset / BLOCK_SIZE);
+                long blockOffset = (usedFileOffset % BLOCK_SIZE);
 
-            readOffset = clusterOffset + (blockNumber * BLOCK_SIZE);
-            // (long)WiiUDisc.WIIU_DECRYPTED_AREA_OFFSET + volumeOffset + clusterOffset + (blockStructure.getBlockNumber() * 0x8000);
+                readOffset = clusterOffset + (blockNumber * BLOCK_SIZE);
+                // (long)WiiUDisc.WIIU_DECRYPTED_AREA_OFFSET + volumeOffset + clusterOffset + (blockStructure.getBlockNumber() * 0x8000);
 
-            if (!useFixedIV) {
-                ByteBuffer byteBuffer = ByteBuffer.allocate(0x10);
-                byteBuffer.position(0x08);
-                usedIV = byteBuffer.putLong(usedFileOffset >> 16).array();
-            }
-
-            buffer = readDecryptedChunk(readOffset, key, usedIV);
-            maxCopySize = BLOCK_SIZE - blockOffset;
-            copySize = (usedSize > maxCopySize) ? maxCopySize : usedSize;
-
-            try {
-                outputStream.write(Arrays.copyOfRange(buffer, (int) blockOffset, (int) (blockOffset + copySize)));
-            } catch (IOException e) {
-                if (e.getMessage().equals("Pipe closed")) {
-                    break;
-                } else {
-                    throw e;
+                if (!useFixedIV) {
+                    ByteBuffer byteBuffer = ByteBuffer.allocate(0x10);
+                    byteBuffer.position(0x08);
+                    usedIV = byteBuffer.putLong(usedFileOffset >> 16).array();
                 }
-            }
 
-            totalread += copySize;
+                buffer = readDecryptedChunk(readOffset, key, usedIV);
+                maxCopySize = BLOCK_SIZE - blockOffset;
+                copySize = (usedSize > maxCopySize) ? maxCopySize : usedSize;
 
-            // update counters
-            usedSize -= copySize;
-            usedFileOffset += copySize;
-        } while (totalread < size);
+                try {
+                    outputStream.write(Arrays.copyOfRange(buffer, (int) blockOffset, (int) (blockOffset + copySize)));
+                } catch (IOException e) {
+                    if (e.getMessage().equals("Pipe closed")) {
+                        break;
+                    } else {
+                        throw e;
+                    }
+                }
 
-        outputStream.close();
+                totalread += copySize;
+
+                // update counters
+                usedSize -= copySize;
+                usedFileOffset += copySize;
+            } while (totalread < size);
+        } finally {
+            StreamUtils.closeAll(outputStream);
+        }
+
         return totalread >= size;
     }
 

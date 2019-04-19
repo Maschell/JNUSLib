@@ -53,8 +53,11 @@ public final class FileUtils {
      */
     public static boolean saveByteArrayToFile(@NonNull File output, byte[] data) throws IOException {
         FileOutputStream out = new FileOutputStream(output);
-        out.write(data);
-        out.close();
+        try {
+            out.write(data);
+        } finally {
+            out.close();
+        }
         return true;
     }
 
@@ -81,12 +84,14 @@ public final class FileUtils {
 
         tempFile.createNewFile();
         RandomAccessFile outStream = new RandomAccessFile(tempFilePath, "rw");
-        outStream.setLength(filesize);
-        outStream.seek(0L);
+        try {
+            outStream.setLength(filesize);
+            outStream.seek(0L);
 
-        action.apply(new RandomFileOutputStream(outStream));
-
-        outStream.close();
+            action.apply(new RandomFileOutputStream(outStream));
+        } finally {
+            outStream.close();
+        }
 
         // Rename temp file.
         if (outputFile.exists()) {

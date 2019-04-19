@@ -23,6 +23,7 @@ import java.util.Arrays;
 
 import de.mas.wiiu.jnus.implementations.wud.WUDImage;
 import de.mas.wiiu.jnus.implementations.wud.WUDImageCompressedInfo;
+import de.mas.wiiu.jnus.utils.StreamUtils;
 
 public class WUDDiscReaderCompressed extends WUDDiscReader {
 
@@ -55,40 +56,40 @@ public class WUDDiscReaderCompressed extends WUDDiscReader {
         byte[] buffer = new byte[bufferSize];
 
         RandomAccessFile input = getRandomAccessFileStream();
-        synchronized (input) {
-            while (usedSize > 0) {
-                long sectorOffset = (usedOffset % info.getSectorSize());
-                long remainingSectorBytes = info.getSectorSize() - sectorOffset;
-                long sectorIndex = (usedOffset / info.getSectorSize());
-                int bytesToRead = (int) ((remainingSectorBytes < usedSize) ? remainingSectorBytes : usedSize); // read only up to the end of the current sector
-                // look up real sector index
-                long realSectorIndex = info.getSectorIndex((int) sectorIndex);
-                long offset2 = info.getOffsetSectorArray() + realSectorIndex * info.getSectorSize() + sectorOffset;
+        try {
+            synchronized (input) {
+                while (usedSize > 0) {
+                    long sectorOffset = (usedOffset % info.getSectorSize());
+                    long remainingSectorBytes = info.getSectorSize() - sectorOffset;
+                    long sectorIndex = (usedOffset / info.getSectorSize());
+                    int bytesToRead = (int) ((remainingSectorBytes < usedSize) ? remainingSectorBytes : usedSize); // read only up to the end of the current
+                                                                                                                   // sector
+                    // look up real sector index
+                    long realSectorIndex = info.getSectorIndex((int) sectorIndex);
+                    long offset2 = info.getOffsetSectorArray() + realSectorIndex * info.getSectorSize() + sectorOffset;
 
-                input.seek(offset2);
-                int read = input.read(buffer);
+                    input.seek(offset2);
+                    int read = input.read(buffer);
 
-                if (read < 0) {
-                    break;
-                }
-                try {
-                    out.write(Arrays.copyOfRange(buffer, 0, bytesToRead));
-                } catch (IOException e) {
-                    if (e.getMessage().equals("Pipe closed")) {
+                    if (read < 0) {
                         break;
-                    } else {
-                        input.close();
-                        throw e;
                     }
-                }
+                    try {
+                        out.write(Arrays.copyOfRange(buffer, 0, bytesToRead));
+                    } catch (IOException e) {
+                        if (e.getMessage().equals("Pipe closed")) {
+                            break;
+                        } else {
+                            throw e;
+                        }
+                    }
 
-                usedSize -= bytesToRead;
-                usedOffset += bytesToRead;
+                    usedSize -= bytesToRead;
+                    usedOffset += bytesToRead;
+                }
             }
-            input.close();
-        }
-        synchronized (out) {
-            out.close();
+        } finally {
+            StreamUtils.closeAll(input, out);
         }
         return usedSize == 0;
     }

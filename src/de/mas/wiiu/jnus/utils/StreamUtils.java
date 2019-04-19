@@ -16,6 +16,7 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.utils;
 
+import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,29 +33,40 @@ public final class StreamUtils {
         // Utility class
     }
 
+    /**
+     * Tries to read a given amount of bytes from a stream and return them as 
+     * a byte array. Closes the inputs stream on success AND failure.
+     * @param in
+     * @param size
+     * @return
+     * @throws IOException
+     */
     public static byte[] getBytesFromStream(InputStream in, int size) throws IOException {
-        synchronized (in) {
-            byte[] result = new byte[size];
-            byte[] buffer = null;
-            if (size < 0x8000) {
-                buffer = new byte[size];
-            } else {
-                buffer = new byte[0x8000];
-            }
-            int toRead = size;
-            int curReadChunk = buffer.length;
-            do {
-                if (toRead < curReadChunk) {
-                    curReadChunk = toRead;
+        try {
+            synchronized (in) {
+                byte[] result = new byte[size];
+                byte[] buffer = null;
+                if (size < 0x8000) {
+                    buffer = new byte[size];
+                } else {
+                    buffer = new byte[0x8000];
                 }
-                int read = in.read(buffer, 0, curReadChunk);
-                StreamUtils.checkForException(in);
-                if (read < 0) break;
-                System.arraycopy(buffer, 0, result, size - toRead, read);
-                toRead -= read;
-            } while (toRead > 0);
-            in.close();
-            return result;
+                int toRead = size;
+                int curReadChunk = buffer.length;
+                do {
+                    if (toRead < curReadChunk) {
+                        curReadChunk = toRead;
+                    }
+                    int read = in.read(buffer, 0, curReadChunk);
+                    StreamUtils.checkForException(in);
+                    if (read < 0) break;
+                    System.arraycopy(buffer, 0, result, size - toRead, read);
+                    toRead -= read;
+                } while (toRead > 0);
+                return result;
+            }
+        } finally {
+            StreamUtils.closeAll(in);
         }
     }
 
@@ -141,43 +153,44 @@ public final class StreamUtils {
             int read = 0;
             long totalRead = 0;
             long written = 0;
-            do {
-                read = inputStream.read(buffer);
-                StreamUtils.checkForException(inputStream);
-                if (read < 0) {
-                    break;
-                }
-                totalRead += read;
 
-                if (totalRead > filesize) {
-                    read = (int) (read - (totalRead - filesize));
+            try {
+                do {
+                    read = inputStream.read(buffer);
+                    StreamUtils.checkForException(inputStream);
+                    if (read < 0) {
+                        break;
+                    }
+                    totalRead += read;
+
+                    if (totalRead > filesize) {
+                        read = (int) (read - (totalRead - filesize));
+                    }
+
+                    outputStream.write(buffer, 0, read);
+                    written += read;
+
+                    if (sha1 != null) {
+                        sha1.update(buffer, 0, read);
+                    }
+                } while (written < filesize);
+
+                if (sha1 != null && hash != null) {
+                    long missingInHash = expectedSizeForHash - written;
+                    if (missingInHash > 0) {
+                        sha1.update(new byte[(int) missingInHash]);
+                    }
+
+                    byte[] calculated_hash = sha1.digest();
+                    byte[] expected_hash = hash;
+                    if (!Arrays.equals(calculated_hash, expected_hash)) {
+                        throw new CheckSumWrongException("Hash doesn't match saves output stream.", calculated_hash, expected_hash);
+                    }
                 }
 
-                outputStream.write(buffer, 0, read);
-                written += read;
-
-                if (sha1 != null) {
-                    sha1.update(buffer, 0, read);
-                }
-            } while (written < filesize);
-
-            if (sha1 != null && hash != null) {
-                long missingInHash = expectedSizeForHash - written;
-                if (missingInHash > 0) {
-                    sha1.update(new byte[(int) missingInHash]);
-                }
-
-                byte[] calculated_hash = sha1.digest();
-                byte[] expected_hash = hash;
-                if (!Arrays.equals(calculated_hash, expected_hash)) {
-                    outputStream.close();
-                    inputStream.close();
-                    throw new CheckSumWrongException("Hash doesn't match saves output stream.", calculated_hash, expected_hash);
-                }
+            } finally {
+                StreamUtils.closeAll(inputStream, outputStream);
             }
-
-            outputStream.close();
-            inputStream.close();
         }
     }
 
@@ -206,4 +219,17 @@ public final class StreamUtils {
         }
     }
 
+    public static void closeAll(Closeable... stream) throws IOException {
+        IOException exception = null;
+        for (Closeable cur : stream) {
+            try {
+                cur.close();
+            } catch (IOException e) {
+                exception = e;
+            }
+        }
+        if (exception != null) {
+            throw exception;
+        }
+    }
 }
