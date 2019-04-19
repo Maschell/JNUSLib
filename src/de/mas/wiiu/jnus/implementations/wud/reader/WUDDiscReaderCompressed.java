@@ -71,7 +71,9 @@ public class WUDDiscReaderCompressed extends WUDDiscReader {
                 input.seek(offset2);
                 int read = input.read(buffer);
 
-                if (read < 0) return;
+                if (read < 0) {
+                    break;
+                }
                 try {
                     out.write(Arrays.copyOfRange(buffer, 0, bytesToRead));
                 } catch (IOException e) {
