@@ -20,6 +20,7 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.entities.content.ContentFSTInfo;
@@ -109,7 +110,7 @@ public final class FSTService {
                     }
                 } else {
                     // TODO: make content attribute in a fstentry optional
-                    entryParam.setContent(content);
+                    entryParam.setContent(Optional.of(content));
                     ContentFSTInfo contentFSTInfo = contentsFSTByIndex.get((int) contentIndex);
                     if (contentFSTInfo == null) {
                         log.warning("ContentFSTInfo for FST Entry not found");
@@ -121,7 +122,7 @@ public final class FSTService {
             }
 
             entryParam.setContentFSTID(contentIndex);
-            entryParam.setParent(parent);
+            entryParam.setParent(Optional.of(parent));
 
             FSTEntry entry = new FSTEntry(entryParam);
             fstEntryToOffsetMap.put(entryOffset, entry);

@@ -66,7 +66,7 @@ public final class DecryptionService {
     public CompletableFuture<Void> decryptFSTEntryToAsync(boolean useFullPath, FSTEntry entry, String outputPath, boolean skipExistingFile) {
         return CompletableFuture.runAsync(() -> {
             try {
-                if (entry.isNotInPackage() || entry.getContent() == null) {
+                if (entry.isNotInPackage() || !entry.getContent().isPresent()) {
                     return;
                 }
 
@@ -99,7 +99,7 @@ public final class DecryptionService {
                             return;
                         }
                         if (targetFile.length() == entry.getFileSize()) {
-                            Content c = entry.getContent();
+                            Content c = entry.getContent().get();
                             if (c.isHashed()) {
                                 log.info("File already exists: " + entry.getFilename());
                                 return;

@@ -75,11 +75,16 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
 
     @Override
     public void readFileToStream(OutputStream out, FSTEntry entry, long offset, Optional<Long> size) throws IOException {
+        if (!entry.getContent().isPresent()) {
+            out.close();
+            throw new IOException("Content for the FSTEntry not found: " + entry);
+        }
         long fileOffset = entry.getFileOffset() + offset;
         long fileOffsetBlock = fileOffset;
         long usedSize = size.orElse(entry.getFileSize());
+        Content c = entry.getContent().get();
 
-        if (entry.getContent().isHashed()) {
+        if (c.isHashed()) {
             fileOffsetBlock = (fileOffset / 0xFC00) * 0x10000;
         } else {
             fileOffsetBlock = (fileOffset / 0x8000) * 0x8000;
@@ -97,12 +102,12 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
 
     private boolean decryptFSTEntryToStream(FSTEntry entry, OutputStream outputStream, long fileOffsetBlock, long fileOffset, long fileSize)
             throws IOException, CheckSumWrongException {
-        if (entry.isNotInPackage() || entry.getContent() == null || !title.getTicket().isPresent()) {
+        if (entry.isNotInPackage() || !entry.getContent().isPresent() || !title.getTicket().isPresent()) {
             if (!title.getTicket().isPresent()) {
                 log.info("Decryption not possible because no ticket was set.");
-            }else if(entry.isNotInPackage()) {
+            } else if (entry.isNotInPackage()) {
                 log.info("Decryption not possible because the FSTEntry is not in this package");
-            }else if(entry.getContent() == null) {
+            } else if (entry.getContent() == null) {
                 // TODO: convert it to an Optional
                 log.info("Decryption not possible because the Content was null");
             }
@@ -110,7 +115,7 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
             return false;
         }
 
-        Content c = entry.getContent();
+        Content c = entry.getContent().get();
 
         NUSDataProvider dataProvider = title.getDataProvider();
 
@@ -124,7 +129,7 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
             }
             return nusdecryption.decryptStreams(in, outputStream, fileSize, fileOffset, c, h3HashedOpt);
         } catch (CheckSumWrongException e) {
-            if (entry.getContent().isUNKNWNFlag1Set()) {
+            if (c.isUNKNWNFlag1Set()) {
                 log.info("Hash doesn't match. But file is optional. Don't worry.");
             } else {
                 StringBuilder sb = new StringBuilder();

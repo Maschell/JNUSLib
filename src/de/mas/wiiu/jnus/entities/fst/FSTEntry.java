@@ -20,14 +20,14 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import de.mas.wiiu.jnus.entities.content.Content;
 import lombok.Data;
 import lombok.Getter;
-import lombok.extern.java.Log;
+import lombok.NonNull;
 
-@Log
 /**
  * Represents one FST Entry
  * 
@@ -41,7 +41,7 @@ public class FSTEntry {
     private String filename = null;
     private final Supplier<String> filenameSupplier;
 
-    @Getter private final FSTEntry parent;
+    @Getter private final Optional<FSTEntry> parent;
 
     @Getter private final List<FSTEntry> children = new ArrayList<>();
 
@@ -50,7 +50,7 @@ public class FSTEntry {
     @Getter private final long fileSize;
     @Getter private final long fileOffset;
 
-    @Getter private final Content content;
+    @Getter private final Optional<Content> content;
 
     @Getter private final boolean isDir;
     @Getter private final boolean isRoot;
@@ -62,14 +62,14 @@ public class FSTEntry {
         this.filenameSupplier = fstParam.getFileNameSupplier();
         this.flags = fstParam.getFlags();
         this.parent = fstParam.getParent();
-        if (parent != null) {
-            parent.children.add(this);
+        if (parent.isPresent()) {
+            parent.get().children.add(this);
         }
         this.fileSize = fstParam.getFileSize();
         this.fileOffset = fstParam.getFileOffset();
         this.content = fstParam.getContent();
-        if (content != null) {
-            content.addEntry(this);
+        if (content.isPresent()) {
+            content.get().addEntry(this);
         }
         this.isDir = fstParam.isDir();
         this.isRoot = fstParam.isRoot();
@@ -88,14 +88,14 @@ public class FSTEntry {
         param.setDir(true);
         return new FSTEntry(param);
     }
-    
-    public static FSTEntry createFSTEntry(FSTEntry parent, String filename, Content content) {
+
+    public static FSTEntry createFSTEntry(@NonNull FSTEntry parent, @NonNull String filename, @NonNull Content content) {
         FSTEntryParam param = new FSTEntryParam();
         param.setFileNameSupplier(() -> filename);
         param.setFileSize(content.getDecryptedFileSize());
-        param.setContent(content);
+        param.setContent(Optional.of(content));
         param.setDir(false);
-        param.setParent(parent);
+        param.setParent(Optional.of(parent));
         return new FSTEntry(param);
     }
 
@@ -111,8 +111,9 @@ public class FSTEntry {
     }
 
     private StringBuilder getPathInternal() {
-        if (parent != null) {
-            return parent.getPathInternal().append(parent.getFilename()).append(File.separator);
+        if (parent.isPresent()) {
+            FSTEntry par = parent.get();
+            return par.getPathInternal().append(par.getFilename()).append(File.separator);
         }
         return new StringBuilder();
     }
@@ -159,14 +160,10 @@ public class FSTEntry {
 
     public List<FSTEntry> getFSTEntriesByContent(Content content) {
         List<FSTEntry> entries = new ArrayList<>();
-        if (this.content == null) {
-            log.warning("Error in getFSTEntriesByContent, content null");
-            System.exit(0);
-        } else {
-            if (this.content.equals(content)) {
-                entries.add(this);
-            }
+        if (this.content.isPresent() && this.content.get().equals(content)) {
+            entries.add(this);
         }
+
         for (FSTEntry child : getChildren()) {
             entries.addAll(child.getFSTEntriesByContent(content));
         }
@@ -174,7 +171,7 @@ public class FSTEntry {
     }
 
     public long getFileOffsetBlock() {
-        if (getContent().isHashed()) {
+        if (getContent().isPresent() && getContent().get().isHashed()) {
             return (getFileOffset() / 0xFC00) * 0x10000;
         } else {
             return getFileOffset();
@@ -211,14 +208,14 @@ public class FSTEntry {
     @Data
     protected static class FSTEntryParam {
         private Supplier<String> fileNameSupplier = () -> "";
-        private FSTEntry parent = null;
+        private Optional<FSTEntry> parent = Optional.empty();
 
         private short flags;
 
         private long fileSize = 0;
         private long fileOffset = 0;
 
-        private Content content = null;
+        private Optional<Content> content = Optional.empty();
 
         private boolean isDir = false;
         private boolean isRoot = false;
