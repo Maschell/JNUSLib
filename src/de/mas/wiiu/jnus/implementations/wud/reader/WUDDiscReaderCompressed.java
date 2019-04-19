@@ -79,6 +79,7 @@ public class WUDDiscReaderCompressed extends WUDDiscReader {
                     if (e.getMessage().equals("Pipe closed")) {
                         break;
                     } else {
+                        input.close();
                         throw e;
                     }
                 }
