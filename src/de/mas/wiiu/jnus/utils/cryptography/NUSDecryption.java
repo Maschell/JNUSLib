@@ -31,6 +31,7 @@ import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.utils.ByteArrayBuffer;
 import de.mas.wiiu.jnus.utils.CheckSumWrongException;
 import de.mas.wiiu.jnus.utils.HashUtil;
+import de.mas.wiiu.jnus.utils.PipedInputStreamWithException;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 import de.mas.wiiu.jnus.utils.Utils;
 import lombok.extern.java.Log;
@@ -101,7 +102,9 @@ public class NUSDecryption extends AESDecryption {
             int readTotal = 0;
             while (readTotal < toRead) {
                 int res = inputStream.read(data, readTotal, toRead - readTotal);
+                StreamUtils.checkForException(inputStream);
                 if (res < 0) {
+                    // This should NEVER happen.
                     throw new IOException();
                 }
                 readTotal += res;

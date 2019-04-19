@@ -48,6 +48,7 @@ public final class StreamUtils {
                     curReadChunk = toRead;
                 }
                 int read = in.read(buffer, 0, curReadChunk);
+                StreamUtils.checkForException(in);
                 if (read < 0) break;
                 System.arraycopy(buffer, 0, result, size - toRead, read);
                 toRead -= read;
@@ -65,6 +66,7 @@ public final class StreamUtils {
             do {
                 try {
                     bytesRead = inputStream.read(overflowbuf, overflowbuffer.getLengthOfDataInBuffer(), overflowbuffer.getSpaceLeft());
+                    StreamUtils.checkForException(inputStream);
                 } catch (IOException e) {
                     log.info(e.getMessage());
                     if (!e.getMessage().equals("Write end dead")) {
@@ -141,6 +143,7 @@ public final class StreamUtils {
             long written = 0;
             do {
                 read = inputStream.read(buffer);
+                StreamUtils.checkForException(inputStream);
                 if (read < 0) {
                     break;
                 }
@@ -192,4 +195,15 @@ public final class StreamUtils {
 
         }
     }
+
+    public static void checkForException(InputStream inputStream) throws IOException {
+        if (inputStream instanceof PipedInputStreamWithException) {
+            try {
+                ((PipedInputStreamWithException) inputStream).checkForException();
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
+        }
+    }
+
 }
