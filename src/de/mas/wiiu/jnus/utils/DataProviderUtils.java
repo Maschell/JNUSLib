@@ -76,11 +76,11 @@ public class DataProviderUtils {
 
         if (output.exists()) {
             if (Arrays.equals(content.getSHA2Hash(), HashUtil.hashSHA1(output))) {
-                log.info(h3Filename + " already exists");
+                log.fine(h3Filename + " already exists");
                 return false;
             } else {
                 if (Arrays.equals(content.getSHA2Hash(), Arrays.copyOf(HashUtil.hashSHA256(output), 20))) { // 0005000c1f941200 used sha256 instead of SHA1
-                    log.info(h3Filename + " already exists");
+                    log.fine(h3Filename + " already exists");
                     return false;
                 }
                 log.warning(h3Filename + " already exists but hash is differrent than expected.");
@@ -93,7 +93,7 @@ public class DataProviderUtils {
         }
         byte[] hash = hashOpt.get();
 
-        log.warning("Saving " + h3Filename + " ");
+        log.info("Saving " + h3Filename + " ");
 
         return FileUtils.saveByteArrayToFile(output, hash);
 
@@ -117,10 +117,10 @@ public class DataProviderUtils {
             File output = new File(outputFolder + File.separator + content.getFilename());
             if (output.exists()) {
                 if (output.length() == content.getEncryptedFileSizeAligned()) {
-                    log.info(content.getFilename() + "Encrypted content alreadys exists, skipped");
+                    log.fine(content.getFilename() + "Encrypted content alreadys exists, skipped");
                     return;
                 } else {
-                    log.warning(content.getFilename() + " Encrypted content alreadys exists, but the length is not as expected. Saving it again. "
+                    log.info(content.getFilename() + " Encrypted content alreadys exists, but the length is not as expected. Saving it again. "
                             + output.length() + " " + content.getEncryptedFileSizeAligned() + " Difference: "
                             + (output.length() - content.getEncryptedFileSizeAligned()));
                 }
@@ -129,16 +129,16 @@ public class DataProviderUtils {
             Utils.createDir(outputFolder);
             InputStream inputStream = dataProvider.getInputStreamFromContent(content, 0);
             if (inputStream == null) {
-                log.info(content.getFilename() + " Couldn't save encrypted content. Input stream was null");
+                log.warning(content.getFilename() + " Couldn't save encrypted content. Input stream was null");
                 return;
             }
-            log.warning("loading " + content.getFilename());
+            log.fine("loading " + content.getFilename());
             FileUtils.saveInputStreamToFile(output, inputStream, content.getEncryptedFileSizeAligned());
 
             File outputNow = new File(outputFolder + File.separator + content.getFilename());
             if (outputNow.exists()) {
                 if (outputNow.length() != content.getEncryptedFileSizeAligned()) {
-                    log.warning(content.getFilename() + " Encrypted content length is not as expected. Saving it again. Loaded: " + outputNow.length()
+                    log.info(content.getFilename() + " Encrypted content length is not as expected. Saving it again. Loaded: " + outputNow.length()
                             + " Expected: " + content.getEncryptedFileSizeAligned() + " Difference: "
                             + (outputNow.length() - content.getEncryptedFileSizeAligned()));
                     i++;
