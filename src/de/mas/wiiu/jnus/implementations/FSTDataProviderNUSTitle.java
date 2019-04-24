@@ -119,7 +119,26 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
 
         NUSDataProvider dataProvider = title.getDataProvider();
 
-        InputStream in = dataProvider.getInputStreamFromContent(c, fileOffsetBlock);
+        Optional<Long> readFilesize = Optional.empty();
+        if (c.isHashed()) {
+            long offsetInBlock = fileOffset - ((fileOffsetBlock / 0x10000) * 0xFC00);
+            if (offsetInBlock + fileSize < 0xFC00) {
+                readFilesize = Optional.of(0x10000L);
+            } else {
+                long curVal = 0x10000;
+                long missing = (fileSize - (0xFC00 - offsetInBlock));
+
+                curVal += (missing / 0xFC00) * 0x10000;
+
+                if (missing % 0xFC00 > 0) {
+                    curVal += 0x10000;
+                }
+
+                readFilesize = Optional.of(curVal);
+            }
+        }
+
+        InputStream in = dataProvider.getInputStreamFromContent(c, fileOffsetBlock, readFilesize);
 
         try {
             NUSDecryption nusdecryption = new NUSDecryption(title.getTicket().get());
