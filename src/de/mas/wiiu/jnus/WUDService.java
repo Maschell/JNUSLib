@@ -92,78 +92,81 @@ public final class WUDService {
 
         log.info("Writing compressed file to: " + outputFile.getAbsolutePath());
         RandomAccessFile fileOutput = new RandomAccessFile(outputFile, "rw");
+        try {
 
-        WUDImageCompressedInfo info = WUDImageCompressedInfo.getDefaultCompressedInfo();
+            WUDImageCompressedInfo info = WUDImageCompressedInfo.getDefaultCompressedInfo();
 
-        byte[] header = info.getHeaderAsBytes();
-        log.info("Writing header");
-        fileOutput.write(header);
+            byte[] header = info.getHeaderAsBytes();
+            log.info("Writing header");
+            fileOutput.write(header);
 
-        int sectorTableEntryCount = (int) ((image.getWUDFileSize() + WUDImageCompressedInfo.SECTOR_SIZE - 1) / (long) WUDImageCompressedInfo.SECTOR_SIZE);
+            int sectorTableEntryCount = (int) ((image.getWUDFileSize() + WUDImageCompressedInfo.SECTOR_SIZE - 1) / (long) WUDImageCompressedInfo.SECTOR_SIZE);
 
-        long sectorTableStart = fileOutput.getFilePointer();
-        long sectorTableEnd = Utils.align(sectorTableEntryCount * 0x04, WUDImageCompressedInfo.SECTOR_SIZE);
-        byte[] sectorTablePlaceHolder = new byte[(int) (sectorTableEnd - sectorTableStart)];
+            long sectorTableStart = fileOutput.getFilePointer();
+            long sectorTableEnd = Utils.align(sectorTableEntryCount * 0x04, WUDImageCompressedInfo.SECTOR_SIZE);
+            byte[] sectorTablePlaceHolder = new byte[(int) (sectorTableEnd - sectorTableStart)];
 
-        fileOutput.write(sectorTablePlaceHolder);
+            fileOutput.write(sectorTablePlaceHolder);
 
-        Map<ByteArrayWrapper, Integer> sectorHashes = new HashMap<>();
-        Map<Integer, Integer> sectorMapping = new TreeMap<>();
+            Map<ByteArrayWrapper, Integer> sectorHashes = new HashMap<>();
+            Map<Integer, Integer> sectorMapping = new TreeMap<>();
 
-        InputStream in = image.getWUDDiscReader().readEncryptedToStream(0, image.getWUDFileSize());
+            InputStream in = image.getWUDDiscReader().readEncryptedToStream(0, image.getWUDFileSize());
 
-        int bufferSize = WUDImageCompressedInfo.SECTOR_SIZE;
-        byte[] blockBuffer = new byte[bufferSize];
-        ByteArrayBuffer overflow = new ByteArrayBuffer(bufferSize);
+            int bufferSize = WUDImageCompressedInfo.SECTOR_SIZE;
+            byte[] blockBuffer = new byte[bufferSize];
+            ByteArrayBuffer overflow = new ByteArrayBuffer(bufferSize);
 
-        long written = 0;
-        int curSector = 0;
-        int realSector = 0;
+            long written = 0;
+            int curSector = 0;
+            int realSector = 0;
 
-        log.info("Writing sectors");
-        Integer oldOffset = null;
-        do {
-            int read = StreamUtils.getChunkFromStream(in, blockBuffer, overflow, bufferSize);
-            ByteArrayWrapper hash;
-            try {
-                hash = new ByteArrayWrapper(HashUtil.hashSHA1(blockBuffer));
-            } catch (NoSuchAlgorithmException e1) {
-                throw new IOException(e1);
+            log.info("Writing sectors");
+            Integer oldOffset = null;
+            do {
+                int read = StreamUtils.getChunkFromStream(in, blockBuffer, overflow, bufferSize);
+                ByteArrayWrapper hash;
+                try {
+                    hash = new ByteArrayWrapper(HashUtil.hashSHA1(blockBuffer));
+                } catch (NoSuchAlgorithmException e1) {
+                    throw new IOException(e1);
+                }
+
+                if ((oldOffset = sectorHashes.get(hash)) == null) {
+                    sectorMapping.put(curSector, realSector);
+                    sectorHashes.put(hash, realSector);
+                    fileOutput.write(blockBuffer);
+                    realSector++;
+                } else {
+                    sectorMapping.put(curSector, oldOffset);
+                    oldOffset = null;
+                }
+
+                written += read;
+                curSector++;
+                if (curSector % 10 == 0) {
+                    double readMB = written / 1024.0 / 1024.0;
+                    double writtenMB = ((long) realSector * (long) bufferSize) / 1024.0 / 1024.0;
+                    double percent = ((double) written / image.getWUDFileSize()) * 100;
+                    double ratio = 1 / (writtenMB / readMB);
+                    System.out.print(String.format(Locale.ROOT, "\rCompressing into .wux | Progress %.2f%% | Ratio: 1:%.2f | Read: %.2fMB | Written: %.2fMB\t",
+                            percent, ratio, readMB, writtenMB));
+                }
+            } while (written < image.getWUDFileSize());
+            System.out.println();
+            log.info("Sectors compressed.");
+            log.info("Writing sector table");
+            fileOutput.seek(sectorTableStart);
+            ByteBuffer buffer = ByteBuffer.allocate(sectorTablePlaceHolder.length);
+            buffer.order(ByteOrder.LITTLE_ENDIAN);
+            for (Entry<Integer, Integer> e : sectorMapping.entrySet()) {
+                buffer.putInt(e.getValue());
             }
 
-            if ((oldOffset = sectorHashes.get(hash)) == null) {
-                sectorMapping.put(curSector, realSector);
-                sectorHashes.put(hash, realSector);
-                fileOutput.write(blockBuffer);
-                realSector++;
-            } else {
-                sectorMapping.put(curSector, oldOffset);
-                oldOffset = null;
-            }
-
-            written += read;
-            curSector++;
-            if (curSector % 10 == 0) {
-                double readMB = written / 1024.0 / 1024.0;
-                double writtenMB = ((long) realSector * (long) bufferSize) / 1024.0 / 1024.0;
-                double percent = ((double) written / image.getWUDFileSize()) * 100;
-                double ratio = 1 / (writtenMB / readMB);
-                System.out.print(String.format(Locale.ROOT, "\rCompressing into .wux | Progress %.2f%% | Ratio: 1:%.2f | Read: %.2fMB | Written: %.2fMB\t",
-                        percent, ratio, readMB, writtenMB));
-            }
-        } while (written < image.getWUDFileSize());
-        System.out.println();
-        log.info("Sectors compressed.");
-        log.info("Writing sector table");
-        fileOutput.seek(sectorTableStart);
-        ByteBuffer buffer = ByteBuffer.allocate(sectorTablePlaceHolder.length);
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
-        for (Entry<Integer, Integer> e : sectorMapping.entrySet()) {
-            buffer.putInt(e.getValue());
+            fileOutput.write(buffer.array());
+        } finally {
+            fileOutput.close();
         }
-
-        fileOutput.write(buffer.array());
-        fileOutput.close();
 
         return Optional.of(outputFile);
     }
