@@ -212,6 +212,10 @@ public class NUSDecryption extends AESDecryption {
                 inBlockBuffer = StreamUtils.getChunkFromStream(inputStream, encryptedBlockBuffer, overflow, BLOCKSIZE);
                 if (writeSize > filesize) writeSize = filesize;
 
+                if (inBlockBuffer != BLOCKSIZE) {
+                    throw new IOException("wasn't able to read  " + BLOCKSIZE);
+                }
+
                 byte[] output;
                 try {
                     output = decryptFileChunkHash(encryptedBlockBuffer, (int) block, contentIndex, h3Hash);
