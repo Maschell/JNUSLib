@@ -61,7 +61,7 @@ public final class WoomyParser {
             ZipEntry metaFile = zipFile.getEntry(Settings.WOOMY_METADATA_FILENAME);
             if (metaFile == null) {
                 log.info("No meta ");
-                throw new FileNotFoundException("No \""+ Settings.WOOMY_METADATA_FILENAME +"\" inside woomy was found.");
+                throw new FileNotFoundException("No \"" + Settings.WOOMY_METADATA_FILENAME + "\" inside woomy was found.");
             }
             WoomyMeta meta = WoomyMetaParser.parseMeta(zipFile.getInputStream(metaFile));
 
@@ -93,7 +93,7 @@ public final class WoomyParser {
                 String entryName = entry.getName();
                 Matcher matcher = pattern.matcher(entryName);
                 if (matcher.matches()) {
-                    String[] tokens = entryName.replace(File.separator, "\\").split("[\\\\|/]"); // We only want the filename!
+                    String[] tokens = entryName.replace(File.separator, "/").split("[\\\\|/]"); // We only want the filename!
                     String filename = tokens[tokens.length - 1];
                     result.put(filename.toLowerCase(Locale.ENGLISH), entry);
                 }

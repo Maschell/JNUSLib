@@ -113,7 +113,7 @@ public class FSTEntry {
     private StringBuilder getPathInternal() {
         if (parent.isPresent()) {
             FSTEntry par = parent.get();
-            return par.getPathInternal().append(par.getFilename()).append(File.separator);
+            return par.getPathInternal().append(par.getFilename()).append('/');
         }
         return new StringBuilder();
     }

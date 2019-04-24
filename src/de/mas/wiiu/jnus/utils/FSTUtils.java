@@ -30,14 +30,14 @@ import lombok.val;
 
 public class FSTUtils {
     public static Optional<FSTEntry> getFSTEntryByFullPath(FSTEntry root, String givenFullPath) {
-        String fullPath = givenFullPath.replace("/", File.separator);
-        if (!fullPath.startsWith(File.separator)) {
-            fullPath = File.separator + fullPath;
+        String fullPath = givenFullPath.replace(File.separator, "/");
+        if (!fullPath.startsWith("/")) {
+            fullPath = "/" + fullPath;
         }
 
         String dirPath = FilenameUtils.getFullPathNoEndSeparator(fullPath);
         Optional<FSTEntry> pathOpt = Optional.of(root);
-        if (!dirPath.equals(File.separator)) {
+        if (!dirPath.equals("/")) {
             pathOpt = getFileEntryDir(root, dirPath);
         }
 
@@ -47,15 +47,16 @@ public class FSTUtils {
     }
 
     public static Optional<FSTEntry> getFileEntryDir(FSTEntry curEntry, String string) {
-        string = string.replace("/", File.separator);
+        string = string.replace(File.separator, "/");
 
-        if (!string.endsWith(File.separator)) {
-            string += File.separator;
+        // We add the "/" at the end so we don't get false results when using the "startWith" function.
+        if (!string.endsWith("/")) {
+            string += "/";
         }
         for (val curChild : curEntry.getDirChildren()) {
             String compareTo = curChild.getFullPath();
-            if (!compareTo.endsWith(File.separator)) {
-                compareTo += File.separator;
+            if (!compareTo.endsWith("/")) {
+                compareTo += "/";
             }
             if (string.startsWith(compareTo)) {
                 if (string.equals(compareTo)) {
@@ -107,7 +108,7 @@ public class FSTUtils {
                 .filter(e -> allowNotInPackage || !e.isNotInPackage()) //
                 .flatMap(e -> {
                     if (!e.isDir()) {
-                        if (p.matcher(e.getFullPath().replace("/", File.separator)).matches()) {
+                        if (p.matcher(e.getFullPath()).matches()) {
                             return Stream.of(e);
                         } else {
                             return Stream.empty();

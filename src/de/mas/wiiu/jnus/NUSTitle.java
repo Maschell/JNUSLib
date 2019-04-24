@@ -126,7 +126,7 @@ public class NUSTitle {
                 .filter(e -> allowNotInPackage || !e.isNotInPackage()) //
                 .flatMap(e -> {
                     if (!e.isDir()) {
-                        if (p.matcher(e.getFullPath().replace("/", File.separator)).matches()) {
+                        if (p.matcher(e.getFullPath()).matches()) {
                             return Stream.of(e);
                         } else {
                             return Stream.empty();

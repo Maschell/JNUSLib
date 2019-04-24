@@ -134,11 +134,11 @@ public final class WUDInfoParser {
 
             for (val dirChilden : siFST.getRoot().getDirChildren()) {
                 // The SI partition contains the tmd, cert and tik for every GM partition.
-                byte[] rawTIK = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_TICKET_FILENAME, siPartitionOffset, headerSize, siFST,
+                byte[] rawTIK = getFSTEntryAsByte(dirChilden.getFullPath() + '/' + WUD_TICKET_FILENAME, siPartitionOffset, headerSize, siFST,
                         wudInfo.getWUDDiscReader(), wudInfo.getTitleKey());
-                byte[] rawTMD = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_TMD_FILENAME, siPartitionOffset, headerSize, siFST,
+                byte[] rawTMD = getFSTEntryAsByte(dirChilden.getFullPath() + '/' + WUD_TMD_FILENAME, siPartitionOffset, headerSize, siFST,
                         wudInfo.getWUDDiscReader(), wudInfo.getTitleKey());
-                byte[] rawCert = getFSTEntryAsByte(dirChilden.getFullPath() + File.separator + WUD_CERT_FILENAME, siPartitionOffset, headerSize, siFST,
+                byte[] rawCert = getFSTEntryAsByte(dirChilden.getFullPath() + '/' + WUD_CERT_FILENAME, siPartitionOffset, headerSize, siFST,
                         wudInfo.getWUDDiscReader(), wudInfo.getTitleKey());
 
                 String partitionName = "GM" + Utils.ByteArrayToString(Arrays.copyOfRange(rawTIK, 0x1DC, 0x1DC + 0x08));
