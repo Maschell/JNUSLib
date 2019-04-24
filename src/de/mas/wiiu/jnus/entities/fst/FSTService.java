@@ -104,12 +104,12 @@ public final class FSTService {
             if (contentsByIndex != null) {
                 Content content = contentsByIndex.get((int) contentIndex);
                 if (content == null) {
-                    if (!entryParam.isDir() || entryParam.isNotInPackage()) {
-                        log.warning("Content for FST Entry not found");                       
+                    if ((!entryParam.isDir() || entryParam.isNotInPackage()) && !contentsByIndex.isEmpty()) {
+                        // This is only a problem when the data is NOT on aWUDDataPartition (they have no content files)
+                        log.warning("Content for FST Entry not found");     
                         throw new ParseException("Content for FST Entry not found", 0);
                     }
                 } else {
-                    // TODO: make content attribute in a fstentry optional
                     entryParam.setContent(Optional.of(content));
                     ContentFSTInfo contentFSTInfo = contentsFSTByIndex.get((int) contentIndex);
                     if (contentFSTInfo == null) {
