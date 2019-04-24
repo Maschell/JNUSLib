@@ -201,12 +201,16 @@ public class NUSDecryption extends AESDecryption {
         long block = (fileoffset / HASHBLOCKSIZE);
         long soffset = fileoffset - (fileoffset / HASHBLOCKSIZE * HASHBLOCKSIZE);
 
-        if (soffset + filesize > writeSize) writeSize = writeSize - soffset;
+        if (soffset + filesize > writeSize) {
+            writeSize = writeSize - soffset;
+
+        }
 
         byte[] encryptedBlockBuffer = new byte[BLOCKSIZE];
         ByteArrayBuffer overflow = new ByteArrayBuffer(BLOCKSIZE);
         long wrote = 0;
         int inBlockBuffer = 0;
+
         try {
             do {
                 inBlockBuffer = StreamUtils.getChunkFromStream(inputStream, encryptedBlockBuffer, overflow, BLOCKSIZE);
