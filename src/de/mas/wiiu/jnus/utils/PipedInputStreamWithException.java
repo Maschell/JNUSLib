@@ -18,6 +18,7 @@ package de.mas.wiiu.jnus.utils;
 
 import java.io.IOException;
 import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 
 import de.mas.wiiu.jnus.interfaces.InputStreamWithException;
 import lombok.extern.java.Log;
@@ -28,6 +29,14 @@ public class PipedInputStreamWithException extends PipedInputStream implements I
     private boolean exceptionSet = false;
     private boolean closed = false;
     private Object lock = new Object();
+
+    public PipedInputStreamWithException() {
+
+    }
+
+    public PipedInputStreamWithException(PipedOutputStream src, int pipeSize) throws IOException {
+        super(src, pipeSize);
+    }
 
     @Override
     public void close() throws IOException {

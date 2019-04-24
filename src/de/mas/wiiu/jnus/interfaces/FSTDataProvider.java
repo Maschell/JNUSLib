@@ -36,14 +36,13 @@ public interface FSTDataProvider {
 
     public byte[] readFile(FSTEntry entry, long offset, long size) throws IOException;
 
-    
     default public InputStream readFileAsStream(FSTEntry entry) throws IOException {
         return readFileAsStream(entry, 0, Optional.empty());
     }
-    
+
     default public InputStream readFileAsStream(FSTEntry entry, long offset, Optional<Long> size) throws IOException {
-        PipedInputStreamWithException in = new PipedInputStreamWithException();
-        PipedOutputStream out = new PipedOutputStream(in);
+        PipedOutputStream out = new PipedOutputStream();
+        PipedInputStreamWithException in = new PipedInputStreamWithException(out, 0x10000);
 
         new Thread(() -> {
             try {
@@ -62,7 +61,5 @@ public interface FSTDataProvider {
     }
 
     public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset, Optional<Long> size) throws IOException;
-
-   
 
 }

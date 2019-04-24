@@ -57,8 +57,8 @@ public abstract class WUDDiscReader {
     public abstract boolean readEncryptedToStream(OutputStream out, long offset, long size) throws IOException;
 
     public InputStream readEncryptedToStream(long offset, long size) throws IOException {
-        PipedInputStreamWithException in = new PipedInputStreamWithException();
-        PipedOutputStream out = new PipedOutputStream(in);
+        PipedOutputStream out = new PipedOutputStream();
+        PipedInputStreamWithException in = new PipedInputStreamWithException(out, 0x8000);
 
         new Thread(() -> {
             try {
