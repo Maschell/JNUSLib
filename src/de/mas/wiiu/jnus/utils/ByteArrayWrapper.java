@@ -18,13 +18,12 @@ package de.mas.wiiu.jnus.utils;
 
 import java.util.Arrays;
 
+import lombok.NonNull;
+
 public final class ByteArrayWrapper {
     private final byte[] data;
 
-    public ByteArrayWrapper(byte[] data) {
-        if (data == null) {
-            throw new NullPointerException();
-        }
+    public ByteArrayWrapper(@NonNull byte[] data) {       
         this.data = data;
     }
 
