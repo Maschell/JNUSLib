@@ -44,7 +44,7 @@ public class NUSDataProviderWoomy implements NUSDataProvider {
     }
 
     @Override
-    public InputStream getInputStreamFromContent(@NonNull Content content, long fileOffsetBlock, long size) throws IOException {
+    public InputStream readContentAsStream(@NonNull Content content, long fileOffsetBlock, long size) throws IOException {
         WoomyZipFile zipFile = getSharedWoomyZipFile();
         ZipEntry entry = getWoomyInfo().getContentFiles().get(content.getFilename().toLowerCase());
         if (entry == null) {

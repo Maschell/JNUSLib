@@ -45,7 +45,7 @@ public final class NUSDataProviderLocal implements NUSDataProvider {
     }
 
     @Override
-    public InputStream getInputStreamFromContent(Content content, long offset, long size) throws IOException {
+    public InputStream readContentAsStream(Content content, long offset, long size) throws IOException {
         File filepath = FileUtils.getFileIgnoringFilenameCases(getLocalPath(), content.getFilename());
         if (filepath == null || !filepath.exists()) {
             String errormsg = "Couldn't open \"" + getLocalPath() + File.separator + content.getFilename() + "\", file does not exist";

@@ -120,7 +120,7 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
 
         NUSDataProvider dataProvider = title.getDataProvider();
 
-        InputStream in = dataProvider.getInputStreamFromContent(c, streamOffset, streamFilesize);
+        InputStream in = dataProvider.readContentAsStream(c, streamOffset, streamFilesize);
 
         try {
             NUSDecryption nusdecryption = new NUSDecryption(title.getTicket().get());

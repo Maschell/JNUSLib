@@ -48,7 +48,7 @@ public class NUSDataProviderLocalBackup implements NUSDataProvider {
     }
 
     @Override
-    public InputStream getInputStreamFromContent(Content content, long offset, long size) throws IOException {
+    public InputStream readContentAsStream(Content content, long offset, long size) throws IOException {
         File filepath = new File(getFilePathOnDisk(content));
         if (!filepath.exists()) {
             throw new FileNotFoundException(filepath.getAbsolutePath() + " was not found.");

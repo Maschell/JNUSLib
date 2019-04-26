@@ -27,19 +27,19 @@ import de.mas.wiiu.jnus.utils.StreamUtils;
 
 public interface NUSDataProvider {
 
-    default public byte[] getChunkFromContent(Content content, long offset, int size) throws IOException {
-        return StreamUtils.getBytesFromStream(getInputStreamFromContent(content, offset, size), size);
+    default public byte[] readContent(Content content, long offset, int size) throws IOException {
+        return StreamUtils.getBytesFromStream(readContentAsStream(content, offset, size), size);
     }
 
-    default public InputStream getInputStreamFromContent(Content content) throws IOException {
-        return getInputStreamFromContent(content, 0);
+    default public InputStream readContentAsStream(Content content) throws IOException {
+        return readContentAsStream(content, 0);
     }
 
-    default public InputStream getInputStreamFromContent(Content content, long offset) throws IOException {
-        return getInputStreamFromContent(content, offset, content.getEncryptedFileSize() - offset);
+    default public InputStream readContentAsStream(Content content, long offset) throws IOException {
+        return readContentAsStream(content, offset, content.getEncryptedFileSize() - offset);
     }
 
-    public InputStream getInputStreamFromContent(Content content, long offset, long size) throws IOException;
+    public InputStream readContentAsStream(Content content, long offset, long size) throws IOException;
 
     public Optional<byte[]> getContentH3Hash(Content content) throws IOException;
 

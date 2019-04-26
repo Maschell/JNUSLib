@@ -56,7 +56,7 @@ public class NUSDataProviderWUD implements NUSDataProvider {
     }
 
     @Override
-    public InputStream getInputStreamFromContent(Content content, long fileOffsetBlock, long size) throws IOException {
+    public InputStream readContentAsStream(Content content, long fileOffsetBlock, long size) throws IOException {
         WUDDiscReader discReader = getDiscReader();
         long offset = getOffsetInWUD(content) + fileOffsetBlock;
 

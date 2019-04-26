@@ -44,7 +44,7 @@ public class NUSDataProviderFST implements NUSDataProvider {
     }
 
     @Override
-    public InputStream getInputStreamFromContent(Content content, long offset, long size) throws IOException {
+    public InputStream readContentAsStream(Content content, long offset, long size) throws IOException {
         String filename = content.getFilename();
         Optional<FSTEntry> contentFileOpt = FSTUtils.getChildOfDirectory(base, filename);
         FSTEntry contentFile = contentFileOpt.orElseThrow(() -> new FileNotFoundException(filename + " was not found."));
