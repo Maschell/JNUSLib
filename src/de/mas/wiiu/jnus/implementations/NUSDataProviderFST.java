@@ -19,6 +19,8 @@ package de.mas.wiiu.jnus.implementations;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import de.mas.wiiu.jnus.Settings;
@@ -49,9 +51,16 @@ public class NUSDataProviderFST implements NUSDataProvider {
         return fstDataProvider.readFileAsStream(contentFile, offset, size);
     }
 
+    Map<Integer, Optional<byte[]>> h3Hashes = new HashMap<>();
+
     @Override
     public Optional<byte[]> getContentH3Hash(Content content) throws IOException {
-        return readFileByFilename(base, String.format("%08X%s", content.getID(), Settings.H3_EXTENTION));
+        Optional<byte[]> res = h3Hashes.get(content.getID());
+        if(res == null) {
+            res =readFileByFilename(base, String.format("%08X%s", content.getID(), Settings.H3_EXTENTION));
+            h3Hashes.put(content.getID(), res);
+        }
+        return res;
     }
 
     private Optional<byte[]> readFileByFilename(FSTEntry base, String filename) throws IOException {
