@@ -56,8 +56,8 @@ public class NUSDataProviderFST implements NUSDataProvider {
     @Override
     public Optional<byte[]> getContentH3Hash(Content content) throws IOException {
         Optional<byte[]> res = h3Hashes.get(content.getID());
-        if(res == null) {
-            res =readFileByFilename(base, String.format("%08X%s", content.getID(), Settings.H3_EXTENTION));
+        if (res == null) {
+            res = readFileByFilename(base, String.format("%08X%s", content.getID(), Settings.H3_EXTENTION));
             h3Hashes.put(content.getID(), res);
         }
         return res;

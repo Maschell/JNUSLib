@@ -18,16 +18,12 @@ package de.mas.wiiu.jnus.entities.content;
 
 import java.nio.ByteBuffer;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import de.mas.wiiu.jnus.Settings;
-import de.mas.wiiu.jnus.entities.fst.FSTEntry;
 import de.mas.wiiu.jnus.utils.Utils;
 import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.java.Log;
 
 /**

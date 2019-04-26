@@ -179,7 +179,7 @@ public final class Utils {
             return 0L;
         }
     }
-    
+
     public static void setGlobalLogLevel(Level level) {
         Arrays.stream(LogManager.getLogManager().getLogger("").getHandlers()).forEach(h -> h.setLevel(level));
     }

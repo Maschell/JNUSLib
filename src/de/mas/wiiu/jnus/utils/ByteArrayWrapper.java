@@ -23,7 +23,7 @@ import lombok.NonNull;
 public final class ByteArrayWrapper {
     private final byte[] data;
 
-    public ByteArrayWrapper(@NonNull byte[] data) {       
+    public ByteArrayWrapper(@NonNull byte[] data) {
         this.data = data;
     }
 

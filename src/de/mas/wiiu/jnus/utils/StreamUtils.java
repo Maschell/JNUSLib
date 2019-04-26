@@ -34,8 +34,8 @@ public final class StreamUtils {
     }
 
     /**
-     * Tries to read a given amount of bytes from a stream and return them as 
-     * a byte array. Closes the inputs stream on success AND failure.
+     * Tries to read a given amount of bytes from a stream and return them as a byte array. Closes the inputs stream on success AND failure.
+     * 
      * @param in
      * @param size
      * @return

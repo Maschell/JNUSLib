@@ -26,7 +26,6 @@ import de.mas.wiiu.jnus.entities.fst.FST;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 
 public interface NUSDataProvider {
-
     default public byte[] readContent(Content content, long offset, int size) throws IOException {
         return StreamUtils.getBytesFromStream(readContentAsStream(content, offset, size), size);
     }

@@ -104,7 +104,7 @@ public final class TMD {
     public static TMD parseTMD(File tmd) throws IOException, ParseException {
         if (tmd == null || !tmd.exists()) {
             log.info("TMD input file null or doesn't exist.");
-            throw new   IOException("TMD input file null or doesn't exist.");
+            throw new IOException("TMD input file null or doesn't exist.");
         }
         return parseTMD(Files.readAllBytes(tmd.toPath()));
     }
@@ -145,7 +145,7 @@ public final class TMD {
         buffer.position(0x184);
         long systemVersion = buffer.getLong();
         long titleID = buffer.getLong();
-        if((titleID & 0x0005000000000000L) != 0x0005000000000000L) {
+        if ((titleID & 0x0005000000000000L) != 0x0005000000000000L) {
             throw new ParseException("Invalid TMD file. This is not a Wii U TMD", 0);
         }
         int titleType = buffer.getInt();

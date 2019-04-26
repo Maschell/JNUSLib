@@ -23,7 +23,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import de.mas.wiiu.jnus.Settings;
 

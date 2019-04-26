@@ -55,7 +55,7 @@ public final class ContentFSTInfo {
      * @param input
      *            0x20 byte of data from the FST (starting at 0x20)
      * @return ContentFSTInfo object
-     * @throws ParseException 
+     * @throws ParseException
      */
     public static ContentFSTInfo parseContentFST(byte[] input) throws ParseException {
         if (input == null || input.length != 0x20) {

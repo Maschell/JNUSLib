@@ -25,6 +25,7 @@ public final class NUSTitleLoaderLocalBackup {
     private NUSTitleLoaderLocalBackup() {
 
     }
+
     public static NUSTitle loadNUSTitle(String inputPath, short titleVersion, Ticket ticket) throws Exception {
         NUSTitleConfig config = new NUSTitleConfig();
 
