@@ -16,6 +16,7 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.interfaces;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -30,11 +31,17 @@ public interface FSTDataProvider {
 
     public FSTEntry getRoot();
 
-    public default byte[] readFile(FSTEntry entry) throws IOException {
+    default public byte[] readFile(FSTEntry entry) throws IOException {
         return readFile(entry, 0, entry.getFileSize());
     }
 
-    public byte[] readFile(FSTEntry entry, long offset, long size) throws IOException;
+    default public byte[] readFile(FSTEntry entry, long offset, long size) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        readFileToStream(out, entry, offset, Optional.of(size));
+
+        return out.toByteArray();
+    }
 
     default public InputStream readFileAsStream(FSTEntry entry) throws IOException {
         return readFileAsStream(entry, 0, Optional.empty());
