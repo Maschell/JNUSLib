@@ -276,8 +276,8 @@ public class NUSDecryption extends AESDecryption {
         return output;
     }
 
-    public boolean decryptStreams(InputStream inputStream, OutputStream outputStream, long offset, long size, Content content, Optional<byte[]> h3HashHashed)
-            throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
+    public boolean decryptStreams(InputStream inputStream, OutputStream outputStream, long offset, long size, Content content, Optional<byte[]> h3HashHashed,
+            boolean partial) throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
 
         short contentIndex = (short) content.getIndex();
 
@@ -290,11 +290,8 @@ public class NUSDecryption extends AESDecryption {
                     decryptFileStreamHashed(inputStream, outputStream, offset, size, (short) contentIndex, h3);
                 } else {
                     byte[] h3Hash = content.getSHA2Hash();
-                    // We want to check if we read the whole file or just a part of it.
-                    // There should be only one actual file inside a non-hashed content.
-                    // But it could also contain a directory, so we need to filter.
-                    long fstFileSize = content.getEntries().stream().filter(f -> !f.isDir()).findFirst().map(f -> f.getFileSize()).orElse(0L);
-                    if (size > 0 && size < fstFileSize) {
+                    // Ignore the h3hash if we don't read the whole file.
+                    if (partial) {
                         h3Hash = null;
                     }
                     decryptFileStream(inputStream, outputStream, offset, size, (short) contentIndex, h3Hash, encryptedFileSize);

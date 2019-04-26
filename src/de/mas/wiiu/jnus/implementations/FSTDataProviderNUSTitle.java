@@ -146,7 +146,7 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
             if (c.isHashed()) {
                 h3HashedOpt = dataProvider.getContentH3Hash(c);
             }
-            return nusdecryption.decryptStreams(in, outputStream, fileOffset, fileSize, c, h3HashedOpt);
+            return nusdecryption.decryptStreams(in, outputStream, fileOffset, fileSize, c, h3HashedOpt, fileSize == entry.getFileSize());
         } catch (CheckSumWrongException e) {
             if (c.isUNKNWNFlag1Set()) {
                 log.info("Hash doesn't match. But file is optional. Don't worry.");
