@@ -49,20 +49,6 @@ public class FSTDataProviderWUDDataPartition implements FSTDataProvider {
     }
 
     @Override
-    public byte[] readFile(FSTEntry entry, long offset, long size) throws IOException {
-        ContentFSTInfo info = FSTUtils.getFSTInfoForContent(partition.getFST(), entry.getContentIndex())
-                .orElseThrow(() -> new IOException("Failed to find FSTInfo"));
-        return getChunkOfData(info.getOffset(), entry.getFileOffset() + offset, size, discReader, titleKey);
-    }
-
-    public byte[] getChunkOfData(long contentOffset, long fileoffset, long size, WUDDiscReader discReader, byte[] titleKey) throws IOException {
-        if (titleKey == null) {
-            return discReader.readEncryptedToByteArray(partition.getPartitionOffset() + contentOffset, fileoffset, (int) size);
-        }
-        return discReader.readDecryptedToByteArray(partition.getPartitionOffset() + contentOffset, fileoffset, (int) size, titleKey, null, false);
-    }
-
-    @Override
     public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset, long size) throws IOException {
         ContentFSTInfo info = FSTUtils.getFSTInfoForContent(partition.getFST(), entry.getContentIndex())
                 .orElseThrow(() -> new IOException("Failed to find FSTInfo"));
