@@ -37,7 +37,7 @@ public class NUSDataProviderRemote implements NUSDataProvider, Parallelizable {
     }
 
     @Override
-    public InputStream getInputStreamFromContent(Content content, long fileOffsetBlock, Optional<Long> size) throws IOException {
+    public InputStream getInputStreamFromContent(Content content, long fileOffsetBlock, long size) throws IOException {
         NUSDownloadService downloadService = NUSDownloadService.getDefaultInstance();
         return downloadService.getInputStreamForURL(getRemoteURL(content), fileOffsetBlock, size);
     }

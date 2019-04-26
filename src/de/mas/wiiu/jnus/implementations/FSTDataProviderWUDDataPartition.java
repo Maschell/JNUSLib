@@ -1,5 +1,3 @@
-package de.mas.wiiu.jnus.implementations;
-
 /****************************************************************************
  * Copyright (C) 2016-2019 Maschell
  *
@@ -16,10 +14,11 @@ package de.mas.wiiu.jnus.implementations;
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
+package de.mas.wiiu.jnus.implementations;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Optional;
 
 import de.mas.wiiu.jnus.entities.content.ContentFSTInfo;
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
@@ -64,24 +63,22 @@ public class FSTDataProviderWUDDataPartition implements FSTDataProvider {
     }
 
     @Override
-    public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset, Optional<Long> size) throws IOException {
+    public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset, long size) throws IOException {
         ContentFSTInfo info = FSTUtils.getFSTInfoForContent(partition.getFST(), entry.getContentIndex())
                 .orElseThrow(() -> new IOException("Failed to find FSTInfo"));
-        long usedSize = size.orElse(entry.getFileSize());
         if (titleKey == null) {
-            return discReader.readEncryptedToStream(out, partition.getPartitionOffset() + info.getOffset() + entry.getFileOffset() + offset, usedSize);
+            return discReader.readEncryptedToStream(out, partition.getPartitionOffset() + info.getOffset() + entry.getFileOffset() + offset, size);
         }
-        return discReader.readDecryptedToOutputStream(out, partition.getPartitionOffset() + info.getOffset(), entry.getFileOffset() + offset, usedSize,
-                titleKey, null, false);
+        return discReader.readDecryptedToOutputStream(out, partition.getPartitionOffset() + info.getOffset(), entry.getFileOffset() + offset, size, titleKey,
+                null, false);
     }
 
     @Override
-    public InputStream readFileAsStream(FSTEntry entry, long offset, Optional<Long> size) throws IOException {
+    public InputStream readFileAsStream(FSTEntry entry, long offset, long size) throws IOException {
         if (titleKey == null) {
             ContentFSTInfo info = FSTUtils.getFSTInfoForContent(partition.getFST(), entry.getContentIndex())
                     .orElseThrow(() -> new IOException("Failed to find FSTInfo"));
-            long usedSize = size.orElse(entry.getFileSize());
-            return discReader.readEncryptedToStream(partition.getPartitionOffset() + info.getOffset() + entry.getFileOffset() + offset, usedSize);
+            return discReader.readEncryptedToStream(partition.getPartitionOffset() + info.getOffset() + entry.getFileOffset() + offset, size);
         }
 
         return FSTDataProvider.super.readFileAsStream(entry, offset, size);

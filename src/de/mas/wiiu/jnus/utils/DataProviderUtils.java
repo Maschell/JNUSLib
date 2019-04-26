@@ -133,7 +133,7 @@ public class DataProviderUtils {
             }
 
             Utils.createDir(outputFolder);
-            InputStream inputStream = dataProvider.getInputStreamFromContent(content, 0);
+            InputStream inputStream = dataProvider.getInputStreamFromContent(content);
             if (inputStream == null) {
                 log.warning(content.getFilename() + " Couldn't save encrypted content. Input stream was null");
                 return;

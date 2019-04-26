@@ -83,15 +83,11 @@ public final class NUSDownloadService extends Downloader {
         return downloadFileToByteArray(URL);
     }
 
-    public InputStream getInputStream(String URL, long offset, Optional<Long> size) throws IOException {
+    public InputStream getInputStream(String URL, long offset, long size) throws IOException {
         URL url_obj = new URL(URL);
         HttpURLConnection connection = (HttpURLConnection) url_obj.openConnection();
         connection.setRequestProperty("User-Agent", Settings.USER_AGENT);
-        String sizeString = "";
-        if (size.isPresent()) {
-            sizeString = Long.toString(size.get());
-        }
-        connection.setRequestProperty("Range", "bytes=" + offset + "-" + sizeString);
+        connection.setRequestProperty("Range", "bytes=" + offset + "-" + Long.toString(size));
         try {
             connection.connect();
         } catch (Exception e) {
@@ -101,7 +97,7 @@ public final class NUSDownloadService extends Downloader {
         return connection.getInputStream();
     }
 
-    public InputStream getInputStreamForURL(String url, long offset, Optional<Long> size) throws IOException {
+    public InputStream getInputStreamForURL(String url, long offset, Long size) throws IOException {
         String URL = URL_BASE + "/" + url;
 
         return getInputStream(URL, offset, size);

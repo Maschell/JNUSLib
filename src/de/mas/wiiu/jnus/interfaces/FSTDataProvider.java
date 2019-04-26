@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedOutputStream;
-import java.util.Optional;
 
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
 import de.mas.wiiu.jnus.utils.PipedInputStreamWithException;
@@ -38,16 +37,16 @@ public interface FSTDataProvider {
     default public byte[] readFile(FSTEntry entry, long offset, long size) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        readFileToStream(out, entry, offset, Optional.of(size));
+        readFileToStream(out, entry, offset, size);
 
         return out.toByteArray();
     }
 
     default public InputStream readFileAsStream(FSTEntry entry) throws IOException {
-        return readFileAsStream(entry, 0, Optional.empty());
+        return readFileAsStream(entry, 0, entry.getFileSize());
     }
 
-    default public InputStream readFileAsStream(FSTEntry entry, long offset, Optional<Long> size) throws IOException {
+    default public InputStream readFileAsStream(FSTEntry entry, long offset, long size) throws IOException {
         PipedOutputStream out = new PipedOutputStream();
         PipedInputStreamWithException in = new PipedInputStreamWithException(out, 0x10000);
 
@@ -64,9 +63,9 @@ public interface FSTDataProvider {
     }
 
     default public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset) throws IOException {
-        return readFileToStream(out, entry, offset, Optional.empty());
+        return readFileToStream(out, entry, offset, entry.getFileSize());
     }
 
-    public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset, Optional<Long> size) throws IOException;
+    public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset, long size) throws IOException;
 
 }

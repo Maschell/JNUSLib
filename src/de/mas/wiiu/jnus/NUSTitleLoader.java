@@ -71,7 +71,7 @@ public class NUSTitleLoader {
         // If we have more than one content, the index 0 is the FST.
         Content fstContent = result.getTMD().getContentByIndex(0);
 
-        InputStream fstContentEncryptedStream = dataProvider.getInputStreamFromContent(fstContent, 0, Optional.of(fstContent.getEncryptedFileSize()));
+        InputStream fstContentEncryptedStream = dataProvider.getInputStreamFromContent(fstContent);
 
         byte[] fstBytes = StreamUtils.getBytesFromStream(fstContentEncryptedStream, (int) fstContent.getEncryptedFileSize());
 

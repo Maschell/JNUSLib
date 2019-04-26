@@ -61,14 +61,11 @@ public class NUSDataProviderWUD implements NUSDataProvider {
     }
 
     @Override
-    public InputStream getInputStreamFromContent(Content content, long fileOffsetBlock, Optional<Long> size) throws IOException {
+    public InputStream getInputStreamFromContent(Content content, long fileOffsetBlock, long size) throws IOException {
         WUDDiscReader discReader = getDiscReader();
         long offset = getOffsetInWUD(content) + fileOffsetBlock;
-        long usedSize = content.getEncryptedFileSize() - fileOffsetBlock;
-        if (size.isPresent()) {
-            usedSize = size.get();
-        }
-        return discReader.readEncryptedToStream(offset, usedSize);
+
+        return discReader.readEncryptedToStream(offset, size);
     }
 
     @Override
