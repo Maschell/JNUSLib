@@ -16,7 +16,6 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.implementations;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -63,15 +62,6 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
     @Override
     public FSTEntry getRoot() {
         return rootEntry;
-    }
-
-    @Override
-    public byte[] readFile(FSTEntry entry, long offset, long size) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-        readFileToStream(out, entry, offset, Optional.of(size));
-
-        return out.toByteArray();
     }
 
     @Override
