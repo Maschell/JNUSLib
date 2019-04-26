@@ -20,19 +20,16 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
-import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
 import de.mas.wiiu.jnus.interfaces.FSTDataProvider;
 import de.mas.wiiu.jnus.utils.CheckSumWrongException;
 import de.mas.wiiu.jnus.utils.FSTUtils;
 import de.mas.wiiu.jnus.utils.FileUtils;
-import de.mas.wiiu.jnus.utils.HashUtil;
 import de.mas.wiiu.jnus.utils.Utils;
 import lombok.val;
 import lombok.extern.java.Log;
@@ -66,7 +63,7 @@ public final class DecryptionService {
     public CompletableFuture<Void> decryptFSTEntryToAsync(boolean useFullPath, FSTEntry entry, String outputPath, boolean skipExistingFile) {
         return CompletableFuture.runAsync(() -> {
             try {
-                if (entry.isNotInPackage() || !entry.getContent().isPresent()) {
+                if (entry.isNotInPackage()) {
                     return;
                 }
 
@@ -99,18 +96,9 @@ public final class DecryptionService {
                             return;
                         }
                         if (targetFile.length() == entry.getFileSize()) {
-                            Content c = entry.getContent().get();
-                            if (c.isHashed()) {
-                                log.info("File already exists: " + entry.getFilename());
-                                return;
-                            } else {
-                                if (Arrays.equals(HashUtil.hashSHA1(target, (int) c.getDecryptedFileSize()), c.getSHA2Hash())) {
-                                    log.info("File already exists: " + entry.getFilename());
-                                    return;
-                                } else {
-                                    log.info("File already exists with the same filesize, but the hash doesn't match: " + entry.getFilename());
-                                }
-                            }
+
+                            log.info("File already exists: " + entry.getFilename());
+                            return;
 
                         } else {
                             log.info("File already exists but the filesize doesn't match: " + entry.getFilename());

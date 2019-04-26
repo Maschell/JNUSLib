@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.entities.content.ContentFSTInfo;
 import de.mas.wiiu.jnus.utils.ByteUtils;
 import lombok.Getter;
@@ -50,14 +49,12 @@ public final class FST {
      * 
      * @param fstData
      *            raw decrypted FST data
-     * @param contentsMappedByIndex
-     *            map of index/content
      * @return
-     * @throws ParseException 
+     * @throws ParseException
      */
-    public static FST parseFST(byte[] fstData, Map<Integer, Content> contentsMappedByIndex) throws ParseException {
+    public static FST parseFST(byte[] fstData) throws ParseException {
         if (!Arrays.equals(Arrays.copyOfRange(fstData, 0, 3), new byte[] { 0x46, 0x53, 0x54 })) {
-            throw new ParseException("Failed to parse FST",0);
+            throw new ParseException("Failed to parse FST", 0);
         }
 
         int sectorSize = ByteUtils.getIntFromBytes(fstData, 0x04);
@@ -94,7 +91,7 @@ public final class FST {
 
         FSTEntry root = result.getRoot();
 
-        FSTService.parseFST(root, fstSection, nameSection, contentsMappedByIndex, contentFSTInfos, sectorSize);
+        FSTService.parseFST(root, fstSection, nameSection, sectorSize);
 
         return result;
     }

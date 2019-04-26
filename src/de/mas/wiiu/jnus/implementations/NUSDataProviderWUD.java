@@ -21,10 +21,13 @@ import java.io.InputStream;
 import java.util.Optional;
 
 import de.mas.wiiu.jnus.entities.content.Content;
+import de.mas.wiiu.jnus.entities.content.ContentFSTInfo;
+import de.mas.wiiu.jnus.entities.fst.FST;
 import de.mas.wiiu.jnus.implementations.wud.parser.WUDGamePartition;
 import de.mas.wiiu.jnus.implementations.wud.parser.WUDPartitionHeader;
 import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReader;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
+import de.mas.wiiu.jnus.utils.FSTUtils;
 import lombok.Getter;
 import lombok.extern.java.Log;
 
@@ -32,17 +35,24 @@ import lombok.extern.java.Log;
 public class NUSDataProviderWUD implements NUSDataProvider {
     @Getter private final WUDGamePartition gamePartition;
     @Getter private final WUDDiscReader discReader;
+    @Getter private FST fst;
 
     public NUSDataProviderWUD(WUDGamePartition gamePartition, WUDDiscReader discReader) {
         this.gamePartition = gamePartition;
         this.discReader = discReader;
     }
 
-    public long getOffsetInWUD(Content content) {
+    @Override
+    public void setFST(FST fst) {
+        this.fst = fst;
+    }
+
+    public long getOffsetInWUD(Content content) throws IOException {
         if (content.getIndex() == 0) { // Index 0 is the FST which is at the beginning of the partion;
             return getGamePartition().getPartitionOffset();
         }
-        return getGamePartition().getPartitionOffset() + content.getContentFSTInfo().getOffset();
+        ContentFSTInfo info = FSTUtils.getFSTInfoForContent(fst, content.getIndex()).orElseThrow(() -> new IOException("Failed to find FSTInfo"));
+        return getGamePartition().getPartitionOffset() + info.getOffset();
     }
 
     @Override

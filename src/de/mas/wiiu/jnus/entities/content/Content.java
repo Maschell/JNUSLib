@@ -50,10 +50,6 @@ public class Content implements Comparable<Content> {
     @Getter private final long encryptedFileSize;
     @Getter private final byte[] SHA2Hash;
 
-    @Getter private final List<FSTEntry> entries = new ArrayList<>();
-
-    @Getter @Setter private ContentFSTInfo contentFSTInfo;
-
     private Content(ContentParam param) {
         this.ID = param.getID();
         this.index = param.getIndex();
@@ -68,7 +64,7 @@ public class Content implements Comparable<Content> {
      * @param input
      *            0x30 byte of data from the TMD (starting at 0xB04)
      * @return content object
-     * @throws ParseException 
+     * @throws ParseException
      */
     public static Content parseContent(byte[] input) throws ParseException {
         if (input == null || input.length != CONTENT_SIZE) {
@@ -126,16 +122,6 @@ public class Content implements Comparable<Content> {
      */
     public String getFilename() {
         return String.format("%08X%s", getID(), Settings.ENCRYPTED_CONTENT_EXTENTION);
-    }
-
-    /**
-     * Adds a content to the internal entry list.
-     * 
-     * @param entry
-     *            that will be added to the content list
-     */
-    public void addEntry(FSTEntry entry) {
-        getEntries().add(entry);
     }
 
     /**

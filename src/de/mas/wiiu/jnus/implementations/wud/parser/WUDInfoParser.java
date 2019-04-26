@@ -16,7 +16,6 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.implementations.wud.parser;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -130,7 +129,7 @@ public final class WUDInfoParser {
                 throw new ParseException("Failed to decrypt the FST of the SI partition.", 0);
             }
 
-            FST siFST = FST.parseFST(fileTableBlock, new HashMap<>());
+            FST siFST = FST.parseFST(fileTableBlock);
 
             for (val dirChilden : siFST.getRoot().getDirChildren()) {
                 // The SI partition contains the tmd, cert and tik for every GM partition.
@@ -188,7 +187,7 @@ public final class WUDInfoParser {
                 throw new IOException("FST Decrpytion failed");
             }
 
-            FST curFST = FST.parseFST(curFileTableBlock, new HashMap<>());
+            FST curFST = FST.parseFST(curFileTableBlock);
 
             WUDDataPartition curDataPartition = new WUDDataPartition(curPartionName, partitionOffset + headerSize, curFST);
 
@@ -214,7 +213,7 @@ public final class WUDInfoParser {
             throws IOException {
         FSTEntry entry = FSTUtils.getEntryByFullPath(fst.getRoot(), filePath).orElseThrow(() -> new FileNotFoundException(filePath + " was not found."));
 
-        ContentFSTInfo info = fst.getContentFSTInfos().get((int) entry.getContentFSTID());
+        ContentFSTInfo info = fst.getContentFSTInfos().get((int) entry.getContentIndex());
 
         if (key == null) {
             return discReader.readEncryptedToByteArray(headerSize + partitionOffset + (long) info.getOffset(), entry.getFileOffset(),

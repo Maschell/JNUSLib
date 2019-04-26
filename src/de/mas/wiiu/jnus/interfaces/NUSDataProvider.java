@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.util.Optional;
 
 import de.mas.wiiu.jnus.entities.content.Content;
+import de.mas.wiiu.jnus.entities.fst.FST;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 
 public interface NUSDataProvider {
@@ -52,5 +53,9 @@ public interface NUSDataProvider {
     public Optional<byte[]> getRawCert() throws IOException;
 
     public void cleanup() throws IOException;
+
+    default public void setFST(FST fst) {
+
+    }
 
 }

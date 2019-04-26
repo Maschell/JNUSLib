@@ -16,7 +16,6 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.entities.fst;
 
-import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,31 +49,24 @@ public class FSTEntry {
     @Getter private final long fileSize;
     @Getter private final long fileOffset;
 
-    @Getter private final Optional<Content> content;
-
     @Getter private final boolean isDir;
     @Getter private final boolean isRoot;
     @Getter private final boolean isNotInPackage;
 
-    @Getter private final short contentFSTID;
+    @Getter private final short contentIndex;
 
     protected FSTEntry(FSTEntryParam fstParam) {
         this.filenameSupplier = fstParam.getFileNameSupplier();
         this.flags = fstParam.getFlags();
         this.parent = fstParam.getParent();
-        if (parent.isPresent()) {
-            parent.get().children.add(this);
-        }
+
         this.fileSize = fstParam.getFileSize();
         this.fileOffset = fstParam.getFileOffset();
-        this.content = fstParam.getContent();
-        if (content.isPresent()) {
-            content.get().addEntry(this);
-        }
+
         this.isDir = fstParam.isDir();
         this.isRoot = fstParam.isRoot();
         this.isNotInPackage = fstParam.isNotInPackage();
-        this.contentFSTID = fstParam.getContentFSTID();
+        this.contentIndex = fstParam.getContentIndex();
     }
 
     /**
@@ -93,7 +85,6 @@ public class FSTEntry {
         FSTEntryParam param = new FSTEntryParam();
         param.setFileNameSupplier(() -> filename);
         param.setFileSize(content.getDecryptedFileSize());
-        param.setContent(Optional.of(content));
         param.setDir(false);
         param.setParent(Optional.of(parent));
         return new FSTEntry(param);
@@ -158,26 +149,6 @@ public class FSTEntry {
         return result;
     }
 
-    public List<FSTEntry> getFSTEntriesByContent(Content content) {
-        List<FSTEntry> entries = new ArrayList<>();
-        if (this.content.isPresent() && this.content.get().equals(content)) {
-            entries.add(this);
-        }
-
-        for (FSTEntry child : getChildren()) {
-            entries.addAll(child.getFSTEntriesByContent(content));
-        }
-        return entries;
-    }
-
-    public long getFileOffsetBlock() {
-        if (getContent().isPresent() && getContent().get().isHashed()) {
-            return (getFileOffset() / 0xFC00) * 0x10000;
-        } else {
-            return getFileOffset();
-        }
-    }
-
     public void printRecursive(int space) {
         printRecursive(System.out, space);
     }
@@ -202,7 +173,7 @@ public class FSTEntry {
     @Override
     public String toString() {
         return "FSTEntry [filename=" + getFilename() + ", path=" + getPath() + ", flags=" + flags + ", filesize=" + fileSize + ", fileoffset=" + fileOffset
-                + ", content=" + content + ", isDir=" + isDir + ", isRoot=" + isRoot + ", notInPackage=" + isNotInPackage + "]";
+                + ", isDir=" + isDir + ", isRoot=" + isRoot + ", notInPackage=" + isNotInPackage + "]";
     }
 
     @Data
@@ -215,13 +186,15 @@ public class FSTEntry {
         private long fileSize = 0;
         private long fileOffset = 0;
 
-        private Optional<Content> content = Optional.empty();
-
         private boolean isDir = false;
         private boolean isRoot = false;
         private boolean notInPackage = false;
 
-        private short contentFSTID = 0;
+        private short contentIndex = 0;
+    }
+
+    public void addChildren(FSTEntry entry) {
+        this.getChildren().add(entry);
     }
 
 }

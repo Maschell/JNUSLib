@@ -54,8 +54,6 @@ public final class TMD {
     private static final int CERT1_LENGTH     = 0x400;
     private static final int CERT2_LENGTH     = 0x300;
     
-    
-
     @Getter private final int signatureType;                        // 0x000
     @Getter private final byte[] signature;                         // 0x004
     @Getter private final byte[] issuer;                            // 0x140

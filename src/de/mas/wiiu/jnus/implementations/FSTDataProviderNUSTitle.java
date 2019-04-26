@@ -76,14 +76,10 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
 
     @Override
     public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset, Optional<Long> size) throws IOException {
-        if (!entry.getContent().isPresent()) {
-            out.close();
-            throw new IOException("Content for the FSTEntry not found: " + entry);
-        }
         long fileOffset = entry.getFileOffset() + offset;
         long fileOffsetBlock = fileOffset;
         long usedSize = size.orElse(entry.getFileSize());
-        Content c = entry.getContent().get();
+        Content c = title.getTMD().getContentByIndex(entry.getContentIndex());
 
         if (c.isHashed()) {
             fileOffsetBlock = (fileOffset / 0xFC00) * 0x10000;
@@ -103,19 +99,17 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
 
     private boolean decryptFSTEntryToStream(FSTEntry entry, OutputStream outputStream, long fileOffsetBlock, long fileOffset, long fileSize)
             throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
-        if (entry.isNotInPackage() || !entry.getContent().isPresent() || !title.getTicket().isPresent()) {
+        if (entry.isNotInPackage() || !title.getTicket().isPresent()) {
             if (!title.getTicket().isPresent()) {
                 log.info("Decryption not possible because no ticket was set.");
             } else if (entry.isNotInPackage()) {
                 log.info("Decryption not possible because the FSTEntry is not in this package");
-            } else if (!entry.getContent().isPresent()) {
-                log.info("Decryption not possible because the Content was empty");
             }
             outputStream.close();
             return false;
         }
 
-        Content c = entry.getContent().get();
+        Content c = title.getTMD().getContentByIndex(entry.getContentIndex());
 
         NUSDataProvider dataProvider = title.getDataProvider();
 
@@ -155,7 +149,6 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
                 sb.append("Hash doesn't match").append(System.lineSeparator());
                 sb.append("Detailed info:").append(System.lineSeparator());
                 sb.append(entry).append(System.lineSeparator());
-                sb.append(entry.getContent()).append(System.lineSeparator());
                 sb.append(String.format("%016x", title.getTMD().getTitleID()));
                 sb.append(e.getMessage() + " Calculated Hash: " + Utils.ByteArrayToString(e.getGivenHash()) + ", expected hash: "
                         + Utils.ByteArrayToString(e.getExpectedHash()));

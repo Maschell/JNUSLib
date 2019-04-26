@@ -19,7 +19,6 @@ package de.mas.wiiu.jnus;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -84,10 +83,12 @@ public class NUSTitleLoader {
             fstBytes = aesDecryption.decrypt(fstBytes);
         }
 
-        Map<Integer, Content> contents = result.getTMD().getAllContents();
-
-        FST fst = FST.parseFST(fstBytes, contents);
+        FST fst = FST.parseFST(fstBytes);
         result.setFST(Optional.of(fst));
+
+        // The dataprovider may need the FST to calculate the offset of a content
+        // on the partition.
+        dataProvider.setFST(fst);
 
         return result;
     }
