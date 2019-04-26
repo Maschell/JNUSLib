@@ -37,20 +37,20 @@ public interface NUSDataProvider {
      * @return
      * @throws IOException
      */
-    public abstract InputStream getInputStreamFromContent(Content content, long offset, Optional<Long> size) throws IOException;
+    public InputStream getInputStreamFromContent(Content content, long offset, Optional<Long> size) throws IOException;
 
     default public InputStream getInputStreamFromContent(Content content, long offset) throws IOException {
         return getInputStreamFromContent(content, offset, Optional.empty());
     }
 
-    public abstract Optional<byte[]> getContentH3Hash(Content content) throws IOException;
+    public Optional<byte[]> getContentH3Hash(Content content) throws IOException;
 
-    public abstract Optional<byte[]> getRawTMD() throws IOException;
+    public Optional<byte[]> getRawTMD() throws IOException;
 
-    public abstract Optional<byte[]> getRawTicket() throws IOException;
+    public Optional<byte[]> getRawTicket() throws IOException;
 
-    public abstract Optional<byte[]> getRawCert() throws IOException;
+    public Optional<byte[]> getRawCert() throws IOException;
 
-    public abstract void cleanup() throws IOException;
+    public void cleanup() throws IOException;
 
 }
