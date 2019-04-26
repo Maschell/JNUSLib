@@ -25,6 +25,8 @@ import java.util.stream.Stream;
 
 import org.apache.commons.io.FilenameUtils;
 
+import de.mas.wiiu.jnus.entities.content.ContentFSTInfo;
+import de.mas.wiiu.jnus.entities.fst.FST;
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
 import lombok.val;
 
@@ -95,15 +97,15 @@ public class FSTUtils {
     }
 
     public static List<FSTEntry> getFSTEntriesByRegEx(FSTEntry root, String string) {
-        return getFSTEntriesByRegEx(string, root, false);
+        return getFSTEntriesByRegEx(root, string, false);
     }
 
-    public static List<FSTEntry> getFSTEntriesByRegEx(String regEx, FSTEntry entry, boolean allowNotInPackage) {
+    public static List<FSTEntry> getFSTEntriesByRegEx(FSTEntry entry, String regEx, boolean allowNotInPackage) {
         Pattern p = Pattern.compile(regEx);
-        return getFSTEntriesByRegExStream(p, entry, allowNotInPackage).collect(Collectors.toList());
+        return getFSTEntriesByRegExStream(entry, p, allowNotInPackage).collect(Collectors.toList());
     }
 
-    private static Stream<FSTEntry> getFSTEntriesByRegExStream(Pattern p, FSTEntry entry, boolean allowNotInPackage) {
+    private static Stream<FSTEntry> getFSTEntriesByRegExStream(FSTEntry entry, Pattern p, boolean allowNotInPackage) {
         return entry.getChildren().stream()//
                 .filter(e -> allowNotInPackage || !e.isNotInPackage()) //
                 .flatMap(e -> {
@@ -114,7 +116,44 @@ public class FSTUtils {
                             return Stream.empty();
                         }
                     }
-                    return getFSTEntriesByRegExStream(p, e, allowNotInPackage);
+                    return getFSTEntriesByRegExStream(e, p, allowNotInPackage);
+                });
+    }
+
+    public static Optional<ContentFSTInfo> getFSTInfoForContent(FST fst, short contentIndex) {
+        return fst.getContentFSTInfos().entrySet().stream().filter(e -> e.getKey().shortValue() == contentIndex).map(e -> e.getValue()).findAny();
+    }
+
+    public static List<FSTEntry> getFSTEntriesByContentIndex(FSTEntry entry, short index) {
+        return getFSTEntriesByContentIndexAsStream(entry, index).collect(Collectors.toList());
+    }
+
+    public static Stream<FSTEntry> getFSTEntriesByContentIndexAsStream(FSTEntry entry, short index) {
+        return entry.getChildren().stream()//
+                .filter(e -> e.getContentIndex() == index) //
+                .flatMap(e -> {
+                    if (!e.isDir()) {
+                        return Stream.of(e);
+                    }
+                    return getFSTEntriesByContentIndexAsStream(e, index);
+                });
+    }
+
+    /**
+     * Does not include entries that are not in the package..
+     */
+    public static Stream<FSTEntry> getAllFSTEntryChildrenAsStream(FSTEntry root) {
+        return getAllFSTEntryChildrenAsStream(root, false);
+    }
+
+    public static Stream<FSTEntry> getAllFSTEntryChildrenAsStream(FSTEntry root, boolean allowNotInPackage) {
+        return root.getChildren().stream() //
+                .filter(e -> allowNotInPackage || !e.isNotInPackage()) //
+                .flatMap(e -> {
+                    if (!e.isDir()) {
+                        return Stream.of(e);
+                    }
+                    return getAllFSTEntryChildrenAsStream(e, allowNotInPackage);
                 });
     }
 }
