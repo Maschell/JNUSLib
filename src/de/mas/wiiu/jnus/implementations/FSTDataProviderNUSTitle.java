@@ -66,28 +66,16 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
 
     @Override
     public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset, Optional<Long> size) throws IOException {
-        long fileOffset = entry.getFileOffset() + offset;
-        long fileOffsetBlock = fileOffset;
         long usedSize = size.orElse(entry.getFileSize());
-        Content c = title.getTMD().getContentByIndex(entry.getContentIndex());
 
-        if (c.isHashed()) {
-            fileOffsetBlock = (fileOffset / 0xFC00) * 0x10000;
-        } else {
-            fileOffsetBlock = (fileOffset / 0x8000) * 0x8000;
-            // We need the previous IV if we don't start at the first block.
-            if (fileOffset >= 0x8000 && fileOffset % 0x8000 == 0) {
-                fileOffsetBlock -= 16;
-            }
-        }
         try {
-            return decryptFSTEntryToStream(entry, out, fileOffsetBlock, fileOffset, usedSize);
+            return decryptFSTEntryToStream(entry, out, offset, usedSize);
         } catch (CheckSumWrongException | NoSuchAlgorithmException e) {
             throw new IOException(e);
         }
     }
 
-    private boolean decryptFSTEntryToStream(FSTEntry entry, OutputStream outputStream, long fileOffsetBlock, long fileOffset, long fileSize)
+    private boolean decryptFSTEntryToStream(FSTEntry entry, OutputStream outputStream, long offset, long fileSize)
             throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
         if (entry.isNotInPackage() || !title.getTicket().isPresent()) {
             if (!title.getTicket().isPresent()) {
@@ -101,11 +89,14 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
 
         Content c = title.getTMD().getContentByIndex(entry.getContentIndex());
 
-        NUSDataProvider dataProvider = title.getDataProvider();
+        long payloadOffset = entry.getFileOffset() + offset;
+
+        long streamOffset = payloadOffset;
 
         Optional<Long> readFilesize = Optional.empty();
         if (c.isHashed()) {
-            long offsetInBlock = fileOffset - ((fileOffsetBlock / 0x10000) * 0xFC00);
+            streamOffset = (payloadOffset / 0xFC00) * 0x10000;
+            long offsetInBlock = payloadOffset - ((streamOffset / 0x10000) * 0xFC00);
             if (offsetInBlock + fileSize < 0xFC00) {
                 readFilesize = Optional.of(0x10000L);
             } else {
@@ -120,9 +111,17 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
 
                 readFilesize = Optional.of(curVal);
             }
+        } else {
+            streamOffset = (payloadOffset / 0x8000) * 0x8000;
+            // We need the previous IV if we don't start at the first block.
+            if (payloadOffset >= 0x8000 && payloadOffset % 0x8000 == 0) {
+                streamOffset -= 16;
+            }
         }
 
-        InputStream in = dataProvider.getInputStreamFromContent(c, fileOffsetBlock, readFilesize);
+        NUSDataProvider dataProvider = title.getDataProvider();
+
+        InputStream in = dataProvider.getInputStreamFromContent(c, streamOffset, readFilesize);
 
         try {
             NUSDecryption nusdecryption = new NUSDecryption(title.getTicket().get());
@@ -130,7 +129,7 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
             if (c.isHashed()) {
                 h3HashedOpt = dataProvider.getContentH3Hash(c);
             }
-            return nusdecryption.decryptStreams(in, outputStream, fileOffset, fileSize, c, h3HashedOpt, fileSize == entry.getFileSize());
+            return nusdecryption.decryptStreams(in, outputStream, payloadOffset, fileSize, c, h3HashedOpt, fileSize == entry.getFileSize());
         } catch (CheckSumWrongException e) {
             if (c.isUNKNWNFlag1Set()) {
                 log.info("Hash doesn't match. But file is optional. Don't worry.");
