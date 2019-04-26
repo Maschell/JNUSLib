@@ -57,7 +57,7 @@ public class NUSDecryption extends AESDecryption {
         return decrypt(blockBuffer, offset, BLOCKSIZE);
     }
 
-    public void decryptFileStream(InputStream inputStream, OutputStream outputStream, long filesize, long fileOffset, short contentIndex, byte[] h3hash,
+    public void decryptFileStream(InputStream inputStream, OutputStream outputStream, long fileOffset, long filesize, short contentIndex, byte[] h3hash,
             long expectedSizeForHash) throws IOException, CheckSumWrongException {
         MessageDigest sha1 = null;
         MessageDigest sha1fallback = null;
@@ -191,7 +191,7 @@ public class NUSDecryption extends AESDecryption {
         }
     }
 
-    public void decryptFileStreamHashed(InputStream inputStream, OutputStream outputStream, long filesize, long fileoffset, short contentIndex, byte[] h3Hash)
+    public void decryptFileStreamHashed(InputStream inputStream, OutputStream outputStream, long fileoffset, long filesize, short contentIndex, byte[] h3Hash)
             throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
         int BLOCKSIZE = 0x10000;
         int HASHBLOCKSIZE = 0xFC00;
@@ -276,7 +276,7 @@ public class NUSDecryption extends AESDecryption {
         return output;
     }
 
-    public boolean decryptStreams(InputStream inputStream, OutputStream outputStream, long size, long offset, Content content, Optional<byte[]> h3HashHashed)
+    public boolean decryptStreams(InputStream inputStream, OutputStream outputStream, long offset, long size, Content content, Optional<byte[]> h3HashHashed)
             throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
 
         short contentIndex = (short) content.getIndex();
@@ -287,7 +287,7 @@ public class NUSDecryption extends AESDecryption {
             if (content.isEncrypted()) {
                 if (content.isHashed()) {
                     byte[] h3 = h3HashHashed.orElseThrow(() -> new FileNotFoundException("h3 hash not found."));
-                    decryptFileStreamHashed(inputStream, outputStream, size, offset, (short) contentIndex, h3);
+                    decryptFileStreamHashed(inputStream, outputStream, offset, size, (short) contentIndex, h3);
                 } else {
                     byte[] h3Hash = content.getSHA2Hash();
                     // We want to check if we read the whole file or just a part of it.
@@ -297,7 +297,7 @@ public class NUSDecryption extends AESDecryption {
                     if (size > 0 && size < fstFileSize) {
                         h3Hash = null;
                     }
-                    decryptFileStream(inputStream, outputStream, size, offset, (short) contentIndex, h3Hash, encryptedFileSize);
+                    decryptFileStream(inputStream, outputStream, offset, size, (short) contentIndex, h3Hash, encryptedFileSize);
                 }
             } else {
                 StreamUtils.saveInputStreamToOutputStreamWithHash(inputStream, outputStream, size, content.getSHA2Hash(), encryptedFileSize);
