@@ -57,7 +57,7 @@ public class NUSDecryption extends AESDecryption {
         return decrypt(blockBuffer, offset, BLOCKSIZE);
     }
 
-    public void decryptFileStream(InputStream inputStream, OutputStream outputStream, long fileOffset, long filesize, short contentIndex, byte[] h3hash,
+    public void decryptFileStream(InputStream inputStream, OutputStream outputStream, long fileOffset, long filesize, byte[] IV, byte[] h3hash,
             long expectedSizeForHash) throws IOException, CheckSumWrongException {
         MessageDigest sha1 = null;
 
@@ -70,15 +70,6 @@ public class NUSDecryption extends AESDecryption {
         }
 
         int BLOCKSIZE = 0x8000;
-        // long dlFileLength = filesize;
-        // if(dlFileLength > (dlFileLength/BLOCKSIZE)*BLOCKSIZE){
-        // dlFileLength = ((dlFileLength/BLOCKSIZE)*BLOCKSIZE) +BLOCKSIZE;
-        // }
-
-        byte[] IV = new byte[0x10];
-
-        IV[0] = (byte) ((contentIndex >> 8) & 0xFF);
-        IV[1] = (byte) (contentIndex);
 
         byte[] blockBuffer = new byte[BLOCKSIZE];
 
@@ -87,23 +78,6 @@ public class NUSDecryption extends AESDecryption {
         long writtenHash = 0;
 
         try {
-            // The input stream has been prepared to start 16 bytes earlier on this case.
-            if (fileOffset >= 16) {
-                int toRead = 16;
-                byte[] data = new byte[toRead];
-                int readTotal = 0;
-                while (readTotal < toRead) {
-                    int res = inputStream.read(data, readTotal, toRead - readTotal);
-                    StreamUtils.checkForException(inputStream);
-                    if (res < 0) {
-                        // This should NEVER happen.
-                        throw new IOException();
-                    }
-                    readTotal += res;
-                }
-                IV = Arrays.copyOfRange(data, 0, toRead);
-            }
-
             ByteArrayBuffer overflow = new ByteArrayBuffer(BLOCKSIZE);
 
             // We can only decrypt multiples of 16. So we need to align it.
@@ -171,7 +145,7 @@ public class NUSDecryption extends AESDecryption {
         }
     }
 
-    public void decryptFileStreamHashed(InputStream inputStream, OutputStream outputStream, long fileoffset, long filesize, short contentIndex, byte[] h3Hash)
+    public void decryptFileStreamHashed(InputStream inputStream, OutputStream outputStream, long fileoffset, long filesize, byte[] h3Hash)
             throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
         int BLOCKSIZE = 0x10000;
         int HASHBLOCKSIZE = 0xFC00;
@@ -202,7 +176,7 @@ public class NUSDecryption extends AESDecryption {
 
                 byte[] output;
                 try {
-                    output = decryptFileChunkHash(encryptedBlockBuffer, (int) block, contentIndex, h3Hash);
+                    output = decryptFileChunkHash(encryptedBlockBuffer, (int) block, h3Hash);
                 } catch (CheckSumWrongException | NoSuchAlgorithmException e) {
                     throw e;
                 }
@@ -235,20 +209,15 @@ public class NUSDecryption extends AESDecryption {
         }
     }
 
-    private byte[] decryptFileChunkHash(byte[] blockBuffer, int block, int contentIndex, byte[] h3_hashes)
-            throws CheckSumWrongException, NoSuchAlgorithmException {
+    private byte[] decryptFileChunkHash(byte[] blockBuffer, int block, byte[] h3_hashes) throws CheckSumWrongException, NoSuchAlgorithmException {
         int hashSize = 0x400;
         int blocksize = 0xFC00;
-        byte[] IV = ByteBuffer.allocate(16).putShort((short) contentIndex).array();
 
-        byte[] hashes = decryptFileChunk(blockBuffer, hashSize, IV);
-
-        hashes[0] ^= (byte) ((contentIndex >> 8) & 0xFF);
-        hashes[1] ^= (byte) (contentIndex & 0xFF);
+        byte[] hashes = decryptFileChunk(blockBuffer, hashSize, new byte[16]);
 
         int H0_start = (block % 16) * 20;
 
-        IV = Arrays.copyOfRange(hashes, H0_start, H0_start + 16);
+        byte[] IV = Arrays.copyOfRange(hashes, H0_start, H0_start + 16);
         byte[] output = decryptFileChunk(blockBuffer, hashSize, blocksize, IV);
 
         HashUtil.checkFileChunkHashes(hashes, h3_hashes, output, block);
@@ -256,10 +225,8 @@ public class NUSDecryption extends AESDecryption {
         return output;
     }
 
-    public boolean decryptStreams(InputStream inputStream, OutputStream outputStream, long offset, long size, Content content, Optional<byte[]> h3HashHashed,
-            boolean partial) throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
-
-        short contentIndex = (short) content.getIndex();
+    public boolean decryptStreams(InputStream inputStream, OutputStream outputStream, long offset, long size, Content content, Optional<byte[]> IV,
+            Optional<byte[]> h3HashHashed, boolean partial) throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
 
         long encryptedFileSize = content.getEncryptedFileSize();
 
@@ -267,14 +234,14 @@ public class NUSDecryption extends AESDecryption {
             if (content.isEncrypted()) {
                 if (content.isHashed()) {
                     byte[] h3 = h3HashHashed.orElseThrow(() -> new FileNotFoundException("h3 hash not found."));
-                    decryptFileStreamHashed(inputStream, outputStream, offset, size, (short) contentIndex, h3);
+                    decryptFileStreamHashed(inputStream, outputStream, offset, size, h3);
                 } else {
                     byte[] h3Hash = content.getSHA2Hash();
                     // Ignore the h3hash if we don't read the whole file.
                     if (partial) {
                         h3Hash = null;
                     }
-                    decryptFileStream(inputStream, outputStream, offset, size, (short) contentIndex, h3Hash, encryptedFileSize);
+                    decryptFileStream(inputStream, outputStream, offset, size, IV.orElseThrow(() -> new IOException("Missing IV")), h3Hash, encryptedFileSize);
                 }
             } else {
                 StreamUtils.saveInputStreamToOutputStreamWithHash(inputStream, outputStream, size, content.getSHA2Hash(), encryptedFileSize);

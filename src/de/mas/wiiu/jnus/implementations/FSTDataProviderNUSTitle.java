@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -30,6 +31,7 @@ import de.mas.wiiu.jnus.interfaces.FSTDataProvider;
 import de.mas.wiiu.jnus.interfaces.HasNUSTitle;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.CheckSumWrongException;
+import de.mas.wiiu.jnus.utils.StreamUtils;
 import de.mas.wiiu.jnus.utils.Utils;
 import de.mas.wiiu.jnus.utils.cryptography.NUSDecryption;
 import lombok.Getter;
@@ -91,10 +93,11 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
         Content c = title.getTMD().getContentByIndex(entry.getContentIndex());
 
         long payloadOffset = entry.getFileOffset() + offset;
-
         long streamOffset = payloadOffset;
-
         long streamFilesize = c.getEncryptedFileSize();
+
+        Optional<byte[]> IV = Optional.empty();
+
         if (c.isHashed()) {
             streamOffset = (payloadOffset / 0xFC00) * 0x10000;
             long offsetInBlock = payloadOffset - ((streamOffset / 0x10000) * 0xFC00);
@@ -113,16 +116,22 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
                 streamFilesize = curVal;
             }
         } else {
-            if (size != entry.getFileSize()) {             
-                streamFilesize = size;
-                
-                // We need the previous IV if we don't start at the first block.
-                if (payloadOffset >= 16) {
-                    streamOffset -= 16;
-                    streamFilesize += 16;
-                }
-            }
+            byte[] newIV = new byte[0x10];
+            newIV[0] = (byte) ((c.getIndex() >> 8) & 0xFF);
+            newIV[1] = (byte) (c.getIndex() & 0xFF);
+            IV = Optional.of(newIV);
 
+            // if we have an offset we can't calculate the hash anymore
+            // we need a new IV
+            if (streamOffset > 0) {
+                streamFilesize = size;
+
+                streamOffset -= 16;
+                streamFilesize += 16;
+
+                // We need to get the current IV as soon as we get the InputStream.
+                IV = Optional.empty();
+            }
         }
 
         NUSDataProvider dataProvider = title.getDataProvider();
@@ -134,8 +143,27 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
             Optional<byte[]> h3HashedOpt = Optional.empty();
             if (c.isHashed()) {
                 h3HashedOpt = dataProvider.getContentH3Hash(c);
+            } else {
+                if (!IV.isPresent()) {
+                    // If we read with an offset > 16 we need the previous 16 bytes because they are the IV.
+                    // The input stream has been prepared to start 16 bytes earlier on this case.
+                    int toRead = 16;
+                    byte[] data = new byte[toRead];
+                    int readTotal = 0;
+                    while (readTotal < toRead) {
+                        int res = in.read(data, readTotal, toRead - readTotal);
+                        StreamUtils.checkForException(in);
+                        if (res < 0) {
+                            // This should NEVER happen.
+                            throw new IOException();
+                        }
+                        readTotal += res;
+                    }
+                    IV = Optional.of(Arrays.copyOfRange(data, 0, toRead));
+                }
             }
-            return nusdecryption.decryptStreams(in, outputStream, payloadOffset, size, c, h3HashedOpt, size != entry.getFileSize());
+
+            return nusdecryption.decryptStreams(in, outputStream, payloadOffset, size, c, IV, h3HashedOpt, size != entry.getFileSize());
         } catch (CheckSumWrongException e) {
             if (c.isUNKNWNFlag1Set()) {
                 log.info("Hash doesn't match. But file is optional. Don't worry.");
