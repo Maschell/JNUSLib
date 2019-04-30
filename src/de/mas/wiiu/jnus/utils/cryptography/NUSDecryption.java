@@ -91,13 +91,8 @@ public class NUSDecryption extends AESDecryption {
         int skipoffset = (int) (fileOffset % 0x8000);
 
         try {
-
-            // If we are at the beginning of a block, but it's not the first one,
-            // we need to get the IV from the last 16 bytes of the previous block.
-            // while beeing paranoid to exactly read 16 bytes but not more. Reading more
-            // would destroy our input stream.
             // The input stream has been prepared to start 16 bytes earlier on this case.
-            if (fileOffset >= 0x8000 && fileOffset % 0x8000 == 0) {
+            if (fileOffset >= 16) {
                 int toRead = 16;
                 byte[] data = new byte[toRead];
                 int readTotal = 0;
@@ -119,15 +114,6 @@ public class NUSDecryption extends AESDecryption {
             long toRead = Utils.align(filesize + 15, 16);
 
             do {
-                // In case we start on the middle of a block we need to consume the "garbage" and save the
-                // current IV.
-                if (skipoffset > 0) {
-                    int skippedBytes = StreamUtils.getChunkFromStream(inputStream, blockBuffer, overflow, skipoffset);
-                    if (skippedBytes >= 16) {
-                        IV = Arrays.copyOfRange(blockBuffer, skippedBytes - 16, skippedBytes);
-                    }
-                    skipoffset = 0;
-                }
 
                 int curReadSize = BLOCKSIZE;
                 if (toRead < BLOCKSIZE) {

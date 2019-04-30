@@ -91,7 +91,7 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
 
         long streamOffset = payloadOffset;
 
-        long streamFilesize = size;
+        long streamFilesize = c.getEncryptedFileSize();
         if (c.isHashed()) {
             streamOffset = (payloadOffset / 0xFC00) * 0x10000;
             long offsetInBlock = payloadOffset - ((streamOffset / 0x10000) * 0xFC00);
@@ -110,16 +110,11 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
                 streamFilesize = curVal;
             }
         } else {
-            if (size != entry.getFileSize()) {
-                streamOffset = (payloadOffset / 0x8000) * 0x8000;
-                
-                // We need the missing bytes of the previous blocks + the size we want to read.
-                streamFilesize = size;                
-                long offsetInBlock = offset - streamOffset;
-                streamFilesize += offsetInBlock;
+            if (size != entry.getFileSize()) {             
+                streamFilesize = size;
                 
                 // We need the previous IV if we don't start at the first block.
-                if (payloadOffset >= 0x8000 && payloadOffset % 0x8000 == 0) {
+                if (payloadOffset >= 16) {
                     streamOffset -= 16;
                     streamFilesize += 16;
                 }
