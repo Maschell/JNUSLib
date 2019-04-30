@@ -18,6 +18,8 @@ package de.mas.wiiu.jnus.implementations;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import de.mas.wiiu.jnus.Settings;
@@ -46,16 +48,25 @@ public class NUSDataProviderRemote implements NUSDataProvider, Parallelizable {
         return String.format("%016x/%08X", titleID, content.getID());
     }
 
+    Map<Integer, Optional<byte[]>> h3Hashes = new HashMap<>();
+
     @Override
     public Optional<byte[]> getContentH3Hash(Content content) throws IOException {
-        NUSDownloadService downloadService = NUSDownloadService.getDefaultInstance();
-        String url = getRemoteURL(content) + Settings.H3_EXTENTION;
+        Optional<byte[]> resOpt = h3Hashes.get(content.getID());
+        if (resOpt == null) {
+            NUSDownloadService downloadService = NUSDownloadService.getDefaultInstance();
+            String url = getRemoteURL(content) + Settings.H3_EXTENTION;
+            System.out.println(url);
 
-        byte[] res = downloadService.downloadToByteArray(url);
-        if (res == null || res.length == 0) {
-            return Optional.empty();
+            byte[] res = downloadService.downloadToByteArray(url);
+            if (res == null || res.length == 0) {
+                resOpt = Optional.empty();
+            } else {
+                resOpt = Optional.of(res);
+            }
+            h3Hashes.put(content.getID(), resOpt);
         }
-        return Optional.of(res);
+        return resOpt;
     }
 
     @Override
