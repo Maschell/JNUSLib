@@ -20,7 +20,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -140,7 +139,7 @@ public class NUSDecryption extends AESDecryption {
         } finally {
             StreamUtils.closeAll(inputStream, outputStream);
         }
-        if(written < filesize) {
+        if (written < filesize) {
             throw new IOException("Failed to read. Missing " + (filesize - written));
         }
     }
@@ -225,27 +224,38 @@ public class NUSDecryption extends AESDecryption {
         return output;
     }
 
-    public boolean decryptStreams(InputStream inputStream, OutputStream outputStream, long offset, long size, Content content, Optional<byte[]> IV,
-            Optional<byte[]> h3HashHashed, boolean partial) throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
-
-        long encryptedFileSize = content.getEncryptedFileSize();
-
+    public boolean decryptStreamsHashed(InputStream inputStream, OutputStream outputStream, long offset, long size, Optional<byte[]> h3HashHashed)
+            throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
         try {
-            if (content.isEncrypted()) {
-                if (content.isHashed()) {
-                    byte[] h3 = h3HashHashed.orElseThrow(() -> new FileNotFoundException("h3 hash not found."));
-                    decryptFileStreamHashed(inputStream, outputStream, offset, size, h3);
-                } else {
-                    byte[] h3Hash = content.getSHA2Hash();
-                    // Ignore the h3hash if we don't read the whole file.
-                    if (partial) {
-                        h3Hash = null;
-                    }
-                    decryptFileStream(inputStream, outputStream, offset, size, IV.orElseThrow(() -> new IOException("Missing IV")), h3Hash, encryptedFileSize);
-                }
-            } else {
-                StreamUtils.saveInputStreamToOutputStreamWithHash(inputStream, outputStream, size, content.getSHA2Hash(), encryptedFileSize);
+            byte[] h3 = h3HashHashed.orElseThrow(() -> new FileNotFoundException("h3 hash not found."));
+            decryptFileStreamHashed(inputStream, outputStream, offset, size, h3);
+        } finally {
+            StreamUtils.closeAll(inputStream, outputStream);
+        }
+
+        return true;
+    }
+
+    public boolean decryptStreamsNonEncrypted(InputStream inputStream, OutputStream outputStream, long offset, long size, Content content)
+            throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
+        try {
+            StreamUtils.saveInputStreamToOutputStreamWithHash(inputStream, outputStream, size, content.getSHA2Hash(), content.getEncryptedFileSize());
+        } finally {
+            StreamUtils.closeAll(inputStream, outputStream);
+        }
+        
+        return true;
+    }
+
+    public boolean decryptStreamsNonHashed(InputStream inputStream, OutputStream outputStream, long offset, long size, Content content, byte[] IV,
+            boolean partial) throws IOException, CheckSumWrongException {
+        try {
+            byte[] h3Hash = content.getSHA2Hash();
+            // Ignore the h3hash if we don't read the whole file.
+            if (partial) {
+                h3Hash = null;
             }
+            decryptFileStream(inputStream, outputStream, offset, size, IV, h3Hash, content.getEncryptedFileSize());
         } finally {
             StreamUtils.closeAll(inputStream, outputStream);
         }

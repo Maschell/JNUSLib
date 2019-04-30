@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import de.mas.wiiu.jnus.NUSTitle;
@@ -75,6 +74,89 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
         }
     }
 
+    private boolean decryptFSTEntryToStreamHashed(FSTEntry entry, OutputStream outputStream, long offset, long size)
+            throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
+        Content c = title.getTMD().getContentByIndex(entry.getContentIndex());
+
+        long payloadOffset = entry.getFileOffset() + offset;
+        long streamOffset = payloadOffset;
+        long streamFilesize = 0;
+
+        streamOffset = (payloadOffset / 0xFC00) * 0x10000;
+        long offsetInBlock = payloadOffset - ((streamOffset / 0x10000) * 0xFC00);
+        if (offsetInBlock + size < 0xFC00) {
+            streamFilesize = 0x10000L;
+        } else {
+            long curVal = 0x10000;
+            long missing = (size - (0xFC00 - offsetInBlock));
+
+            curVal += (missing / 0xFC00) * 0x10000;
+
+            if (missing % 0xFC00 > 0) {
+                curVal += 0x10000;
+            }
+
+            streamFilesize = curVal;
+        }
+
+        NUSDataProvider dataProvider = title.getDataProvider();
+        InputStream in = dataProvider.readContentAsStream(c, streamOffset, streamFilesize);
+
+        NUSDecryption nusdecryption = new NUSDecryption(title.getTicket().get());
+
+        return nusdecryption.decryptStreamsHashed(in, outputStream, payloadOffset, size, dataProvider.getContentH3Hash(c));
+    }
+
+    private boolean decryptFSTEntryToStreamNonHashed(FSTEntry entry, OutputStream outputStream, long offset, long size)
+            throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
+
+        Content c = title.getTMD().getContentByIndex(entry.getContentIndex());
+
+        byte[] IV = new byte[0x10];
+        IV[0] = (byte) ((c.getIndex() >> 8) & 0xFF);
+        IV[1] = (byte) (c.getIndex() & 0xFF);
+
+        long payloadOffset = entry.getFileOffset() + offset;
+        long streamOffset = payloadOffset;
+        long streamFilesize = c.getEncryptedFileSize();
+
+        // if we have an offset we can't calculate the hash anymore
+        // we need a new IV
+        if (streamOffset > 0) {
+            streamFilesize = size;
+
+            streamOffset -= 16;
+            streamFilesize += 16;
+
+            // We need to get the current IV as soon as we get the InputStream.
+            IV = null;
+        }
+
+        NUSDataProvider dataProvider = title.getDataProvider();
+        InputStream in = dataProvider.readContentAsStream(c, streamOffset, streamFilesize);
+
+        if (IV == null) {
+            // If we read with an offset > 16 we need the previous 16 bytes because they are the IV.
+            // The input stream has been prepared to start 16 bytes earlier on this case.
+            int toRead = 16;
+            byte[] data = new byte[toRead];
+            int readTotal = 0;
+            while (readTotal < toRead) {
+                int res = in.read(data, readTotal, toRead - readTotal);
+                StreamUtils.checkForException(in);
+                if (res < 0) {
+                    // This should NEVER happen.
+                    throw new IOException();
+                }
+                readTotal += res;
+            }
+            IV = Arrays.copyOfRange(data, 0, toRead);
+        }
+        NUSDecryption nusdecryption = new NUSDecryption(title.getTicket().get());
+
+        return nusdecryption.decryptStreamsNonHashed(in, outputStream, payloadOffset, size, c, IV, size != entry.getFileSize());
+    }
+
     private boolean decryptFSTEntryToStream(FSTEntry entry, OutputStream outputStream, long offset, long size)
             throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
         if (entry.isNotInPackage() || !title.getTicket().isPresent()) {
@@ -92,78 +174,18 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
 
         Content c = title.getTMD().getContentByIndex(entry.getContentIndex());
 
-        long payloadOffset = entry.getFileOffset() + offset;
-        long streamOffset = payloadOffset;
-        long streamFilesize = c.getEncryptedFileSize();
-
-        Optional<byte[]> IV = Optional.empty();
-
-        if (c.isHashed()) {
-            streamOffset = (payloadOffset / 0xFC00) * 0x10000;
-            long offsetInBlock = payloadOffset - ((streamOffset / 0x10000) * 0xFC00);
-            if (offsetInBlock + size < 0xFC00) {
-                streamFilesize = 0x10000L;
-            } else {
-                long curVal = 0x10000;
-                long missing = (size - (0xFC00 - offsetInBlock));
-
-                curVal += (missing / 0xFC00) * 0x10000;
-
-                if (missing % 0xFC00 > 0) {
-                    curVal += 0x10000;
-                }
-
-                streamFilesize = curVal;
-            }
-        } else {
-            byte[] newIV = new byte[0x10];
-            newIV[0] = (byte) ((c.getIndex() >> 8) & 0xFF);
-            newIV[1] = (byte) (c.getIndex() & 0xFF);
-            IV = Optional.of(newIV);
-
-            // if we have an offset we can't calculate the hash anymore
-            // we need a new IV
-            if (streamOffset > 0) {
-                streamFilesize = size;
-
-                streamOffset -= 16;
-                streamFilesize += 16;
-
-                // We need to get the current IV as soon as we get the InputStream.
-                IV = Optional.empty();
-            }
-        }
-
-        NUSDataProvider dataProvider = title.getDataProvider();
-
-        InputStream in = dataProvider.readContentAsStream(c, streamOffset, streamFilesize);
-
         try {
-            NUSDecryption nusdecryption = new NUSDecryption(title.getTicket().get());
-            Optional<byte[]> h3HashedOpt = Optional.empty();
-            if (c.isHashed()) {
-                h3HashedOpt = dataProvider.getContentH3Hash(c);
-            } else {
-                if (!IV.isPresent()) {
-                    // If we read with an offset > 16 we need the previous 16 bytes because they are the IV.
-                    // The input stream has been prepared to start 16 bytes earlier on this case.
-                    int toRead = 16;
-                    byte[] data = new byte[toRead];
-                    int readTotal = 0;
-                    while (readTotal < toRead) {
-                        int res = in.read(data, readTotal, toRead - readTotal);
-                        StreamUtils.checkForException(in);
-                        if (res < 0) {
-                            // This should NEVER happen.
-                            throw new IOException();
-                        }
-                        readTotal += res;
-                    }
-                    IV = Optional.of(Arrays.copyOfRange(data, 0, toRead));
+            if (c.isEncrypted()) {
+                if (c.isHashed()) {
+                    return decryptFSTEntryToStreamHashed(entry, outputStream, offset, size);
+                } else {
+                    return decryptFSTEntryToStreamNonHashed(entry, outputStream, offset, size);
                 }
+            } else {
+                NUSDecryption nusdecryption = new NUSDecryption(title.getTicket().get());
+                InputStream in = title.getDataProvider().readContentAsStream(c, offset, size);
+                return nusdecryption.decryptStreamsNonEncrypted(in, outputStream, offset, size, c);
             }
-
-            return nusdecryption.decryptStreams(in, outputStream, payloadOffset, size, c, IV, h3HashedOpt, size != entry.getFileSize());
         } catch (CheckSumWrongException e) {
             if (c.isUNKNWNFlag1Set()) {
                 log.info("Hash doesn't match. But file is optional. Don't worry.");
