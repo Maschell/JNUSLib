@@ -44,6 +44,11 @@ public class PipedInputStreamWithException extends PipedInputStream implements I
         synchronized (lock) {
             closed = true;
         }
+        try {
+            checkForException();
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
     }
 
     public void throwException(Exception e) {
@@ -59,6 +64,46 @@ public class PipedInputStreamWithException extends PipedInputStream implements I
             isClosed = closed;
         }
         return isClosed;
+    }
+
+    @Override
+    public int read(byte b[], int off, int len) throws IOException {
+        try {
+            checkForException();
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+        return super.read(b, off, len);
+    }
+
+    @Override
+    public int read() throws IOException {
+        try {
+            checkForException();
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+        return super.read();
+    }
+
+    @Override
+    public int available() throws IOException {
+        try {
+            checkForException();
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+        return super.available();
+    }
+
+    @Override
+    public long skip(long n) throws IOException {
+        try {
+            checkForException();
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+        return super.skip(n);
     }
 
     @Override

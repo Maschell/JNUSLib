@@ -30,7 +30,6 @@ import de.mas.wiiu.jnus.interfaces.FSTDataProvider;
 import de.mas.wiiu.jnus.interfaces.HasNUSTitle;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.CheckSumWrongException;
-import de.mas.wiiu.jnus.utils.StreamUtils;
 import de.mas.wiiu.jnus.utils.Utils;
 import de.mas.wiiu.jnus.utils.cryptography.NUSDecryption;
 import lombok.Getter;
@@ -143,7 +142,6 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
             int readTotal = 0;
             while (readTotal < toRead) {
                 int res = in.read(data, readTotal, toRead - readTotal);
-                StreamUtils.checkForException(in);
                 if (res < 0) {
                     // This should NEVER happen.
                     throw new IOException();
