@@ -39,7 +39,6 @@ public class NUSTitle {
 
     @Getter private final TMD TMD;
 
-    @Getter @Setter private boolean skipExistingFiles = true;
     @Getter private final NUSDataProvider dataProvider;
 
     public NUSTitle(@NonNull NUSDataProvider dataProvider) throws ParseException, IOException {
