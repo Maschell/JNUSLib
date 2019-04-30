@@ -60,12 +60,10 @@ public class NUSDecryption extends AESDecryption {
     public void decryptFileStream(InputStream inputStream, OutputStream outputStream, long fileOffset, long filesize, short contentIndex, byte[] h3hash,
             long expectedSizeForHash) throws IOException, CheckSumWrongException {
         MessageDigest sha1 = null;
-        MessageDigest sha1fallback = null;
 
         if (h3hash != null) {
             try {
                 sha1 = MessageDigest.getInstance("SHA1");
-                sha1fallback = MessageDigest.getInstance("SHA1");
             } catch (NoSuchAlgorithmException e) {
                 e.printStackTrace();
             }
@@ -86,9 +84,7 @@ public class NUSDecryption extends AESDecryption {
 
         int inBlockBuffer;
         long written = 0;
-        long writtenFallback = 0;
-
-        int skipoffset = (int) (fileOffset % 0x8000);
+        long writtenHash = 0;
 
         try {
             // The input stream has been prepared to start 16 bytes earlier on this case.
@@ -139,35 +135,30 @@ public class NUSDecryption extends AESDecryption {
 
                 outputStream.write(output, 0, toWrite);
 
-                if (sha1 != null && sha1fallback != null) {
-                    sha1.update(output, 0, toWrite);
-
+                if (sha1 != null) {
                     // In some cases it's using the hash of the whole .app file instead of the part
                     // that's been actually used.
                     long toFallback = inBlockBuffer;
-                    if (writtenFallback + toFallback > expectedSizeForHash) {
-                        toFallback = expectedSizeForHash - writtenFallback;
+                    if (written + toFallback > expectedSizeForHash) {
+                        toFallback = expectedSizeForHash - written;
                     }
-                    sha1fallback.update(output, 0, (int) toFallback);
-                    writtenFallback += toFallback;
+                    sha1.update(output, 0, (int) toFallback);
+                    writtenHash += toFallback;
                 }
                 if (written >= filesize && h3hash == null) {
                     break;
                 }
             } while (inBlockBuffer == BLOCKSIZE);
 
-            if (sha1 != null && sha1fallback != null) {
-
-                long missingInHash = expectedSizeForHash - writtenFallback;
+            if (sha1 != null) {
+                long missingInHash = expectedSizeForHash - writtenHash;
                 if (missingInHash > 0) {
-                    sha1fallback.update(new byte[(int) missingInHash]);
+                    sha1.update(new byte[(int) missingInHash]);
                 }
 
                 byte[] calculated_hash1 = sha1.digest();
-                byte[] calculated_hash2 = sha1fallback.digest();
-                byte[] expected_hash = h3hash;
-                if (!Arrays.equals(calculated_hash1, expected_hash) && !Arrays.equals(calculated_hash2, expected_hash)) {
-                    throw new CheckSumWrongException("hash checksum failed", calculated_hash1, expected_hash);
+                if (!Arrays.equals(calculated_hash1, h3hash)) {
+                    throw new CheckSumWrongException("hash checksum failed", calculated_hash1, h3hash);
                 } else {
                     log.finest("Hash DOES match saves output stream.");
                 }
