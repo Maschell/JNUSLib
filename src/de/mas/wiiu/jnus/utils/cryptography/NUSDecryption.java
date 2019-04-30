@@ -107,7 +107,7 @@ public class NUSDecryption extends AESDecryption {
             ByteArrayBuffer overflow = new ByteArrayBuffer(BLOCKSIZE);
 
             // We can only decrypt multiples of 16. So we need to align it.
-            long toRead = Utils.align(filesize + 15, 16);
+            long toRead = Utils.align(filesize, 16);
 
             do {
 
