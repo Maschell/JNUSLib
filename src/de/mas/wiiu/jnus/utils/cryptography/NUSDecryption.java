@@ -189,6 +189,9 @@ public class NUSDecryption extends AESDecryption {
         } finally {
             StreamUtils.closeAll(inputStream, outputStream);
         }
+        if(written < filesize) {
+            throw new IOException("Failed to read. Missing " + (filesize - written));
+        }
     }
 
     public void decryptFileStreamHashed(InputStream inputStream, OutputStream outputStream, long fileoffset, long filesize, short contentIndex, byte[] h3Hash)
