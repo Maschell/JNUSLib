@@ -84,6 +84,9 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
             outputStream.close();
             return false;
         }
+        if (offset % 16 != 0) {
+            throw new IOException("The offset for decryption need to be aligned to 16");
+        }
 
         Content c = title.getTMD().getContentByIndex(entry.getContentIndex());
 
