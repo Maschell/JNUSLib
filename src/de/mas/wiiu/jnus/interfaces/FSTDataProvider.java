@@ -62,6 +62,10 @@ public interface FSTDataProvider {
         return in;
     }
 
+    default public boolean readFileToStream(OutputStream out, FSTEntry entry) throws IOException {
+        return readFileToStream(out, entry, 0, entry.getFileSize());
+    }
+
     default public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset) throws IOException {
         return readFileToStream(out, entry, offset, entry.getFileSize());
     }

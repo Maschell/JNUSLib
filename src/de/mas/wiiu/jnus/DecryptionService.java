@@ -116,7 +116,7 @@ public final class DecryptionService {
     }
 
     public void decryptFSTEntryToStream(FSTEntry entry, OutputStream outputStream) throws IOException {
-        dataProvider.readFileToStream(outputStream, entry, 0);
+        dataProvider.readFileToStream(outputStream, entry);
     }
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
