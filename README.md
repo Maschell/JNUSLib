@@ -24,85 +24,122 @@ For WUD files, following additional operations are possible:
 * Compressing into .wux file format (from .wud and splitted .wud)
 * Verifing (comparing) to different wud images.
   
-## How to use it
-At first you have to import the jnuslib.jar and the common key in the Settings class.
+## Maven
 ```
-Settings.commonKey = Utils.StringToByteArray("12345678901234567890123456789012");
+<repository>
+  <id>jitpack.io</id>
+  <url>https://jitpack.io</url>
+</repository>
+...
+<!-- The core module -->
+<dependency>
+  <groupId>de.Maschell.JNUSLib</groupId>
+  <artifactId>sdcf4j-core</artifactId>
+  <version>%version OR commit%</version>
+</dependency>
 ```
-Then for each different source type, you need to use a an own NUSTitleLoader.
+
+## Usage
+
+
+
+### Gettings NUSTitles
+Gor each different source type, you need to use a an own NUSTitleLoader.
 
 ```
-//REMOTE
+byte[] commonKey = Utils.StringToByteArray("12345678901234567890123456789012");
+```
+#### Remote
+```
+// Loading a title with a public ticket
+NUSTitle nusRemote = NUSTitleLoaderRemote.loadNUSTitle(0x0005000E12345678L, commonKey);
 
-        //Loading a title with a public ticket
-        NUSTitle nusRemote = NUSTitleLoaderRemote.loadNUSTitle(0x0005000E12345678L);
-        
-        //Loading a title with an own ticket (key, titleid)
-        Ticket ticket = Ticket.createTicket(Utils.StringToByteArray("12345678901234567890123456789012"), 0x0005000E12345678L);
-        NUSTitle nusRemoteWithTicket = NUSTitleLoaderRemote.loadNUSTitle(0x0005000E12345678L);
-//LOCAL
+// Loading a title with an own ticket (key, titleid)
+Ticket ticket = Ticket.createTicket(Utils.StringToByteArray("12345678901234567890123456789012"), 0x0005000E12345678L, commonKey);
+NUSTitle nusRemoteWithTicket = NUSTitleLoaderRemote.loadNUSTitle(0x0005000E12345678L, commonKey);
+```
 
-        //With ticket on disk
-        NUSTitle nusLocal = NUSTitleLoaderLocal.loadNUSTitle("path-to-app-files");
-        
-         //Loading a title with an own ticket (key, titleid)
-        Ticket ticket = Ticket.createTicket(Utils.StringToByteArray("12345678901234567890123456789012"), 0x0005000E12345678L);
-        NUSTitle nusRemoteWithTicket = NUSTitleLoaderLocal.loadNUSTitle("path-to-app-files");
+#### Local
+```
+// With ticket on disk
+NUSTitle nusLocal = NUSTitleLoaderLocal.loadNUSTitle("path-to-app-files", commonKey);
 
-//Loading a .woomy file
-        NUSTitle nusWoomy = NUSTitleLoaderWoomy.loadNUSTitle("testfile.woomy");
-        
-//WUD
-        //Loading a uncompressed WUD
-        NUSTitle nusWUD = NUSTitleLoaderWUD.loadNUSTitle("game.wud");
-        //Loading a compressed WUD (WUX)
-        NUSTitle nusWUX = NUSTitleLoaderWUD.loadNUSTitle("game.wux");
-        //Loading a uncompressed splitted WUD (2gb parts)
-        NUSTitle nusWUDSplitted = NUSTitleLoaderWUD.loadNUSTitle("game_part1.wud");
+// Loading a title with an own ticket (key, titleid)
+Ticket ticket = Ticket.createTicket(Utils.StringToByteArray("12345678901234567890123456789012"), 0x0005000E12345678L, commonKey);
+NUSTitle nusLocalWithTicket = NUSTitleLoaderLocal.loadNUSTitle("path-to-app-files", ticket);
+
+// Loading a .woomy file
+NUSTitle nusWoomy = NUSTitleLoaderWoomy.loadNUSTitle("testfile.woomy");
+```
+#### WUD/WUX
+```
+// WUD
+
+// Loading a uncompressed WUD
+WUDInfo wiWUD = WUDLoader.load("game.wud"); // needs a game.key next to the .wud
+// Loading a compressed WUD (WUX)
+WUDInfo wiWUX = WUDLoader.load("game.wux"); // needs a game.key next to the .wux
+// Loading a uncompressed splitted WUD (2gb parts)
+WUDInfo wiWUDSplitted = WUDLoader.load("game_part1.wud"); // needs a game.key next to the .wud
+
+// Loading providing the disc key
+WUDInfo wiWUXWithDisc = WUDLoader.load("game.wux", Utils.StringToByteArray("12345678901234567890123456789012")); // needs a game.key next to the .wux
+// Loading a wud with no titley key (kiosk)
+WUDInfo wiKiosk = WUDLoader.loadDev("game.wux");
+
+// Get NUSTitles from WUDInfo
+List<NUSTitle> titlesFromWUD = WUDLoader.getGamePartionsAsNUSTitles(wudInfo, commonKey);
 ```
 
 Once the title is loaded, you can use one of the services to extract and decrypt files.  
-Here are some of the operations you can do. Look at the code for the full list of methods.
 
 ### Decryption:
-
+For the decryption you can use a FSTDataProvider in combinations with a FSTEntry. Example:
 ```
-DecryptionService decrypt = DecryptionService.getInstance(title);
+// Get a FSTDataProvider from NUSTitle
+FSTDataProvider fstdataprovider = new FSTDataProviderNUSTitle(nustitle);
 
-//Decrypt the whole FST into a folder called "DecryptedTitle"
-decrypt.decryptAllFSTEntriesTo("DecryptedTitle");
+// When loading from a WUD, you can get the data of all partitions via
+List<FSTDataProvider> partitionsFromWUD = WUDLoader.getPartitonsAsFSTDataProvider(wudInfo, commonKey);
+// the includes all non-nustitles like the SI or UP partitions.
 
-//Decrypt the code folder into a folder called "code_folder"
-decrypt.decryptFSTEntriesTo("/code/.*", code_folder);
+FSTEntry fstRoot = fstdataprovider.getRoot();
 
-//Decrypt all .js files into a folder called "js_files"
-decrypt.decryptFSTEntriesTo(".*.js", js_files);
+FSTEntry appxml = FSTUtils.getFSTEntriesByRegEx(fstdataprovider.getRoot(), ".*app.xml").get(0); // get all .rpx files
 
+// Get data as byte array
+byte[] appxmlData = fstdataprovider.readFile(appxml);
+// Get 1024 bytes from entry appxml from offset 0
+byte[] appxmlChunk = fstdataprovider.readFile(appxml, 0, 1024);
 
-//Decrypt all .app files into a folder called "decrypted_contents"
-decrypt.decryptAllPlainContents("decrypted_contents");
+// Get data as input stream
+InputStream appxmlStream = fstdataprovider.readFileAsStream(appxml);
+// Get 1024 bytes from entry appxml from offset 0 as input stream
+InputStream appxmlStream = fstdataprovider.readFileAsStream(appxml, 0, 1024);
 
-
-//Use decrypting inputstream. Data will be only loaded/decrypted on demand.
-
-//Display the app.xml as hex dump
-FSTEntry appXMLEntry = title.getFSTEntryByFullPath("code/app.xml");
-decrypt.getDecryptedOutputAsInputStream(appXMLEntry);
-//Lets just print the app.xml as hex data
-int BUFFER_SIZE = 0x40;
-byte[] buffer = new byte[BUFFER_SIZE];
-int i = 0;            
-while(in.read(buffer) > 0){
-    System.out.println(String.format("0x%04X: ", (i++ * BUFFER_SIZE)) + Utils.ByteArrayToString(buffer));
+// Save data to output stream
+FileOutputStream appxmlOut = new FileOutputStream(new File(appxml.getFilename()));
+if (fstdataprovider.readFileToStream(appxmlOut, appxml)) {
+    System.out.println("Okay.");
 }
-in.close();
-[...]
+```
+
+Some wrapper functions can be found in the DecryptionService:
+```
+FSTDataProvider fstdataprovider = new FSTDataProviderNUSTitle(nustitle);
+DecryptionService decrypt = DecryptionService.getInstance(fstdataprovider);
+
+// Decrypt the whole FST into a folder called "DecryptedTitle" and skip existing
+decrypt.decryptAllFSTEntriesTo("DecryptedTitle", true);
+
+// Decrypt the code folder into a folder called "code_folder" and skip existing
+decrypt.decryptFSTEntriesTo("/code/.*", "code_folder", true);
 ```
 
 ### Extraction:
 ```
 //Get the Service for the NUSTitle
-ExtractionService extract = ExtractionService.getInstance(title);
+ExtractionService extract = ExtractionService.getInstance(nusTitle);
 
 //Saving all .app/.h3/tmd/tik/cert files into the folder "encryptedFiles"
 extract.extractAll("encryptedFiles");
@@ -114,35 +151,42 @@ extract.extractAllEncrpytedContentFileHashes("contentHashes");
 extract.extractAllEncryptedContentFilesWithoutHashesTo("contents");
 
 //Save tmd, cert and ticket
-extract.extractTMDTo(output);
-extract.extractTickeTo(output);
-extract.extractCertTo(output);
-
-[...]
+extract.extractTMDTo("output");
+extract.extractTicketTo("output");
+extract.extractCertTo("output");
 ```
 ### WUD Services
-Example for compressing and verifing into .wux files.
+Example for compressing and verifing .wux files.
 
 ```
-    WUDImage imageUncompressed = new WUDImage(new File("game_part1.wud")); //Splitted and not splitted .wud possible here
-    
-    WUDService.compressWUDToWUX(imageUncompressed, "compressedImage","game.wux");
-    
-    WUDImage imageCompressed = new WUDImage(new File("compressedImage" + File.separator + "game.wux"));
-    
-    //Verify compression
-    WUDService.compareWUDImage(imageUncompressed, imageCompressed);
+WUDImage imageUncompressed = new WUDImage(new File("game_part1.wud")); // Splitted and not splitted .wud possible here
+
+Optional<File> compressedWUD = WUDService.compressWUDToWUX(imageUncompressed, "compressedImage", "game.wux", false);
+
+if (compressedWUD.isPresent()) {
+    WUDImage imageCompressed = new WUDImage(compressedWUD.get());
+
+    // Verify compression
+    if (WUDService.compareWUDImage(imageUncompressed, imageCompressed)) {
+        System.out.println("Both images are the same");
+    } else {
+        System.err.println("The images are different");
+    }
+
+    //Turn it back into .wud
+    WUDService.decompressWUX(imageCompressed, "newdecompressed", "test.wud", false);
+} else {
+    System.err.println("Failed to compress wud");
+}
 ```
 
 ### Cleanup:
 Call the method cleanup() for a NUSTitle to cleanup/close all opened ressources.
 
 # Credits
-Maschell
-
-Thanks to:
-Crediar for CDecrypt (https://github.com/crediar/cdecrypt)  
-All people who have contributed to vgmtoolbox (https://sourceforge.net/projects/vgmtoolbox/)  
-Exzap for the .wux file format (https://gbatemp.net/threads/wii-u-image-wud-compression-tool.397901/)  
-FIX94 for wudump (https://gbatemp.net/threads/wudump-dump-raw-images-from-a-wiiu-game-disc.451736/)  
-The creators of lombok for lombok https://projectlombok.org/index.html  
+Maschell for creating the lib
+Crediar for [CDecrypt](https://github.com/crediar/cdecrypt)  
+All people who have contributed to [vgmtoolbox](https://sourceforge.net/projects/vgmtoolbox/)  
+Exzap for the [.wux file format](https://gbatemp.net/threads/wii-u-image-wud-compression-tool.397901/)  
+FIX94 for [wudump](https://gbatemp.net/threads/wudump-dump-raw-images-from-a-wiiu-game-disc.451736/)  
+The creators of lombok for [lombok](https://projectlombok.org/index.html)  
