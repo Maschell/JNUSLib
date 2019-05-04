@@ -46,9 +46,6 @@ public final class DecryptionService {
     }
 
     private DecryptionService(FSTDataProvider dataProvider) {
-        // if (dataProvider instanceof Parallelizable) {
-        // parallelizable = true;
-        // }
         this.dataProvider = dataProvider;
     }
 
@@ -87,8 +84,6 @@ public final class DecryptionService {
                     return;
                 }
 
-                File target = new File(targetFilePath);
-
                 if (skipExistingFile) {
                     File targetFile = new File(targetFilePath);
                     if (targetFile.exists()) {
@@ -106,9 +101,10 @@ public final class DecryptionService {
                     }
                 }
 
+                File target = new File(targetFilePath);
+
                 // to avoid having fragmented files.
-                FileUtils.FileAsOutputStreamWrapper(new File(targetFilePath), entry.getFileSize(),
-                        newOutputStream -> decryptFSTEntryToStream(entry, newOutputStream));
+                FileUtils.FileAsOutputStreamWrapper(target, entry.getFileSize(), newOutputStream -> decryptFSTEntryToStream(entry, newOutputStream));
             } catch (Exception ex) {
                 throw new CompletionException(ex);
             }
