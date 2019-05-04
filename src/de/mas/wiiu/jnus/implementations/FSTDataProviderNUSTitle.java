@@ -30,6 +30,7 @@ import de.mas.wiiu.jnus.interfaces.FSTDataProvider;
 import de.mas.wiiu.jnus.interfaces.HasNUSTitle;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.CheckSumWrongException;
+import de.mas.wiiu.jnus.utils.StreamUtils;
 import de.mas.wiiu.jnus.utils.Utils;
 import de.mas.wiiu.jnus.utils.cryptography.NUSDecryption;
 import lombok.Getter;
@@ -157,10 +158,8 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
 
     private boolean decryptFSTEntryToStream(FSTEntry entry, OutputStream outputStream, long offset, long size)
             throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
-        if (entry.isNotInPackage() || !title.getTicket().isPresent()) {
-            if (!title.getTicket().isPresent()) {
-                log.info("Decryption not possible because no ticket was set.");
-            } else if (entry.isNotInPackage()) {
+        if (entry.isNotInPackage()) {
+            if (entry.isNotInPackage()) {
                 log.info("Decryption not possible because the FSTEntry is not in this package");
             }
             outputStream.close();
@@ -174,15 +173,26 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
 
         try {
             if (c.isEncrypted()) {
+                if (!title.getTicket().isPresent()) {
+                    log.info("Decryption not possible because no ticket was set.");
+                    outputStream.close();
+                    return false;
+                }
                 if (c.isHashed()) {
                     return decryptFSTEntryToStreamHashed(entry, outputStream, offset, size);
                 } else {
                     return decryptFSTEntryToStreamNonHashed(entry, outputStream, offset, size);
                 }
             } else {
-                NUSDecryption nusdecryption = new NUSDecryption(title.getTicket().get());
                 InputStream in = title.getDataProvider().readContentAsStream(c, offset, size);
-                return nusdecryption.decryptStreamsNonEncrypted(in, outputStream, offset, size, c);
+
+                try {
+                    StreamUtils.saveInputStreamToOutputStreamWithHash(in, outputStream, size, c.getSHA2Hash(), c.getEncryptedFileSize(),
+                            size != entry.getFileSize());
+                    return true;
+                } finally {
+                    StreamUtils.closeAll(in, outputStream);
+                }
             }
         } catch (CheckSumWrongException e) {
             if (c.isUNKNWNFlag1Set()) {

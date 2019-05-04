@@ -46,17 +46,20 @@ public class NUSTitleLoader {
             return result;
         }
 
-        Ticket ticket = config.getTicket();
-        if (ticket == null) {
-            Optional<byte[]> ticketOpt = dataProvider.getRawTicket();
-            if (ticketOpt.isPresent()) {
-                ticket = Ticket.parseTicket(ticketOpt.get(), config.getCommonKey());
+        Ticket ticket = null;
+        if (config.isTicketNeeded()) {
+            ticket = config.getTicket();
+            if (ticket == null) {
+                Optional<byte[]> ticketOpt = dataProvider.getRawTicket();
+                if (ticketOpt.isPresent()) {
+                    ticket = Ticket.parseTicket(ticketOpt.get(), config.getCommonKey());
+                }
             }
+            if (ticket == null) {
+                new ParseException("Failed to get ticket data", 0);
+            }
+            result.setTicket(Optional.of(ticket));
         }
-        if (ticket == null) {
-            new ParseException("Failed to get ticket data", 0);
-        }
-        result.setTicket(Optional.of(ticket));
 
         // If we have just content, we don't have a FST.
         if (result.getTMD().getAllContents().size() == 1) {

@@ -22,6 +22,7 @@ import lombok.Data;
 @Data
 public class NUSTitleConfig {
     private Ticket ticket;
+    private boolean ticketNeeded = true;
     private boolean noDecryption;
     private byte[] commonKey;
 }

@@ -37,6 +37,8 @@ public final class NUSTitleLoaderWoomy {
     public static NUSTitle loadNUSTitle(String inputFile) throws IOException, ParserConfigurationException, SAXException, ParseException {
         NUSTitleConfig config = new NUSTitleConfig();
 
+        config.setTicketNeeded(false);
+        
         WoomyInfo woomyInfo = WoomyParser.createWoomyInfo(new File(inputFile));
 
         return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderWoomy(woomyInfo));

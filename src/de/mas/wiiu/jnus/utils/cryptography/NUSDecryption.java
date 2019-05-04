@@ -244,17 +244,6 @@ public class NUSDecryption extends AESDecryption {
         return true;
     }
 
-    public boolean decryptStreamsNonEncrypted(InputStream inputStream, OutputStream outputStream, long offset, long size, Content content)
-            throws IOException, CheckSumWrongException, NoSuchAlgorithmException {
-        try {
-            StreamUtils.saveInputStreamToOutputStreamWithHash(inputStream, outputStream, size, content.getSHA2Hash(), content.getEncryptedFileSize());
-        } finally {
-            StreamUtils.closeAll(inputStream, outputStream);
-        }
-
-        return true;
-    }
-
     public boolean decryptStreamsNonHashed(InputStream inputStream, OutputStream outputStream, long offset, long size, Content content, byte[] IV,
             boolean partial) throws IOException, CheckSumWrongException {
         try {

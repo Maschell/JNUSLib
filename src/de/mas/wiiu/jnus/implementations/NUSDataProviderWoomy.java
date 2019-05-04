@@ -16,6 +16,7 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus.implementations;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +29,7 @@ import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.implementations.woomy.WoomyInfo;
 import de.mas.wiiu.jnus.implementations.woomy.WoomyZipFile;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
+import de.mas.wiiu.jnus.utils.StreamUtils;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -44,14 +46,16 @@ public class NUSDataProviderWoomy implements NUSDataProvider {
     }
 
     @Override
-    public InputStream readContentAsStream(@NonNull Content content, long fileOffsetBlock, long size) throws IOException {
+    public InputStream readContentAsStream(@NonNull Content content, long offset, long size) throws IOException {
         WoomyZipFile zipFile = getSharedWoomyZipFile();
         ZipEntry entry = getWoomyInfo().getContentFiles().get(content.getFilename().toLowerCase());
         if (entry == null) {
             log.warning("Inputstream for " + content.getFilename() + " not found");
             throw new FileNotFoundException("Inputstream for " + content.getFilename() + " not found");
         }
-        return zipFile.getInputStream(entry);
+        InputStream in = zipFile.getInputStream(entry);
+        StreamUtils.skipExactly(in, offset);
+        return in;
     }
 
     @Override
@@ -73,6 +77,20 @@ public class NUSDataProviderWoomy implements NUSDataProvider {
             log.warning(Settings.TMD_FILENAME + " not found in woomy file");
             throw new FileNotFoundException(Settings.TMD_FILENAME + " not found in woomy file");
         }
+        WoomyZipFile zipFile = getNewWoomyZipFile();
+        byte[] result = zipFile.getEntryAsByte(entry);
+        zipFile.close();
+        return Optional.of(result);
+    }
+
+    @Override
+    public Optional<byte[]> getRawCert() throws IOException {
+        ZipEntry entry = getWoomyInfo().getContentFiles().get(Settings.CERT_FILENAME);
+        if (entry == null) {
+            log.warning(Settings.TICKET_FILENAME + " not found in woomy file");
+            throw new FileNotFoundException(Settings.TICKET_FILENAME + " not found in woomy file");
+        }
+
         WoomyZipFile zipFile = getNewWoomyZipFile();
         byte[] result = zipFile.getEntryAsByte(entry);
         zipFile.close();
@@ -111,8 +129,4 @@ public class NUSDataProviderWoomy implements NUSDataProvider {
         }
     }
 
-    @Override
-    public Optional<byte[]> getRawCert() throws IOException {
-        return Optional.empty();
-    }
 }

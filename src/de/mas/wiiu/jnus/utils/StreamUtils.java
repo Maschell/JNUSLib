@@ -126,7 +126,7 @@ public final class StreamUtils {
 
     public static void saveInputStreamToOutputStream(InputStream inputStream, OutputStream outputStream, long filesize) throws IOException {
         try {
-            saveInputStreamToOutputStreamWithHash(inputStream, outputStream, filesize, null, 0L);
+            saveInputStreamToOutputStreamWithHash(inputStream, outputStream, filesize, null, 0L, true);
         } catch (CheckSumWrongException e) {
             // Should never happen because the hash is not set. Lets print it anyway.
             e.printStackTrace();
@@ -134,11 +134,11 @@ public final class StreamUtils {
     }
 
     public static void saveInputStreamToOutputStreamWithHash(InputStream inputStream, OutputStream outputStream, long filesize, byte[] hash,
-            long expectedSizeForHash) throws IOException, CheckSumWrongException {
+            long expectedSizeForHash, boolean partial) throws IOException, CheckSumWrongException {
         synchronized (inputStream) {
 
             MessageDigest sha1 = null;
-            if (hash != null) {
+            if (hash != null && !partial) {
                 try {
                     sha1 = MessageDigest.getInstance("SHA1");
                 } catch (NoSuchAlgorithmException e) {
