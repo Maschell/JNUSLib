@@ -130,10 +130,12 @@ public class FSTUtils {
 
     public static Stream<FSTEntry> getFSTEntriesByContentIndexAsStream(FSTEntry entry, short index) {
         return entry.getChildren().stream()//
-                .filter(e -> e.getContentIndex() == index) //
                 .flatMap(e -> {
                     if (!e.isDir()) {
-                        return Stream.of(e);
+                        if (e.getContentIndex() == index) {
+                            return Stream.of(e);
+                        }
+                        return Stream.empty();
                     }
                     return getFSTEntriesByContentIndexAsStream(e, index);
                 });
