@@ -21,7 +21,7 @@ import lombok.val;
 
 public class WumadLoader {
 
-    public static WumadInfo load(File wumadFile, byte[] commonKey) throws IOException, ParserConfigurationException, SAXException, ParseException {
+    public static WumadInfo load(File wumadFile) throws IOException, ParserConfigurationException, SAXException, ParseException {
         return WumadParser.createWumadInfo(wumadFile);
     }
 
