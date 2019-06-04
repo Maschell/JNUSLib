@@ -12,6 +12,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 
 import de.mas.wiiu.jnus.implementations.FSTDataProviderNUSTitle;
+import de.mas.wiiu.jnus.implementations.FSTDataProviderWumadDataPartition;
+import de.mas.wiiu.jnus.implementations.NUSDataProviderWumad;
 import de.mas.wiiu.jnus.implementations.wud.wumad.WumadGamePartition;
 import de.mas.wiiu.jnus.implementations.wud.wumad.WumadInfo;
 import de.mas.wiiu.jnus.implementations.wud.wumad.WumadParser;
@@ -48,6 +50,10 @@ public class WumadLoader {
             FSTDataProviderNUSTitle res = new FSTDataProviderNUSTitle(t);
             res.setName(gamePartition.getPartitionName());
             result.add(res);
+        }
+
+        for (val dataPartition : wumadInfo.getDataPartitions()) {
+            result.add(new FSTDataProviderWumadDataPartition(dataPartition, wumadInfo.getZipFile()));
         }
 
         return result;

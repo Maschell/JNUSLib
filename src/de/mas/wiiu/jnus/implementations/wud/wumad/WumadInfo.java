@@ -33,8 +33,13 @@ public class WumadInfo {
         return partitions.stream().filter(p -> p instanceof WumadGamePartition).map(p -> (WumadGamePartition) p).collect(Collectors.toList());
     }
 
+    public List<WumadDataPartition> getDataPartitions() {
+        return partitions.stream().filter(p -> p instanceof WumadDataPartition).map(p -> ((WumadDataPartition) p)).collect(Collectors.toList());
+    }
+
     @Setter private ZipFile zipFile;
 
     WumadInfo() {
     }
+
 }
