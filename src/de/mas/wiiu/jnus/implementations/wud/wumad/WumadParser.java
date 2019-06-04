@@ -14,9 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
-package de.mas.wiiu.jnus.implementations.wumad;
+package de.mas.wiiu.jnus.implementations.wud.wumad;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
@@ -31,7 +32,8 @@ import org.xml.sax.SAXException;
 
 import de.mas.wiiu.jnus.entities.fst.FST;
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
-import de.mas.wiiu.jnus.implementations.wud.parser.WUDPartitionHeader;
+import de.mas.wiiu.jnus.implementations.wud.GamePartitionHeader;
+import de.mas.wiiu.jnus.implementations.wud.parser.WUDGamePartition;
 import de.mas.wiiu.jnus.utils.FSTUtils;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 
@@ -53,26 +55,30 @@ public class WumadParser {
 
             // TODO: some .wumad doesn't have SI files.
             ZipEntry fst = zipFile.getEntry(SI_FST_FILENAME);
-
+            
             byte[] fstBytes = StreamUtils.getBytesFromStream(zipFile.getInputStream(fst), (int) fst.getSize());
 
             FST fstdd = FST.parseFST(fstBytes);
 
-            // TODO: add support for multiple partition inside a wumad
-            FSTEntry dirRoot = fstdd.getRoot().getDirChildren().get(0);
+            for (FSTEntry dirRoot : fstdd.getRoot().getDirChildren()) {
+                ZipEntry data = zipFile.getEntry(String.format("sip.s00%s.00000000.app", dirRoot.getFilename()));
 
-            ZipEntry data = zipFile.getEntry(String.format("sip.s00%s.00000000.app", dirRoot.getFilename()));
+                byte[] rawTMD = getFSTEntryAsByte(dirRoot.getFullPath() + "/" + WUD_TMD_FILENAME, dirRoot, zipFile, data)
+                        .orElseThrow(() -> new FileNotFoundException());
+                byte[] rawCert = getFSTEntryAsByte(dirRoot.getFullPath() + "/" + WUD_CERT_FILENAME, dirRoot, zipFile, data)
+                        .orElseThrow(() -> new FileNotFoundException());
+                byte[] rawTIK = getFSTEntryAsByte(dirRoot.getFullPath() + "/" + WUD_TICKET_FILENAME, dirRoot, zipFile, data)
+                        .orElseThrow(() -> new FileNotFoundException());
 
-            result.setTmdData(getFSTEntryAsByte(dirRoot.getFullPath() + "/" + WUD_TMD_FILENAME, dirRoot, zipFile, data));
-            result.setCertData(getFSTEntryAsByte(dirRoot.getFullPath() + "/" + WUD_CERT_FILENAME, dirRoot, zipFile, data));
-            result.setTicketData(getFSTEntryAsByte(dirRoot.getFullPath() + "/" + WUD_TICKET_FILENAME, dirRoot, zipFile, data));
+                ZipEntry headerEntry = zipFile.getEntry(String.format("p%s.header.bin", dirRoot.getFilename()));
 
-            ZipEntry headerEntry = zipFile.getEntry(String.format("p%s.header.bin", dirRoot.getFilename()));
+                byte[] header = StreamUtils.getBytesFromStream(zipFile.getInputStream(headerEntry), (int) headerEntry.getSize());
 
-            byte[] header = StreamUtils.getBytesFromStream(zipFile.getInputStream(headerEntry), (int) headerEntry.getSize());
+                WumadGamePartition curPartition = new WumadGamePartition(dirRoot.getFilename(), GamePartitionHeader.parseHeader(header), rawTMD, rawCert,
+                        rawTIK);
 
-            result.setPartitionHeader(WUDPartitionHeader.parseHeader(header));
-            result.setPartition(dirRoot.getFilename());
+                result.getPartitions().add(curPartition);
+            }
 
         } catch (ZipException e) {
             e.printStackTrace();

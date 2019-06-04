@@ -31,6 +31,7 @@ import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.content.ContentFSTInfo;
 import de.mas.wiiu.jnus.entities.fst.FST;
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
+import de.mas.wiiu.jnus.implementations.wud.GamePartitionHeader;
 import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReader;
 import de.mas.wiiu.jnus.utils.ByteUtils;
 import de.mas.wiiu.jnus.utils.FSTUtils;
@@ -156,7 +157,7 @@ public final class WUDInfoParser {
 
                 byte[] header = wudInfo.getWUDDiscReader().readEncryptedToByteArray(curPartitionOffset, 0, curHeaderSize);
 
-                WUDPartitionHeader partitionHeader = WUDPartitionHeader.parseHeader(header);
+                GamePartitionHeader partitionHeader = GamePartitionHeader.parseHeader(header);
 
                 WUDGamePartition curPartition = new WUDGamePartition(curPartitionPair.getKey(), curPartitionOffset + curHeaderSize, partitionHeader, rawTMD,
                         rawCert, rawTIK);

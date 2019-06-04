@@ -30,19 +30,21 @@ import java.util.zip.ZipFile;
 
 import de.mas.wiiu.jnus.entities.TMD;
 import de.mas.wiiu.jnus.entities.content.Content;
-import de.mas.wiiu.jnus.implementations.wud.parser.WUDPartitionHeader;
-import de.mas.wiiu.jnus.implementations.wumad.WumadInfo;
+import de.mas.wiiu.jnus.implementations.wud.GamePartitionHeader;
+import de.mas.wiiu.jnus.implementations.wud.wumad.WumadGamePartition;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 
 public class NUSDataProviderWumad implements NUSDataProvider {
-
-    private final WumadInfo info;
+    private final ZipFile wumad;
+    private final WumadGamePartition partition;
 
     private final Map<String, ZipEntry> files = new HashMap<>();
 
-    public NUSDataProviderWumad(WumadInfo info) {
-        this.info = info;
+    public NUSDataProviderWumad(WumadGamePartition gamePartition, ZipFile wudmadFile) {
+        this.wumad = wudmadFile;
+        this.partition = gamePartition;
+        files.putAll(loadFileList(wudmadFile));
     }
 
     private Map<String, ZipEntry> loadFileList(ZipFile zipFile) {
@@ -60,13 +62,9 @@ public class NUSDataProviderWumad implements NUSDataProvider {
 
     @Override
     public InputStream readContentAsStream(Content content, long offset, long size) throws IOException {
-        if (files.isEmpty()) {
-            files.putAll(loadFileList(info.getZipFile()));
-        }
-
-        ZipEntry entry = files.values().stream().filter(e -> e.getName().startsWith("p" + info.getPartition() + "."))
+        ZipEntry entry = files.values().stream().filter(e -> e.getName().startsWith("p" + partition.getPartitionName() + "."))
                 .filter(e -> e.getName().endsWith(content.getFilename().toLowerCase())).findFirst().orElseThrow(() -> new FileNotFoundException());
-        InputStream in = info.getZipFile().getInputStream(entry);
+        InputStream in = wumad.getInputStream(entry);
         StreamUtils.skipExactly(in, offset);
 
         return in;
@@ -74,7 +72,7 @@ public class NUSDataProviderWumad implements NUSDataProvider {
 
     @Override
     public Optional<byte[]> getContentH3Hash(Content content) throws IOException {
-        WUDPartitionHeader partitionHeader = info.getPartitionHeader();
+        GamePartitionHeader partitionHeader = partition.getPartitionHeader();
         if (!partitionHeader.isCalculatedHashes()) {
             try {
                 partitionHeader.calculateHashes(TMD.parseTMD(getRawTMD().get()).getAllContents());
@@ -87,21 +85,21 @@ public class NUSDataProviderWumad implements NUSDataProvider {
 
     @Override
     public Optional<byte[]> getRawTMD() throws IOException {
-        return info.getTmdData();
+        return Optional.of(partition.getRawTMD());
     }
 
     @Override
     public Optional<byte[]> getRawTicket() throws IOException {
-        return info.getTicketData();
+        return Optional.of(partition.getRawTicket());
     }
 
     @Override
     public Optional<byte[]> getRawCert() throws IOException {
-        return info.getCertData();
+        return Optional.of(partition.getRawCert());
     }
 
     @Override
     public void cleanup() throws IOException {
-        info.getZipFile().close();
+        wumad.close();
     }
 }

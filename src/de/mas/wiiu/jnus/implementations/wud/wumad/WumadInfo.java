@@ -14,26 +14,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
-package de.mas.wiiu.jnus.implementations.wumad;
+package de.mas.wiiu.jnus.implementations.wud.wumad;
 
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 
-import de.mas.wiiu.jnus.implementations.wud.parser.WUDPartitionHeader;
 import lombok.Data;
 import lombok.Setter;
 
 @Data
 public class WumadInfo {
 
-    @Setter private Optional<byte[]> tmdData = Optional.empty();
-    @Setter private Optional<byte[]> ticketData = Optional.empty();
-    @Setter private Optional<byte[]> certData = Optional.empty();
+    private final List<WumadPartition> partitions = new ArrayList<>();
+
+    public List<WumadGamePartition> getGamePartitions() {
+        return partitions.stream().filter(p -> p instanceof WumadGamePartition).map(p -> (WumadGamePartition) p).collect(Collectors.toList());
+    }
 
     @Setter private ZipFile zipFile;
-    @Setter private WUDPartitionHeader partitionHeader;
-
-    @Setter private String partition;
 
     WumadInfo() {
     }

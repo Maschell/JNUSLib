@@ -23,8 +23,8 @@ import java.util.Optional;
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.entities.content.ContentFSTInfo;
 import de.mas.wiiu.jnus.entities.fst.FST;
+import de.mas.wiiu.jnus.implementations.wud.GamePartitionHeader;
 import de.mas.wiiu.jnus.implementations.wud.parser.WUDGamePartition;
-import de.mas.wiiu.jnus.implementations.wud.parser.WUDPartitionHeader;
 import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReader;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.FSTUtils;
@@ -87,7 +87,7 @@ public class NUSDataProviderWUD implements NUSDataProvider {
         return Optional.of(getGamePartition().getRawCert());
     }
 
-    public WUDPartitionHeader getGamePartitionHeader() {
+    public GamePartitionHeader getGamePartitionHeader() {
         return getGamePartition().getPartitionHeader();
     }
 

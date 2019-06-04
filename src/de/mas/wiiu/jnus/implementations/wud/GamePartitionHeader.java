@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
-package de.mas.wiiu.jnus.implementations.wud.parser;
+package de.mas.wiiu.jnus.implementations.wud;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -34,17 +34,17 @@ import lombok.Setter;
 import lombok.extern.java.Log;
 
 @Log
-public final class WUDPartitionHeader {
+public final class GamePartitionHeader {
     @Getter @Setter private boolean calculatedHashes = false;
     @Getter private final HashMap<Short, byte[]> h3Hashes = new HashMap<>();
     @Getter(AccessLevel.PRIVATE) @Setter(AccessLevel.PRIVATE) private byte[] rawData;
 
-    private WUDPartitionHeader() {
+    private GamePartitionHeader() {
     }
 
     // TODO: real processing. Currently we are ignoring everything except the hashes
-    public static WUDPartitionHeader parseHeader(byte[] header) {
-        WUDPartitionHeader result = new WUDPartitionHeader();
+    public static GamePartitionHeader parseHeader(byte[] header) {
+        GamePartitionHeader result = new GamePartitionHeader();
         result.setRawData(header);
         return result;
     }
