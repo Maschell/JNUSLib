@@ -8,6 +8,7 @@ Loading NUS Contents from different sources. Currently implemented:
    * Files from the NUS Server (Only the part that are needed will be downloaded)
    * .woomy files (https://github.com/shinyquagsire23/makefst)
    * WUD Images. Also compressed (.wux https://gbatemp.net/threads/wii-u-image-wud-compression-tool.397901/) and splitted WUD's (parts dumped from wudumper)
+   * .wumad files
    
    
     
@@ -34,7 +35,7 @@ For WUD files, following additional operations are possible:
 <!-- The core module -->
 <dependency>
   <groupId>de.Maschell.JNUSLib</groupId>
-  <artifactId>sdcf4j-core</artifactId>
+  <artifactId>JNUSLib</artifactId>
   <version>%version OR commit%</version>
 </dependency>
 ```
@@ -91,6 +92,17 @@ WUDInfo wiKiosk = WUDLoader.loadDev("game.wux");
 List<NUSTitle> titlesFromWUD = WUDLoader.getGamePartionsAsNUSTitles(wudInfo, commonKey);
 ```
 
+#### wumad
+```
+/ Loading a wumad
+WumadInfo wumadInfo = WumadLoader.load(new File("game.wud")); 
+
+
+// Get NUSTitles from wumad
+List<NUSTitle> titlesFromWumad = WumadLoader.getGamePartionsAsNUSTitles(wumadInfo, commonKey);
+
+```
+
 Once the title is loaded, you can use one of the services to extract and decrypt files.  
 
 ### Decryption:
@@ -102,6 +114,9 @@ FSTDataProvider fstdataprovider = new FSTDataProviderNUSTitle(nustitle);
 // When loading from a WUD, you can get the data of all partitions via
 List<FSTDataProvider> partitionsFromWUD = WUDLoader.getPartitonsAsFSTDataProvider(wudInfo, commonKey);
 // the includes all non-nustitles like the SI or UP partitions.
+
+// When loading from a Wumad, you can get the data of all partitions via
+List<FSTDataProvider> partitionsFromWumad = WumadLoader.getPartitonsAsFSTDataProvider(wumadInfo, commonKey);
 
 FSTEntry fstRoot = fstdataprovider.getRoot();
 
