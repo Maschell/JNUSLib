@@ -53,7 +53,7 @@ public class FSTDataProviderNUSTitle implements FSTDataProvider, HasNUSTitle {
             // If the tmd has only one content file, it has not FST. We have to create our own FST.
             Content c = title.getTMD().getAllContents().values().stream().collect(Collectors.toList()).get(0);
             FSTEntry root = FSTEntry.getRootFSTEntry();
-            FSTEntry.createFSTEntry(root, "data.bin", c); // Will add this title root.
+            root.addChildren(FSTEntry.createFSTEntry(root, "data.bin", c));
             rootEntry = root;
         } else {
             throw new IOException("No FST root entry was found");
