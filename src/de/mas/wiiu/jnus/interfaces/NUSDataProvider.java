@@ -35,7 +35,7 @@ public interface NUSDataProvider {
     }
 
     default public InputStream readContentAsStream(Content content, long offset) throws IOException {
-        return readContentAsStream(content, offset, content.getEncryptedFileSize() - offset);
+        return readContentAsStream(content, offset, content.getEncryptedFileSizeAligned() - offset);
     }
 
     public InputStream readContentAsStream(Content content, long offset, long size) throws IOException;
