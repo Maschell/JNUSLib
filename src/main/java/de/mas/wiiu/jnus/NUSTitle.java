@@ -17,7 +17,6 @@
 package de.mas.wiiu.jnus;
 
 import java.io.IOException;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -27,10 +26,9 @@ import de.mas.wiiu.jnus.entities.TMD;
 import de.mas.wiiu.jnus.entities.Ticket;
 import de.mas.wiiu.jnus.entities.fst.FST;
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
-import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
+import de.mas.wiiu.jnus.interfaces.NUSDataProcessor;
 import de.mas.wiiu.jnus.utils.FSTUtils;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.Setter;
 
 public class NUSTitle {
@@ -39,12 +37,18 @@ public class NUSTitle {
 
     @Getter private final TMD TMD;
 
-    @Getter private final NUSDataProvider dataProvider;
+    @Getter private final NUSDataProcessor dataProcessor;
 
-    public NUSTitle(@NonNull NUSDataProvider dataProvider) throws ParseException, IOException {
-        byte[] tmdData = dataProvider.getRawTMD().orElseThrow(() -> new ParseException("No TMD data found", 0));
-        this.TMD = de.mas.wiiu.jnus.entities.TMD.parseTMD(tmdData);
-        this.dataProvider = dataProvider;
+    private NUSTitle(TMD tmd, NUSDataProcessor dataProcessor) {
+        this.TMD = tmd;
+        this.dataProcessor = dataProcessor;
+    }
+
+    public static NUSTitle create(TMD tmd, NUSDataProcessor dataProcessor, Optional<Ticket> ticket, Optional<FST> fst) {
+        NUSTitle result = new NUSTitle(tmd, dataProcessor);
+        result.setTicket(ticket);
+        result.setFST(fst);
+        return result;
     }
 
     public Stream<FSTEntry> getAllFSTEntriesAsStream() {
@@ -66,13 +70,13 @@ public class NUSTitle {
     }
 
     public void cleanup() throws IOException {
-        if (getDataProvider() != null) {
-            getDataProvider().cleanup();
+        if (getDataProcessor() != null && getDataProcessor().getDataProvider() != null) {
+            getDataProcessor().getDataProvider().cleanup();
         }
     }
 
     @Override
     public String toString() {
-        return "NUSTitle [dataProvider=" + dataProvider + "]";
+        return "NUSTitle [dataProcessor=" + dataProcessor + "]";
     }
 }

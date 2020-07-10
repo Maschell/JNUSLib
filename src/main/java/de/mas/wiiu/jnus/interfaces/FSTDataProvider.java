@@ -56,20 +56,25 @@ public interface FSTDataProvider {
                 in.throwException(null);
             } catch (Exception e) {
                 in.throwException(e);
+                try {
+					out.close();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
             }
         }).start();
 
         return in;
     }
 
-    default public boolean readFileToStream(OutputStream out, FSTEntry entry) throws IOException {
+    default public long readFileToStream(OutputStream out, FSTEntry entry) throws IOException {
         return readFileToStream(out, entry, 0, entry.getFileSize());
     }
 
-    default public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset) throws IOException {
+    default public long readFileToStream(OutputStream out, FSTEntry entry, long offset) throws IOException {
         return readFileToStream(out, entry, offset, entry.getFileSize());
     }
 
-    public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset, long size) throws IOException;
+    public long readFileToStream(OutputStream out, FSTEntry entry, long offset, long size) throws IOException;
 
 }

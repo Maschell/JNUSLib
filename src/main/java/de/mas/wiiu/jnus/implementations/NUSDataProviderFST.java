@@ -26,6 +26,7 @@ import java.util.Optional;
 import de.mas.wiiu.jnus.Settings;
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
+import de.mas.wiiu.jnus.interfaces.ContentDecryptor;
 import de.mas.wiiu.jnus.interfaces.FSTDataProvider;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.FSTUtils;
@@ -39,12 +40,12 @@ public class NUSDataProviderFST implements NUSDataProvider {
         this.fstDataProvider = fstDataProvider;
     }
 
-    public NUSDataProviderFST(FSTDataProvider fstDataProvider) {
+    public NUSDataProviderFST(FSTDataProvider fstDataProvider, ContentDecryptor decryptor) {
         this(fstDataProvider, fstDataProvider.getRoot());
     }
 
     @Override
-    public InputStream readContentAsStream(Content content, long offset, long size) throws IOException {
+    public InputStream readRawContentAsStream(Content content, long offset, long size) throws IOException {
         String filename = content.getFilename();
         Optional<FSTEntry> contentFileOpt = FSTUtils.getChildOfDirectory(base, filename);
         FSTEntry contentFile = contentFileOpt.orElseThrow(() -> new FileNotFoundException(filename + " was not found."));

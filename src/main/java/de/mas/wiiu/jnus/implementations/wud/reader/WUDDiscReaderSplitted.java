@@ -37,7 +37,7 @@ public class WUDDiscReaderSplitted extends WUDDiscReader {
     }
 
     @Override
-    public boolean readEncryptedToStream(OutputStream outputStream, long offset, long size) throws IOException {
+    public long readEncryptedToStream(OutputStream outputStream, long offset, long size) throws IOException {
         RandomAccessFile input = getFileByOffset(offset);
 
         int bufferSize = 0x8000;
@@ -86,7 +86,7 @@ public class WUDDiscReaderSplitted extends WUDDiscReader {
 
         input.close();
         outputStream.close();
-        return totalread >= size;
+        return totalread;
     }
 
     private int getFilePartByOffset(long offset) {

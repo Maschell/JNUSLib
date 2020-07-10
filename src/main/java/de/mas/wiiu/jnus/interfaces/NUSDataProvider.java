@@ -26,19 +26,19 @@ import de.mas.wiiu.jnus.entities.fst.FST;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 
 public interface NUSDataProvider {
-    default public byte[] readContent(Content content, long offset, int size) throws IOException {
-        return StreamUtils.getBytesFromStream(readContentAsStream(content, offset, size), size);
+    default byte[] readRawContent(Content content, long offset, int size) throws IOException {
+        return StreamUtils.getBytesFromStream(readRawContentAsStream(content, offset, size), size);
     }
 
-    default public InputStream readContentAsStream(Content content) throws IOException {
-        return readContentAsStream(content, 0);
+    default InputStream readRawContentAsStream(Content content) throws IOException {
+        return readRawContentAsStream(content, 0);
     }
 
-    default public InputStream readContentAsStream(Content content, long offset) throws IOException {
-        return readContentAsStream(content, offset, content.getEncryptedFileSizeAligned() - offset);
+    default InputStream readRawContentAsStream(Content content, long offset) throws IOException {
+        return readRawContentAsStream(content, offset, content.getEncryptedFileSizeAligned() - offset);
     }
 
-    public InputStream readContentAsStream(Content content, long offset, long size) throws IOException;
+    public InputStream readRawContentAsStream(Content content, long offset, long size) throws IOException;
 
     public Optional<byte[]> getContentH3Hash(Content content) throws IOException;
 
@@ -53,5 +53,4 @@ public interface NUSDataProvider {
     default public void setFST(FST fst) {
 
     }
-
 }

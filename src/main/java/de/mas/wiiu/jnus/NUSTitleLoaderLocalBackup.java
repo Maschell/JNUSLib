@@ -18,6 +18,7 @@
 package de.mas.wiiu.jnus;
 
 import de.mas.wiiu.jnus.entities.Ticket;
+import de.mas.wiiu.jnus.implementations.DefaultNUSDataProcessor;
 import de.mas.wiiu.jnus.implementations.NUSDataProviderLocalBackup;
 
 public final class NUSTitleLoaderLocalBackup {
@@ -35,7 +36,8 @@ public final class NUSTitleLoaderLocalBackup {
             config.setNoDecryption(true);
         }
 
-        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderLocalBackup(inputPath, titleVersion));
+        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderLocalBackup(inputPath, titleVersion),
+                (dp, cd, en) -> new DefaultNUSDataProcessor(dp, cd));
     }
 
 }

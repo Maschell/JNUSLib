@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (C) 2016-2019 Maschell
+ * Copyright (C) 2016-2020 Maschell
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,54 +16,78 @@
  ****************************************************************************/
 package de.mas.wiiu.jnus;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
+import java.security.NoSuchProviderException;
 import java.text.ParseException;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import de.mas.wiiu.jnus.entities.TMD;
 import de.mas.wiiu.jnus.entities.Ticket;
 import de.mas.wiiu.jnus.entities.content.Content;
 import de.mas.wiiu.jnus.entities.fst.FST;
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
 import de.mas.wiiu.jnus.implementations.FSTDataProviderNUSTitle;
+import de.mas.wiiu.jnus.interfaces.ContentDecryptor;
+import de.mas.wiiu.jnus.interfaces.ContentEncryptor;
 import de.mas.wiiu.jnus.interfaces.FSTDataProvider;
+import de.mas.wiiu.jnus.interfaces.NUSDataProcessor;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
-import de.mas.wiiu.jnus.utils.StreamUtils;
-import de.mas.wiiu.jnus.utils.cryptography.AESDecryption;
+import de.mas.wiiu.jnus.interfaces.TriFunction;
+import de.mas.wiiu.jnus.utils.cryptography.NUSDecryption;
+import de.mas.wiiu.jnus.utils.cryptography.NUSEncryption;
 
 public class NUSTitleLoader {
     private NUSTitleLoader() {
         // should be empty
     }
 
-    public static NUSTitle loadNusTitle(NUSTitleConfig config, Supplier<NUSDataProvider> dataProviderFunction) throws IOException, ParseException {
+    public static NUSTitle loadNusTitle(NUSTitleConfig config, Supplier<NUSDataProvider> dataProviderFunction,
+            TriFunction<NUSDataProvider, Optional<ContentDecryptor>, Optional<ContentEncryptor>, NUSDataProcessor> dataProcessorFunction)
+            throws IOException, ParseException {
         NUSDataProvider dataProvider = dataProviderFunction.get();
 
-        NUSTitle result = new NUSTitle(dataProvider);
+        TMD tmd = TMD.parseTMD(dataProvider.getRawTMD().orElseThrow(() -> new FileNotFoundException("No TMD data found")));
 
         if (config.isNoDecryption()) {
+            NUSTitle result = NUSTitle.create(tmd, dataProcessorFunction.apply(dataProvider, Optional.empty(), Optional.empty()), Optional.empty(),
+                    Optional.empty());
             return result;
         }
 
-        Ticket ticket = null;
+        Optional<Ticket> ticket = Optional.empty();
+        Optional<ContentDecryptor> decryption = Optional.empty();
+        Optional<ContentEncryptor> encryption = Optional.empty();
         if (config.isTicketNeeded()) {
-            ticket = config.getTicket();
-            if (ticket == null) {
+            Ticket ticketT = config.getTicket();
+            if (ticketT == null) {
                 Optional<byte[]> ticketOpt = dataProvider.getRawTicket();
                 if (ticketOpt.isPresent()) {
-                    ticket = Ticket.parseTicket(ticketOpt.get(), config.getCommonKey());
+                    ticketT = Ticket.parseTicket(ticketOpt.get(), config.getCommonKey());
                 }
             }
-            if (ticket == null) {
-                new ParseException("Failed to get ticket data", 0);
+            if (ticketT == null) {
+                throw new ParseException("Failed to get ticket data", 0);
             }
-            result.setTicket(Optional.of(ticket));
+
+            ticket = Optional.of(ticketT);
+
+            decryption = Optional.of(new NUSDecryption(ticketT));
+            try {
+                encryption = Optional.of(new NUSEncryption(ticketT));
+            } catch (NoSuchProviderException e) {
+                throw new IOException(e);
+            }
         }
 
+        NUSDataProcessor dpp = dataProcessorFunction.apply(dataProvider, decryption, encryption);
+
         // If we have just content, we don't have a FST.
-        if (result.getTMD().getAllContents().size() == 1) {
+        if (tmd.getAllContents().size() == 1) {
             // The only way to check if the key is right, is by trying to decrypt the whole thing.
+            NUSTitle result = NUSTitle.create(tmd, dpp, ticket, Optional.empty());
+
             FSTDataProvider dp = new FSTDataProviderNUSTitle(result);
             for (FSTEntry children : dp.getRoot().getChildren()) {
                 dp.readFile(children);
@@ -72,27 +96,16 @@ public class NUSTitleLoader {
             return result;
         }
         // If we have more than one content, the index 0 is the FST.
-        Content fstContent = result.getTMD().getContentByIndex(0);
+        Content fstContent = tmd.getContentByIndex(0);
 
-        InputStream fstContentEncryptedStream = dataProvider.readContentAsStream(fstContent);
-
-        byte[] fstBytes = StreamUtils.getBytesFromStream(fstContentEncryptedStream, (int) fstContent.getEncryptedFileSize());
-
-        if (fstContent.isEncrypted()) {
-            AESDecryption aesDecryption = new AESDecryption(ticket.getDecryptedKey(), new byte[0x10]);
-            if (fstBytes.length % 0x10 != 0) {
-                throw new IOException("FST length is not align to 16");
-            }
-            fstBytes = aesDecryption.decrypt(fstBytes);
-        }
-
+        byte[] fstBytes = dpp.readPlainDecryptedContent(fstContent, true);
         FST fst = FST.parseFST(fstBytes);
-        result.setFST(Optional.of(fst));
 
         // The dataprovider may need the FST to calculate the offset of a content
         // on the partition.
         dataProvider.setFST(fst);
 
-        return result;
+        return NUSTitle.create(tmd, dpp, ticket, Optional.of(fst));
     }
+
 }

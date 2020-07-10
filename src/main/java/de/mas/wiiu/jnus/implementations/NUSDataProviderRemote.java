@@ -39,7 +39,7 @@ public class NUSDataProviderRemote implements NUSDataProvider, Parallelizable {
     }
 
     @Override
-    public InputStream readContentAsStream(Content content, long fileOffsetBlock, long size) throws IOException {
+    public InputStream readRawContentAsStream(Content content, long fileOffsetBlock, long size) throws IOException {
         NUSDownloadService downloadService = NUSDownloadService.getDefaultInstance();
         return downloadService.getInputStreamForURL(getRemoteURL(content), fileOffsetBlock, size);
     }
@@ -56,7 +56,6 @@ public class NUSDataProviderRemote implements NUSDataProvider, Parallelizable {
         if (resOpt == null) {
             NUSDownloadService downloadService = NUSDownloadService.getDefaultInstance();
             String url = getRemoteURL(content) + Settings.H3_EXTENTION;
-            System.out.println(url);
 
             byte[] res = downloadService.downloadToByteArray(url);
             if (res == null || res.length == 0) {
@@ -69,29 +68,39 @@ public class NUSDataProviderRemote implements NUSDataProvider, Parallelizable {
         return resOpt;
     }
 
+    Optional<byte[]> tmdCache = null;
+
     @Override
     public Optional<byte[]> getRawTMD() throws IOException {
-        NUSDownloadService downloadService = NUSDownloadService.getDefaultInstance();
+        if (tmdCache == null) {
+            NUSDownloadService downloadService = NUSDownloadService.getDefaultInstance();
 
-        long titleID = getTitleID();
-        int version = getVersion();
+            long titleID = getTitleID();
+            int version = getVersion();
 
-        byte[] res = downloadService.downloadTMDToByteArray(titleID, version);
+            byte[] res = downloadService.downloadTMDToByteArray(titleID, version);
 
-        if (res == null || res.length == 0) {
-            return Optional.empty();
+            if (res == null || res.length == 0) {
+                return Optional.empty();
+            }
+            tmdCache = Optional.of(res);
         }
-        return Optional.of(res);
+        return tmdCache;
     }
+
+    Optional<byte[]> ticketCache = null;
 
     @Override
     public Optional<byte[]> getRawTicket() throws IOException {
-        NUSDownloadService downloadService = NUSDownloadService.getDefaultInstance();
-        byte[] res = downloadService.downloadTicketToByteArray(titleID);
-        if (res == null || res.length == 0) {
-            return Optional.empty();
+        if (ticketCache == null) {
+            NUSDownloadService downloadService = NUSDownloadService.getDefaultInstance();
+            byte[] res = downloadService.downloadTicketToByteArray(titleID);
+            if (res == null || res.length == 0) {
+                return Optional.empty();
+            }
+            ticketCache =  Optional.of(res);
         }
-        return Optional.of(res);
+        return ticketCache;
     }
 
     @Override

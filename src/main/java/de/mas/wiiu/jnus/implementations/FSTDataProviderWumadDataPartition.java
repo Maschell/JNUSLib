@@ -32,15 +32,15 @@ public class FSTDataProviderWumadDataPartition implements FSTDataProvider {
     }
 
     @Override
-    public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset, long size) throws IOException {
-        StreamUtils.saveInputStreamToOutputStream(readFileAsStream(entry, offset, size), out, size);
-        return true;
+    public long readFileToStream(OutputStream out, FSTEntry entry, long offset, long size) throws IOException {
+        return StreamUtils.saveInputStreamToOutputStream(readFileAsStream(entry, offset, size), out, size);
     }
 
     @Override
     public InputStream readFileAsStream(FSTEntry entry, long offset, long size) throws IOException {
         ZipEntry zipEntry = zipFile.stream()
-                .filter(e -> e.getName().equals(String.format("p%s.s%04d.00000000.app", dataPartition.getPartitionName(), entry.getContentIndex()))).findFirst()
+                .filter(e -> e.getName().equals(String.format("p%s.s%04d.00000000.app", dataPartition.getPartitionName(), entry.getContentIndex())))
+                .findFirst()
                 .orElseThrow(() -> new FileNotFoundException());
 
         InputStream in = zipFile.getInputStream(zipEntry);

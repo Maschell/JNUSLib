@@ -104,7 +104,6 @@ public final class FSTService {
         while ((nameOffset + j) < namesSection.length && namesSection[nameOffset + j] != 0) {
             j++;
         }
-
         return (new String(Arrays.copyOfRange(namesSection, nameOffset, nameOffset + j)));
     }
 

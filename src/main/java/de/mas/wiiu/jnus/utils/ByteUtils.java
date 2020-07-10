@@ -88,7 +88,9 @@ public final class ByteUtils {
 
     public static byte[] getBytesFromInt(int value, ByteOrder bo) {
         byte[] result = new byte[0x04];
-        ByteBuffer.allocate(4).order(bo).putInt(value).get(result);
+        ByteBuffer buffer = ByteBuffer.allocate(4).order(bo).putInt(value);
+        buffer.position(0);
+        buffer.get(result);
         return result;
     }
 
@@ -96,6 +98,12 @@ public final class ByteUtils {
         byte[] result = new byte[0x02];
         ByteBuffer.allocate(2).putShort(value).get(result);
         return result;
+    }
+  
+    public static short getByteFromBytes(byte[] input, int offset) {
+        ByteBuffer buffer = ByteBuffer.allocate(2).put(Arrays.copyOfRange(input, offset, offset + 1)).order(ByteOrder.BIG_ENDIAN);
+        buffer.position(0);
+        return (short) ((buffer.getShort() & 0xFF00) >> 8);
     }
 
 }

@@ -61,7 +61,7 @@ public class NUSDataProviderWumad implements NUSDataProvider {
     }
 
     @Override
-    public InputStream readContentAsStream(Content content, long offset, long size) throws IOException {
+    public InputStream readRawContentAsStream(Content content, long offset, long size) throws IOException {
         ZipEntry entry = files.values().stream().filter(e -> e.getName().startsWith("p" + partition.getPartitionName() + "."))
                 .filter(e -> e.getName().endsWith(content.getFilename().toLowerCase())).findFirst().orElseThrow(() -> new FileNotFoundException());
         InputStream in = wumad.getInputStream(entry);

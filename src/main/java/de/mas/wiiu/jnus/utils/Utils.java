@@ -23,12 +23,14 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -237,5 +239,32 @@ public final class Utils {
 
         return null;
     }
+
+    public static Long getLastModifiedURL(HttpURLConnection connectionForURL, int timeout) throws IOException {
+        HttpURLConnection connection = connectionForURL;
+        connection.setRequestProperty("User-Agent", Settings.USER_AGENT);
+        connection.setConnectTimeout(timeout);
+        connection.setReadTimeout(timeout);
+
+        int responseCode = connection.getResponseCode();
+
+        if (responseCode == HttpsURLConnection.HTTP_OK) {
+            InputStream inputStream = connection.getInputStream();
+            byte[] buffer = new byte[0x10];
+            inputStream.read(buffer);
+            inputStream.close();
+        } else {
+            return null;
+        }
+
+        Long dateTime = connection.getLastModified();
+
+        if (200 <= responseCode && responseCode <= 399) {
+            return dateTime;
+        }
+
+        return null;
+    }
+
 
 }

@@ -61,7 +61,7 @@ public final class FST {
         int contentCount = ByteUtils.getIntFromBytes(fstData, 0x08);
 
         FST result = new FST(sectorSize, contentCount);
-
+        
         int contentfst_offset = 0x20;
         int contentfst_size = 0x20 * contentCount;
 
@@ -71,8 +71,8 @@ public final class FST {
         int fst_size = fileCount * 0x10;
 
         int nameOff = fst_offset + fst_size;
-        int nameSize = nameOff + 1;
-
+        int nameSize = fstData.length - nameOff;
+        
         // Get list with null-terminated Strings. Ends with \0\0.
         for (int i = nameOff; i < fstData.length - 1; i++) {
             if (fstData[i] == 0 && fstData[i + 1] == 0) {
@@ -88,7 +88,7 @@ public final class FST {
 
         byte fstSection[] = Arrays.copyOfRange(fstData, fst_offset, fst_offset + fst_size);
         byte nameSection[] = Arrays.copyOfRange(fstData, nameOff, nameOff + nameSize);
-
+       
         FSTEntry root = result.getRoot();
 
         FSTService.parseFST(root, fstSection, nameSection, sectorSize);

@@ -40,7 +40,7 @@ public class NUSDataProviderLocalBackup implements NUSDataProvider {
 
     public NUSDataProviderLocalBackup(String localPath, short version) {
         this.localPath = localPath;
-        this.titleVersion = version;
+        this.titleVersion = version;        
     }
 
     private String getFilePathOnDisk(Content c) {
@@ -48,7 +48,7 @@ public class NUSDataProviderLocalBackup implements NUSDataProvider {
     }
 
     @Override
-    public InputStream readContentAsStream(Content content, long offset, long size) throws IOException {
+    public InputStream readRawContentAsStream(Content content, long offset, long size) throws IOException {
         File filepath = new File(getFilePathOnDisk(content));
         if (!filepath.exists()) {
             throw new FileNotFoundException(filepath.getAbsolutePath() + " was not found.");
@@ -62,7 +62,9 @@ public class NUSDataProviderLocalBackup implements NUSDataProvider {
     public Optional<byte[]> getContentH3Hash(Content content) throws IOException {
         String h3Path = getLocalPath() + File.separator + String.format("%08X.h3", content.getID());
         File h3File = new File(h3Path);
-
+        if (!h3File.exists()) {
+            throw new FileNotFoundException(h3File.getAbsolutePath() + " was not found.");
+        }
         return Optional.of(Files.readAllBytes(h3File.toPath()));
     }
 

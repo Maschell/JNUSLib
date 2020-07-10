@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.text.ParseException;
 
 import de.mas.wiiu.jnus.entities.Ticket;
+import de.mas.wiiu.jnus.implementations.DefaultNUSDataProcessor;
 import de.mas.wiiu.jnus.implementations.NUSDataProviderRemote;
 
 public final class NUSTitleLoaderRemote {
@@ -53,7 +54,7 @@ public final class NUSTitleLoaderRemote {
             throw new IOException("Ticket was null and no commonKey was given");
         }
 
-        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderRemote(version, titleID));
+        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderRemote(version, titleID), (dp, cd, en) -> new DefaultNUSDataProcessor(dp, cd));
     }
 
 }

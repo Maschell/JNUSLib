@@ -54,7 +54,7 @@ public abstract class WUDDiscReader {
         return out.toByteArray();
     }
 
-    public abstract boolean readEncryptedToStream(OutputStream out, long offset, long size) throws IOException;
+    public abstract long readEncryptedToStream(OutputStream out, long offset, long size) throws IOException;
 
     public InputStream readEncryptedToStream(long offset, long size) throws IOException {
         PipedOutputStream out = new PipedOutputStream();
@@ -63,6 +63,23 @@ public abstract class WUDDiscReader {
         new Thread(() -> {
             try {
                 readEncryptedToStream(out, offset, size);
+                in.throwException(null);
+            } catch (Exception e) {
+                in.throwException(e);
+            }
+        }).start();
+
+        return in;
+    }
+
+    public InputStream readDecryptedToStream(long offset, long fileOffset, long size, byte[] key, byte[] IV,
+            boolean useFixedIV) throws IOException {
+        PipedOutputStream out = new PipedOutputStream();
+        PipedInputStreamWithException in = new PipedInputStreamWithException(out, 0x8000);
+
+        new Thread(() -> {
+            try {
+                readDecryptedToOutputStream(out, offset, fileOffset, size, key, IV, useFixedIV);
                 in.throwException(null);
             } catch (Exception e) {
                 in.throwException(e);
@@ -93,7 +110,7 @@ public abstract class WUDDiscReader {
         return decryptedChunk;
     }
 
-    public boolean readDecryptedToOutputStream(OutputStream outputStream, long clusterOffset, long fileOffset, long size, byte[] key, byte[] IV,
+    public long readDecryptedToOutputStream(OutputStream outputStream, long clusterOffset, long fileOffset, long size, byte[] key, byte[] IV,
             boolean useFixedIV) throws IOException {
         byte[] usedIV = null;
         if (useFixedIV) {
@@ -153,7 +170,7 @@ public abstract class WUDDiscReader {
             StreamUtils.closeAll(outputStream);
         }
 
-        return totalread >= size;
+        return totalread;
     }
 
     /**

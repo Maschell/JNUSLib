@@ -11,6 +11,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.xml.sax.SAXException;
 
+import de.mas.wiiu.jnus.implementations.DefaultNUSDataProcessor;
 import de.mas.wiiu.jnus.implementations.FSTDataProviderNUSTitle;
 import de.mas.wiiu.jnus.implementations.FSTDataProviderWumadDataPartition;
 import de.mas.wiiu.jnus.implementations.NUSDataProviderWumad;
@@ -40,7 +41,7 @@ public class WumadLoader {
         final NUSTitleConfig config = new NUSTitleConfig();
         config.setCommonKey(commonKey);
         gamePartition.getTmd();
-        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderWumad(gamePartition, wudmadFile));
+        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderWumad(gamePartition, wudmadFile), (dp, cd, ce) -> new DefaultNUSDataProcessor(dp, cd));
     }
 
     public static List<FSTDataProvider> getPartitonsAsFSTDataProvider(@NonNull WumadInfo wumadInfo, byte[] commonKey) throws IOException, ParseException {
@@ -57,7 +58,6 @@ public class WumadLoader {
         }
 
         return result;
-
     }
 
 }

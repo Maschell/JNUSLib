@@ -49,7 +49,7 @@ public class FSTDataProviderWUDDataPartition implements FSTDataProvider {
     }
 
     @Override
-    public boolean readFileToStream(OutputStream out, FSTEntry entry, long offset, long size) throws IOException {
+    public long readFileToStream(OutputStream out, FSTEntry entry, long offset, long size) throws IOException {
         ContentFSTInfo info = FSTUtils.getFSTInfoForContent(partition.getFST(), entry.getContentIndex())
                 .orElseThrow(() -> new IOException("Failed to find FSTInfo"));
         if (titleKey == null) {

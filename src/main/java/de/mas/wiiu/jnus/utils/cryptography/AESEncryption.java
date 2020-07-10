@@ -19,6 +19,7 @@ package de.mas.wiiu.jnus.utils.cryptography;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -31,15 +32,15 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.Synchronized;
 
-public class AESDecryption {
+public class AESEncryption {
     private Cipher cipher;
 
     @Getter @Setter private byte[] AESKey;
     @Getter @Setter private byte[] IV;
-
-    public AESDecryption(byte[] AESKey, byte[] IV) {
+    
+    public AESEncryption(byte[] AESKey, byte[] IV) throws NoSuchProviderException {
         try {
-            cipher = Cipher.getInstance("AES/CBC/NoPadding");
+            cipher = Cipher.getInstance("AES/CBC/NoPadding", "SunJCE");
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
             e.printStackTrace();
         }
@@ -56,7 +57,7 @@ public class AESDecryption {
     protected void init(byte[] decryptedKey, byte[] iv) {
         SecretKeySpec secretKeySpec = new SecretKeySpec(decryptedKey, "AES");
         try {
-            cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, new IvParameterSpec(iv));
+            cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, new IvParameterSpec(iv));
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
             e.printStackTrace();
             System.exit(2);
@@ -64,7 +65,7 @@ public class AESDecryption {
     }
 
     @Synchronized("cipher")
-    public byte[] decrypt(byte[] input) {
+    public byte[] encrypt(byte[] input) {
         try {
             return cipher.doFinal(input);
         } catch (IllegalBlockSizeException | BadPaddingException e) {
@@ -74,12 +75,12 @@ public class AESDecryption {
         return input;
     }
 
-    public byte[] decrypt(byte[] input, int len) {
-        return decrypt(input, 0, len);
+    public byte[] encrypt(byte[] input, int len) {
+        return encrypt(input, 0, len);
     }
 
     @Synchronized("cipher")
-    public byte[] decrypt(byte[] input, int offset, int len) {
+    public byte[] encrypt(byte[] input, int offset, int len) {
         try {
             return cipher.doFinal(input, offset, len);
         } catch (IllegalBlockSizeException | BadPaddingException e) {

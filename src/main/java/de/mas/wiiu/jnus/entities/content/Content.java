@@ -37,6 +37,7 @@ public class Content implements Comparable<Content> {
     public static final short CONTENT_FLAG_UNKWN1 = 0x4000;
     public static final short CONTENT_HASHED = 0x0002;
     public static final short CONTENT_ENCRYPTED = 0x0001;
+    
     public static final int CONTENT_SIZE = 0x30;
 
     @Getter private final int ID;
@@ -127,7 +128,7 @@ public class Content implements Comparable<Content> {
      */
     public long getDecryptedFileSize() {
         if (isHashed()) {
-            return getEncryptedFileSize() / 0x10000 * 0xFC00;
+            return (getEncryptedFileSize() / 0x10000) * 0xFC00;
         } else {
             return getEncryptedFileSize();
         }

@@ -24,6 +24,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.mas.wiiu.jnus.implementations.DefaultNUSDataProcessor;
 import de.mas.wiiu.jnus.implementations.FSTDataProviderNUSTitle;
 import de.mas.wiiu.jnus.implementations.FSTDataProviderWUDDataPartition;
 import de.mas.wiiu.jnus.implementations.NUSDataProviderWUD;
@@ -95,7 +96,7 @@ public final class WUDLoader {
         final NUSTitleConfig config = new NUSTitleConfig();
         config.setCommonKey(commonKey);
         gamePartition.getTmd();
-        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderWUD(gamePartition, discReader));
+        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderWUD(gamePartition, discReader), (dp, cd, en) -> new DefaultNUSDataProcessor(dp, cd));
     }
 
     public static List<FSTDataProvider> getPartitonsAsFSTDataProvider(@NonNull WUDInfo wudInfo, byte[] commonKey) throws IOException, ParseException {

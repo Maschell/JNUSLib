@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.text.ParseException;
 
 import de.mas.wiiu.jnus.entities.fst.FSTEntry;
+import de.mas.wiiu.jnus.implementations.DefaultNUSDataProcessor;
 import de.mas.wiiu.jnus.implementations.NUSDataProviderFST;
 import de.mas.wiiu.jnus.interfaces.FSTDataProvider;
 
@@ -36,7 +37,7 @@ public final class NUSTitleLoaderFST {
         NUSTitleConfig config = new NUSTitleConfig();
         config.setCommonKey(commonKey);
 
-        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderFST(dataProvider, base));
+        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderFST(dataProvider, base), (dp, cd, en) -> new DefaultNUSDataProcessor(dp, cd));
     }
 
 }

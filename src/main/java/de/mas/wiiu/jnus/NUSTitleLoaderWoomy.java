@@ -24,6 +24,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.xml.sax.SAXException;
 
+import de.mas.wiiu.jnus.implementations.DefaultNUSDataProcessor;
 import de.mas.wiiu.jnus.implementations.NUSDataProviderWoomy;
 import de.mas.wiiu.jnus.implementations.woomy.WoomyInfo;
 import de.mas.wiiu.jnus.implementations.woomy.WoomyParser;
@@ -38,10 +39,10 @@ public final class NUSTitleLoaderWoomy {
         NUSTitleConfig config = new NUSTitleConfig();
 
         config.setTicketNeeded(false);
-        
+
         WoomyInfo woomyInfo = WoomyParser.createWoomyInfo(new File(inputFile));
 
-        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderWoomy(woomyInfo));
+        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderWoomy(woomyInfo), (dp, cd, en) -> new DefaultNUSDataProcessor(dp, cd));
     }
 
 }

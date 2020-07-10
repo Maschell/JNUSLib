@@ -19,6 +19,7 @@ package de.mas.wiiu.jnus;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,14 +53,14 @@ public final class ExtractionService {
     }
 
     private ExtractionService(NUSTitle nustitle) {
-        if (nustitle.getDataProvider() instanceof Parallelizable) {
+        if (nustitle.getDataProcessor().getDataProvider() instanceof Parallelizable) {
             parallelizable = true;
         }
         this.NUSTitle = nustitle;
     }
 
     private NUSDataProvider getDataProvider() {
-        return getNUSTitle().getDataProvider();
+        return getNUSTitle().getDataProcessor().getDataProvider();
     }
 
     public void extractAllEncrpytedContentFileHashes(String outputFolder) throws IOException {
@@ -95,7 +96,7 @@ public final class ExtractionService {
         }
     }
 
-    public void extractEncryptedContentFilesTo(List<Content> list, String outputFolder, boolean withHashes) throws IOException {
+    public void extractEncryptedContentFilesTo(Collection<Content> list, String outputFolder, boolean withHashes) throws IOException {
         Utils.createDir(outputFolder);
         if (parallelizable && Settings.ALLOW_PARALLELISATION) {
             try {

@@ -89,8 +89,11 @@ public final class StreamUtils {
                     if (overflowbuffer.getLengthOfDataInBuffer() > 0) {
                         System.arraycopy(overflowbuf, 0, output, 0, overflowbuffer.getLengthOfDataInBuffer());
                         inBlockBuffer = overflowbuffer.getLengthOfDataInBuffer();
+                    } else {
+                        if (inBlockBuffer == 0) {
+                            return bytesRead;
+                        }
                     }
-
                     break;
                 }
 
@@ -124,19 +127,21 @@ public final class StreamUtils {
         }
     }
 
-    public static void saveInputStreamToOutputStream(InputStream inputStream, OutputStream outputStream, long filesize) throws IOException {
+    public static long saveInputStreamToOutputStream(InputStream inputStream, OutputStream outputStream, long filesize) throws IOException {
         try {
-            saveInputStreamToOutputStreamWithHash(inputStream, outputStream, filesize, null, 0L, true);
+            return saveInputStreamToOutputStreamWithHash(inputStream, outputStream, filesize, null, 0L, true);
         } catch (CheckSumWrongException e) {
             // Should never happen because the hash is not set. Lets print it anyway.
             e.printStackTrace();
         }
+        return -1;
     }
 
-    public static void saveInputStreamToOutputStreamWithHash(InputStream inputStream, OutputStream outputStream, long filesize, byte[] hash,
+    public static long saveInputStreamToOutputStreamWithHash(InputStream inputStream, OutputStream outputStream, long filesize, byte[] hash,
             long expectedSizeForHash, boolean partial) throws IOException, CheckSumWrongException {
-        synchronized (inputStream) {
+        long written = 0;
 
+        synchronized (inputStream) {
             MessageDigest sha1 = null;
             if (hash != null && !partial) {
                 try {
@@ -150,7 +155,6 @@ public final class StreamUtils {
             byte[] buffer = new byte[BUFFER_SIZE];
             int read = 0;
             long totalRead = 0;
-            long written = 0;
 
             try {
                 do {
@@ -189,6 +193,7 @@ public final class StreamUtils {
                 StreamUtils.closeAll(inputStream, outputStream);
             }
         }
+        return written > 0 ? written : -1;
     }
 
     public static void skipExactly(InputStream in, long offset) throws IOException {
