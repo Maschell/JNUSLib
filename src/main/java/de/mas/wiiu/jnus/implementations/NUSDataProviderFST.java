@@ -24,8 +24,10 @@ import java.util.Map;
 import java.util.Optional;
 
 import de.mas.wiiu.jnus.Settings;
-import de.mas.wiiu.jnus.entities.content.Content;
-import de.mas.wiiu.jnus.entities.fst.FSTEntry;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.DirectoryEntry;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.FileEntry;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.NodeEntry;
+import de.mas.wiiu.jnus.entities.TMD.Content;
 import de.mas.wiiu.jnus.interfaces.ContentDecryptor;
 import de.mas.wiiu.jnus.interfaces.FSTDataProvider;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
@@ -33,9 +35,9 @@ import de.mas.wiiu.jnus.utils.FSTUtils;
 
 public class NUSDataProviderFST implements NUSDataProvider {
     private final FSTDataProvider fstDataProvider;
-    private final FSTEntry base;
+    private final DirectoryEntry base;
 
-    public NUSDataProviderFST(FSTDataProvider fstDataProvider, FSTEntry base) {
+    public NUSDataProviderFST(FSTDataProvider fstDataProvider, DirectoryEntry base) {
         this.base = base;
         this.fstDataProvider = fstDataProvider;
     }
@@ -47,9 +49,12 @@ public class NUSDataProviderFST implements NUSDataProvider {
     @Override
     public InputStream readRawContentAsStream(Content content, long offset, long size) throws IOException {
         String filename = content.getFilename();
-        Optional<FSTEntry> contentFileOpt = FSTUtils.getChildOfDirectory(base, filename);
-        FSTEntry contentFile = contentFileOpt.orElseThrow(() -> new FileNotFoundException(filename + " was not found."));
-        return fstDataProvider.readFileAsStream(contentFile, offset, size);
+        Optional<NodeEntry> contentFileOpt = FSTUtils.getChildOfDirectory(base, filename);
+        NodeEntry contentFile = contentFileOpt.orElseThrow(() -> new FileNotFoundException(filename + " was not found."));
+        if (!contentFile.isFile() || contentFile.isLink()) {
+            throw new IOException("Requested file is not a file or is a link");
+        }
+        return fstDataProvider.readFileAsStream((FileEntry) contentFile, offset, size);
     }
 
     Map<Integer, Optional<byte[]>> h3Hashes = new HashMap<>();
@@ -64,12 +69,14 @@ public class NUSDataProviderFST implements NUSDataProvider {
         return res;
     }
 
-    private Optional<byte[]> readFileByFilename(FSTEntry base, String filename) throws IOException {
-        Optional<FSTEntry> entryOpt = FSTUtils.getChildOfDirectory(base, filename);
+    private Optional<byte[]> readFileByFilename(DirectoryEntry base, String filename) throws IOException {
+        Optional<NodeEntry> entryOpt = FSTUtils.getChildOfDirectory(base, filename);
         if (entryOpt.isPresent()) {
-
-            FSTEntry entry = entryOpt.get();
-            return Optional.of(fstDataProvider.readFile(entry));
+            NodeEntry entry = entryOpt.get();
+            if (!entry.isFile() || entry.isLink()) {
+                return Optional.empty();
+            }
+            return Optional.of(fstDataProvider.readFile((FileEntry) entry));
         }
         return Optional.empty();
     }

@@ -34,9 +34,10 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.xml.sax.SAXException;
 
-import de.mas.wiiu.jnus.entities.fst.FST;
-import de.mas.wiiu.jnus.entities.fst.FSTEntry;
-import de.mas.wiiu.jnus.implementations.wud.GamePartitionHeader;
+import de.mas.wiiu.jnus.entities.FST.FST;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.DirectoryEntry;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.FileEntry;
+import de.mas.wiiu.jnus.implementations.wud.content.partitions.volumes.VolumeHeader;
 import de.mas.wiiu.jnus.utils.FSTUtils;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 import lombok.val;
@@ -61,15 +62,15 @@ public class WumadParser {
             Map<String, List<ZipEntry>> allPartitions = zipFile.stream().filter(e -> e.getName().startsWith("p"))
                     .collect(Collectors.groupingBy(e -> e.getName().substring(1, 3)));
 
-            Map<String, FSTEntry> gamepartitions = new HashMap<>();
+            Map<String, DirectoryEntry> gamepartitions = new HashMap<>();
 
             // If we have a SI partition, let parse the FST to get all game partitions.
             ZipEntry siFST = zipFile.getEntry(SI_FST_FILENAME);
             if (siFST != null) {
                 byte[] fstBytes = StreamUtils.getBytesFromStream(zipFile.getInputStream(siFST), (int) siFST.getSize());
 
-                FST parsedFST = FST.parseFST(fstBytes);
-                gamepartitions.putAll(parsedFST.getRoot().getDirChildren().stream().collect(Collectors.toMap(e -> e.getFilename(), e -> e)));
+                FST parsedFST = FST.parseData(fstBytes);
+                gamepartitions.putAll(parsedFST.getRootEntry().getDirChildren().stream().collect(Collectors.toMap(e -> e.getName(), e -> e)));
             }
 
             // process all game partitions. Remove the partitions from the "all partitions" list on success.
@@ -87,7 +88,7 @@ public class WumadParser {
 
                 byte[] header = StreamUtils.getBytesFromStream(zipFile.getInputStream(headerEntry), (int) headerEntry.getSize());
 
-                WumadGamePartition curPartition = new WumadGamePartition(e.getKey(), GamePartitionHeader.parseHeader(header), rawTMD, rawCert, rawTIK);
+                WumadGamePartition curPartition = new WumadGamePartition(e.getKey(), VolumeHeader.parseData(header), rawTMD, rawCert, rawTIK);
 
                 result.getPartitions().add(curPartition);
                 allPartitions.remove(e.getKey());
@@ -99,7 +100,7 @@ public class WumadParser {
 
                 byte[] fstBytes = StreamUtils.getBytesFromStream(zipFile.getInputStream(fstEntry), (int) fstEntry.getSize());
 
-                FST parsedFST = FST.parseFST(fstBytes);
+                FST parsedFST = FST.parseData(fstBytes);
 
                 WumadDataPartition curPartition = new WumadDataPartition(e.getKey(), parsedFST);
 
@@ -115,16 +116,16 @@ public class WumadParser {
         return result;
     }
 
-    private static Optional<byte[]> getFSTEntryAsByte(String filePath, FSTEntry dirRoot, ZipFile zipFile, ZipEntry data) throws IOException {
-        Optional<FSTEntry> entryOpt = FSTUtils.getEntryByFullPath(dirRoot, filePath);
+    private static Optional<byte[]> getFSTEntryAsByte(String filePath, DirectoryEntry dirRoot, ZipFile zipFile, ZipEntry data) throws IOException {
+        Optional<FileEntry> entryOpt = FSTUtils.getEntryByFullPath(dirRoot, filePath);
         if (!entryOpt.isPresent()) {
             return Optional.empty();
         }
-        FSTEntry entry = entryOpt.get();
+        FileEntry entry = entryOpt.get();
 
         InputStream in = zipFile.getInputStream(data);
 
-        StreamUtils.skipExactly(in, entry.getFileOffset());
-        return Optional.of(StreamUtils.getBytesFromStream(in, (int) entry.getFileSize()));
+        StreamUtils.skipExactly(in, entry.getOffset());
+        return Optional.of(StreamUtils.getBytesFromStream(in, (int) entry.getSize()));
     }
 }

@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import de.mas.wiiu.jnus.entities.content.Content;
+import de.mas.wiiu.jnus.entities.TMD.Content;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 
 public interface NUSDataProcessor {
@@ -50,7 +50,7 @@ public interface NUSDataProcessor {
     default public byte[] readDecryptedContent(Content c, long offset, long size) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         long len = readDecryptedContentToStream(out, c, offset, size);
-        if(len < 0) {
+        if (len < 0) {
             return new byte[0];
         }
         return out.toByteArray();
@@ -71,7 +71,7 @@ public interface NUSDataProcessor {
     }
 
     default public long readDecryptedContentToStream(OutputStream out, Content c, long offset, long size) throws IOException {
-        InputStream in = readDecryptedContentAsStream(c, offset, size);        
+        InputStream in = readDecryptedContentAsStream(c, offset, size);
         return StreamUtils.saveInputStreamToOutputStream(in, out, size);
     }
 
@@ -83,7 +83,7 @@ public interface NUSDataProcessor {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         long len = readPlainDecryptedContentToStream(out, c, offset, size, forceCheckHash);
-        if(len < 0) {
+        if (len < 0) {
             return new byte[0];
         }
 

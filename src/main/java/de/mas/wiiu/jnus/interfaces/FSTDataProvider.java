@@ -22,19 +22,20 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedOutputStream;
 
-import de.mas.wiiu.jnus.entities.fst.FSTEntry;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.FileEntry;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.RootEntry;
 import de.mas.wiiu.jnus.utils.PipedInputStreamWithException;
 
 public interface FSTDataProvider {
     public String getName();
 
-    public FSTEntry getRoot();
+    public RootEntry getRoot();
 
-    default public byte[] readFile(FSTEntry entry) throws IOException {
-        return readFile(entry, 0, entry.getFileSize());
+    default public byte[] readFile(FileEntry entry) throws IOException {
+        return readFile(entry, 0, entry.getSize());
     }
 
-    default public byte[] readFile(FSTEntry entry, long offset, long size) throws IOException {
+    default public byte[] readFile(FileEntry entry, long offset, long size) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         readFileToStream(out, entry, offset, size);
@@ -42,11 +43,11 @@ public interface FSTDataProvider {
         return out.toByteArray();
     }
 
-    default public InputStream readFileAsStream(FSTEntry entry) throws IOException {
-        return readFileAsStream(entry, 0, entry.getFileSize());
+    default public InputStream readFileAsStream(FileEntry entry) throws IOException {
+        return readFileAsStream(entry, 0, entry.getSize());
     }
 
-    default public InputStream readFileAsStream(FSTEntry entry, long offset, long size) throws IOException {
+    default public InputStream readFileAsStream(FileEntry entry, long offset, long size) throws IOException {
         PipedOutputStream out = new PipedOutputStream();
         PipedInputStreamWithException in = new PipedInputStreamWithException(out, 0x10000);
 
@@ -57,24 +58,24 @@ public interface FSTDataProvider {
             } catch (Exception e) {
                 in.throwException(e);
                 try {
-					out.close();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
+                    out.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
             }
         }).start();
 
         return in;
     }
 
-    default public long readFileToStream(OutputStream out, FSTEntry entry) throws IOException {
-        return readFileToStream(out, entry, 0, entry.getFileSize());
+    default public long readFileToStream(OutputStream out, FileEntry entry) throws IOException {
+        return readFileToStream(out, entry, 0, entry.getSize());
     }
 
-    default public long readFileToStream(OutputStream out, FSTEntry entry, long offset) throws IOException {
-        return readFileToStream(out, entry, offset, entry.getFileSize());
+    default public long readFileToStream(OutputStream out, FileEntry entry, long offset) throws IOException {
+        return readFileToStream(out, entry, offset, entry.getSize());
     }
 
-    public long readFileToStream(OutputStream out, FSTEntry entry, long offset, long size) throws IOException;
+    public long readFileToStream(OutputStream out, FileEntry entry, long offset, long size) throws IOException;
 
 }

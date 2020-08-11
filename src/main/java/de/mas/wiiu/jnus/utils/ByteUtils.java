@@ -99,7 +99,7 @@ public final class ByteUtils {
         ByteBuffer.allocate(2).putShort(value).get(result);
         return result;
     }
-  
+
     public static short getByteFromBytes(byte[] input, int offset) {
         ByteBuffer buffer = ByteBuffer.allocate(2).put(Arrays.copyOfRange(input, offset, offset + 1)).order(ByteOrder.BIG_ENDIAN);
         buffer.position(0);

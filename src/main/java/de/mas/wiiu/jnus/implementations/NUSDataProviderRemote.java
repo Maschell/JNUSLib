@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import de.mas.wiiu.jnus.Settings;
-import de.mas.wiiu.jnus.entities.content.Content;
+import de.mas.wiiu.jnus.entities.TMD.Content;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import de.mas.wiiu.jnus.interfaces.Parallelizable;
 import de.mas.wiiu.jnus.utils.download.NUSDownloadService;
@@ -32,15 +32,16 @@ import lombok.Getter;
 public class NUSDataProviderRemote implements NUSDataProvider, Parallelizable {
     @Getter private final int version;
     @Getter private final long titleID;
+    private final NUSDownloadService downloadService;
 
-    public NUSDataProviderRemote(int version, long titleID) {
+    public NUSDataProviderRemote(int version, long titleID, NUSDownloadService downloadService) {
         this.version = version;
         this.titleID = titleID;
+        this.downloadService = downloadService;
     }
 
     @Override
     public InputStream readRawContentAsStream(Content content, long fileOffsetBlock, long size) throws IOException {
-        NUSDownloadService downloadService = NUSDownloadService.getDefaultInstance();
         return downloadService.getInputStreamForURL(getRemoteURL(content), fileOffsetBlock, size);
     }
 
@@ -68,13 +69,11 @@ public class NUSDataProviderRemote implements NUSDataProvider, Parallelizable {
         return resOpt;
     }
 
-    Optional<byte[]> tmdCache = null;
+    Optional<byte[]> tmdCache = Optional.empty();
 
     @Override
     public Optional<byte[]> getRawTMD() throws IOException {
-        if (tmdCache == null) {
-            NUSDownloadService downloadService = NUSDownloadService.getDefaultInstance();
-
+        if (!tmdCache.isPresent()) {
             long titleID = getTitleID();
             int version = getVersion();
 
@@ -88,17 +87,16 @@ public class NUSDataProviderRemote implements NUSDataProvider, Parallelizable {
         return tmdCache;
     }
 
-    Optional<byte[]> ticketCache = null;
+    Optional<byte[]> ticketCache = Optional.empty();
 
     @Override
     public Optional<byte[]> getRawTicket() throws IOException {
-        if (ticketCache == null) {
-            NUSDownloadService downloadService = NUSDownloadService.getDefaultInstance();
+        if (!ticketCache.isPresent()) {
             byte[] res = downloadService.downloadTicketToByteArray(titleID);
             if (res == null || res.length == 0) {
                 return Optional.empty();
             }
-            ticketCache =  Optional.of(res);
+            ticketCache = Optional.of(res);
         }
         return ticketCache;
     }

@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import de.mas.wiiu.jnus.Settings;
-import de.mas.wiiu.jnus.entities.content.Content;
+import de.mas.wiiu.jnus.entities.TMD.Content;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import lombok.NonNull;
 import lombok.extern.java.Log;

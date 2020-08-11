@@ -25,20 +25,22 @@ import java.util.stream.Stream;
 
 import org.apache.commons.io.FilenameUtils;
 
-import de.mas.wiiu.jnus.entities.content.ContentFSTInfo;
-import de.mas.wiiu.jnus.entities.fst.FST;
-import de.mas.wiiu.jnus.entities.fst.FSTEntry;
+import de.mas.wiiu.jnus.entities.FST.FST;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.DirectoryEntry;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.FileEntry;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.NodeEntry;
+import de.mas.wiiu.jnus.entities.FST.sectionentry.SectionEntry;
 import lombok.val;
 
 public class FSTUtils {
-    public static Optional<FSTEntry> getFSTEntryByFullPath(FSTEntry root, String givenFullPath) {
+    public static Optional<NodeEntry> getFSTEntryByFullPath(DirectoryEntry root, String givenFullPath) {
         String fullPath = givenFullPath.replace(File.separator, "/");
         if (!fullPath.startsWith("/")) {
             fullPath = "/" + fullPath;
         }
 
         String dirPath = FilenameUtils.getFullPathNoEndSeparator(fullPath);
-        Optional<FSTEntry> pathOpt = Optional.of(root);
+        Optional<DirectoryEntry> pathOpt = Optional.of(root);
         if (!dirPath.equals("/")) {
             pathOpt = getFileEntryDir(root, dirPath);
         }
@@ -48,7 +50,7 @@ public class FSTUtils {
         return pathOpt.flatMap(e -> e.getChildren().stream().filter(c -> c.getFullPath().equals(path)).findAny());
     }
 
-    public static Optional<FSTEntry> getFileEntryDir(FSTEntry curEntry, String string) {
+    public static Optional<DirectoryEntry> getFileEntryDir(DirectoryEntry curEntry, String string) {
         string = string.replace(File.separator, "/");
 
         // We add the "/" at the end so we don't get false results when using the "startWith" function.
@@ -71,15 +73,15 @@ public class FSTUtils {
         return Optional.empty();
     }
 
-    public static Optional<FSTEntry> getEntryByFullPath(FSTEntry root, String filePath) {
-        for (FSTEntry cur : root.getFileChildren()) {
+    public static Optional<FileEntry> getEntryByFullPath(DirectoryEntry root, String filePath) {
+        for (FileEntry cur : root.getFileChildren()) {
             if (cur.getFullPath().equals(filePath)) {
                 return Optional.of(cur);
             }
         }
 
-        for (FSTEntry cur : root.getDirChildren()) {
-            Optional<FSTEntry> res = getEntryByFullPath(cur, filePath);
+        for (DirectoryEntry cur : root.getDirChildren()) {
+            Optional<FileEntry> res = getEntryByFullPath(cur, filePath);
             if (res.isPresent()) {
                 return res;
             }
@@ -87,75 +89,75 @@ public class FSTUtils {
         return Optional.empty();
     }
 
-    public static Optional<FSTEntry> getChildOfDirectory(FSTEntry root, String filename) {
-        for (FSTEntry cur : root.getChildren()) {
-            if (cur.getFilename().equalsIgnoreCase(filename)) {
+    public static Optional<NodeEntry> getChildOfDirectory(DirectoryEntry root, String filename) {
+        for (NodeEntry cur : root.getChildren()) {
+            if (cur.getName().equalsIgnoreCase(filename)) {
                 return Optional.of(cur);
             }
         }
         return Optional.empty();
     }
 
-    public static List<FSTEntry> getFSTEntriesByRegEx(FSTEntry root, String string) {
+    public static List<FileEntry> getFSTEntriesByRegEx(DirectoryEntry root, String string) {
         return getFSTEntriesByRegEx(root, string, false);
     }
 
-    public static List<FSTEntry> getFSTEntriesByRegEx(FSTEntry entry, String regEx, boolean allowNotInPackage) {
+    public static List<FileEntry> getFSTEntriesByRegEx(DirectoryEntry entry, String regEx, boolean allowNotInPackage) {
         Pattern p = Pattern.compile(regEx);
         return getFSTEntriesByRegExStream(entry, p, allowNotInPackage).collect(Collectors.toList());
     }
 
-    private static Stream<FSTEntry> getFSTEntriesByRegExStream(FSTEntry entry, Pattern p, boolean allowNotInPackage) {
+    private static Stream<FileEntry> getFSTEntriesByRegExStream(DirectoryEntry entry, Pattern p, boolean allowNotInPackage) {
         return entry.getChildren().stream()//
-                .filter(e -> allowNotInPackage || !e.isNotInPackage()) //
+                .filter(e -> allowNotInPackage || !e.isLink()) //
                 .flatMap(e -> {
-                    if (!e.isDir()) {
+                    if (!e.isDirectory()) {
                         if (p.matcher(e.getFullPath()).matches()) {
-                            return Stream.of(e);
+                            return Stream.of((FileEntry) e);
                         } else {
                             return Stream.empty();
                         }
                     }
-                    return getFSTEntriesByRegExStream(e, p, allowNotInPackage);
+                    return getFSTEntriesByRegExStream((DirectoryEntry) e, p, allowNotInPackage);
                 });
     }
 
-    public static Optional<ContentFSTInfo> getFSTInfoForContent(FST fst, short contentIndex) {
-        return fst.getContentFSTInfos().entrySet().stream().filter(e -> e.getKey().shortValue() == contentIndex).map(e -> e.getValue()).findAny();
+    public static Optional<SectionEntry> getSectionEntryForIndex(FST fst, short contentIndex) {
+        return fst.getSectionEntries().stream().filter(e -> e.getSectionNumber() == contentIndex).findAny();
     }
 
-    public static List<FSTEntry> getFSTEntriesByContentIndex(FSTEntry entry, short index) {
+    public static List<NodeEntry> getFSTEntriesByContentIndex(DirectoryEntry entry, short index) {
         return getFSTEntriesByContentIndexAsStream(entry, index).collect(Collectors.toList());
     }
 
-    public static Stream<FSTEntry> getFSTEntriesByContentIndexAsStream(FSTEntry entry, short index) {
+    public static Stream<NodeEntry> getFSTEntriesByContentIndexAsStream(DirectoryEntry entry, short index) {
         return entry.getChildren().stream()//
                 .flatMap(e -> {
-                    if (!e.isDir()) {
-                        if (e.getContentIndex() == index) {
+                    if (!e.isDirectory()) {
+                        if (e.getSectionEntry().getSectionNumber() == index) {
                             return Stream.of(e);
                         }
                         return Stream.empty();
                     }
-                    return getFSTEntriesByContentIndexAsStream(e, index);
+                    return getFSTEntriesByContentIndexAsStream((DirectoryEntry) e, index);
                 });
     }
 
     /**
      * Does not include entries that are not in the package..
      */
-    public static Stream<FSTEntry> getAllFSTEntryChildrenAsStream(FSTEntry root) {
+    public static Stream<NodeEntry> getAllFSTEntryChildrenAsStream(DirectoryEntry root) {
         return getAllFSTEntryChildrenAsStream(root, false);
     }
 
-    public static Stream<FSTEntry> getAllFSTEntryChildrenAsStream(FSTEntry root, boolean allowNotInPackage) {
+    public static Stream<NodeEntry> getAllFSTEntryChildrenAsStream(DirectoryEntry root, boolean allowNotInPackage) {
         return root.getChildren().stream() //
-                .filter(e -> allowNotInPackage || !e.isNotInPackage()) //
+                .filter(e -> allowNotInPackage || !e.isLink()) //
                 .flatMap(e -> {
-                    if (!e.isDir()) {
+                    if (!e.isDirectory()) {
                         return Stream.of(e);
                     }
-                    return getAllFSTEntryChildrenAsStream(e, allowNotInPackage);
+                    return getAllFSTEntryChildrenAsStream((DirectoryEntry) e, allowNotInPackage);
                 });
     }
 }
