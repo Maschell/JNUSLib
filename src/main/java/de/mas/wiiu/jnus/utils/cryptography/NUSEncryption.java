@@ -35,7 +35,7 @@ public class NUSEncryption extends AESEncryption implements ContentEncryptor {
         }
         return encrypt(blockBuffer, offset, BLOCKSIZE);
     }
-    
+
     @Override
     public long readEncryptedContentToStreamHashed(InputStream in, OutputStream out, long offset, long size, long payloadOffset) throws IOException {
         int BLOCKSIZE = 0x10000;
@@ -61,28 +61,28 @@ public class NUSEncryption extends AESEncryption implements ContentEncryptor {
                 if (inBlockBuffer != buffer_size) {
                     break;
                 }
-                
+
                 long curOffset = Math.max(0, payloadOffset - offset - read);
 
                 byte[] IV = new byte[16];
                 if (curOffset < HASHBLOCKSIZE) {
                     byte[] encryptedhashes = encryptFileChunk(Arrays.copyOfRange(decryptedBlockBuffer, 0, HASHBLOCKSIZE), HASHBLOCKSIZE, IV);
-                    
+
                     long writeLength = Math.min((encryptedhashes.length - curOffset), (size - written));
-                    
+
                     out.write(encryptedhashes, (int) curOffset, (int) writeLength);
                     written += writeLength;
                 } else {
                     curOffset = curOffset > HASHBLOCKSIZE ? curOffset - HASHBLOCKSIZE : 0;
                 }
-                if(curOffset < HASHEDBLOCKSIZE) {
+                if (curOffset < HASHEDBLOCKSIZE) {
                     int iv_start = (block % 16) * 20;
                     IV = Arrays.copyOfRange(decryptedBlockBuffer, iv_start, iv_start + 16);
-    
+
                     byte[] encryptedContent = encryptFileChunk(Arrays.copyOfRange(decryptedBlockBuffer, HASHBLOCKSIZE, HASHEDBLOCKSIZE + HASHBLOCKSIZE),
                             HASHEDBLOCKSIZE, IV);
-    
-                    long writeLength = Math.min((encryptedContent.length - curOffset), (size - written));                
+
+                    long writeLength = Math.min((encryptedContent.length - curOffset), (size - written));
                     out.write(encryptedContent, (int) curOffset, (int) writeLength);
                     written += writeLength;
                 }
@@ -96,8 +96,8 @@ public class NUSEncryption extends AESEncryption implements ContentEncryptor {
     }
 
     @Override
-    public long readEncryptedContentToStreamNonHashed(InputStream in, OutputStream out, long offset, long size, long payloadOffset, byte[] IV,
-            IVCache ivcache) throws IOException {
+    public long readEncryptedContentToStreamNonHashed(InputStream in, OutputStream out, long offset, long size, long payloadOffset, byte[] IV, IVCache ivcache)
+            throws IOException {
         int BLOCKSIZE = 0x08000;
 
         int buffer_size = BLOCKSIZE;
@@ -140,7 +140,7 @@ public class NUSEncryption extends AESEncryption implements ContentEncryptor {
 
                 long writeOffset = Math.max(0, payloadOffset - offset - read);
                 long writeLength = Math.min((output.length - writeOffset), (size - written));
-                
+
                 out.write(output, (int) writeOffset, (int) writeLength);
                 written += writeLength;
             } while (written < size);

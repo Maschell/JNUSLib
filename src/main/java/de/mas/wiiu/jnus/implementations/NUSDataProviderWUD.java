@@ -18,41 +18,54 @@ package de.mas.wiiu.jnus.implementations;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Optional;
 
-import de.mas.wiiu.jnus.entities.content.Content;
-import de.mas.wiiu.jnus.entities.content.ContentFSTInfo;
-import de.mas.wiiu.jnus.entities.fst.FST;
-import de.mas.wiiu.jnus.implementations.wud.GamePartitionHeader;
-import de.mas.wiiu.jnus.implementations.wud.parser.WUDGamePartition;
+import de.mas.wiiu.jnus.entities.FST.FST;
+import de.mas.wiiu.jnus.entities.FST.sectionentry.SectionEntry;
+import de.mas.wiiu.jnus.entities.TMD.Content;
+import de.mas.wiiu.jnus.implementations.wud.content.partitions.WiiUGMPartition;
 import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReader;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.FSTUtils;
+import de.mas.wiiu.jnus.utils.HashUtil;
+import de.mas.wiiu.jnus.utils.Utils;
+import de.mas.wiiu.jnus.utils.blocksize.AddressInVolumeBlocks;
+import de.mas.wiiu.jnus.utils.blocksize.SizeInVolumeBlocks;
 import lombok.Getter;
+import lombok.var;
 import lombok.extern.java.Log;
 
 @Log
 public class NUSDataProviderWUD implements NUSDataProvider {
-    @Getter private final WUDGamePartition gamePartition;
+    @Getter private final WiiUGMPartition gamePartition;
     @Getter private final WUDDiscReader discReader;
     @Getter private FST fst;
 
-    public NUSDataProviderWUD(WUDGamePartition gamePartition, WUDDiscReader discReader) {
+    public NUSDataProviderWUD(WiiUGMPartition gamePartition, WUDDiscReader discReader) {
         this.gamePartition = gamePartition;
         this.discReader = discReader;
     }
 
     @Override
     public void setFST(FST fst) {
+        // We need to set the correct blocksizes
+        var blockSize = gamePartition.getVolumes().values().iterator().next().getBlockSize();
+        for (SectionEntry e : fst.getSectionEntries()) {
+            e.setAddress(new AddressInVolumeBlocks(blockSize, e.getAddress().getValue()));
+            e.setSize(new SizeInVolumeBlocks(blockSize, e.getSize().getValue()));
+        }
         this.fst = fst;
     }
 
     public long getOffsetInWUD(Content content) throws IOException {
-        if (content.getIndex() == 0) { // Index 0 is the FST which is at the beginning of the partion;
-            return getGamePartition().getPartitionOffset();
+        if (content.getIndex() == 0) { // Index 0 is the FST which is at the beginning of the partition;
+            var vh = getGamePartition().getVolumes().values().iterator().next();
+            return getGamePartition().getSectionOffsetOnDefaultPartition() + vh.getFSTAddress().getAddressInBytes();
         }
-        ContentFSTInfo info = FSTUtils.getFSTInfoForContent(fst, content.getIndex()).orElseThrow(() -> new IOException("Failed to find FSTInfo"));
-        return getGamePartition().getPartitionOffset() + info.getOffset();
+        SectionEntry info = FSTUtils.getSectionEntryForIndex(fst, content.getIndex()).orElseThrow(() -> new IOException("Failed to find FSTInfo"));
+        return getGamePartition().getSectionOffsetOnDefaultPartition() + info.getAddress().getAddressInBytes();
     }
 
     @Override
@@ -60,16 +73,22 @@ public class NUSDataProviderWUD implements NUSDataProvider {
         WUDDiscReader discReader = getDiscReader();
         long offset = getOffsetInWUD(content) + fileOffsetBlock;
 
-        return discReader.readEncryptedToStream(offset, size);
+        return discReader.readEncryptedToStream(offset, Utils.align(size, 16));
     }
 
     @Override
     public Optional<byte[]> getContentH3Hash(Content content) throws IOException {
-        if (!getGamePartitionHeader().isCalculatedHashes()) {
-            log.info("Calculating h3 hashes");
-            getGamePartitionHeader().calculateHashes(getGamePartition().getTmd().getAllContents());
+        byte[] hash = getGamePartition().getVolumes().values().iterator().next().getH3HashArrayList().get(content.getIndex()).getH3HashArray();
+        // Checking the hash of the h3 file.
+        try {
+            if (!Arrays.equals(HashUtil.hashSHA1(hash), content.getSHA2Hash())) {
+                log.warning("h3 incorrect from WUD");
+            }
+        } catch (NoSuchAlgorithmException e) {
+            log.warning(e.getMessage());
         }
-        return getGamePartitionHeader().getH3Hash(content);
+
+        return Optional.of(hash);
     }
 
     @Override
@@ -85,10 +104,6 @@ public class NUSDataProviderWUD implements NUSDataProvider {
     @Override
     public Optional<byte[]> getRawCert() throws IOException {
         return Optional.of(getGamePartition().getRawCert());
-    }
-
-    public GamePartitionHeader getGamePartitionHeader() {
-        return getGamePartition().getPartitionHeader();
     }
 
     @Override

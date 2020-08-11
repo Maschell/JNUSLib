@@ -23,11 +23,12 @@ import java.text.ParseException;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import de.mas.wiiu.jnus.entities.TMD;
 import de.mas.wiiu.jnus.entities.Ticket;
-import de.mas.wiiu.jnus.entities.content.Content;
-import de.mas.wiiu.jnus.entities.fst.FST;
-import de.mas.wiiu.jnus.entities.fst.FSTEntry;
+import de.mas.wiiu.jnus.entities.FST.FST;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.FileEntry;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.NodeEntry;
+import de.mas.wiiu.jnus.entities.TMD.Content;
+import de.mas.wiiu.jnus.entities.TMD.TitleMetaData;
 import de.mas.wiiu.jnus.implementations.FSTDataProviderNUSTitle;
 import de.mas.wiiu.jnus.interfaces.ContentDecryptor;
 import de.mas.wiiu.jnus.interfaces.ContentEncryptor;
@@ -48,7 +49,7 @@ public class NUSTitleLoader {
             throws IOException, ParseException {
         NUSDataProvider dataProvider = dataProviderFunction.get();
 
-        TMD tmd = TMD.parseTMD(dataProvider.getRawTMD().orElseThrow(() -> new FileNotFoundException("No TMD data found")));
+        TitleMetaData tmd = TitleMetaData.parseTMD(dataProvider.getRawTMD().orElseThrow(() -> new FileNotFoundException("No TMD data found")));
 
         if (config.isNoDecryption()) {
             NUSTitle result = NUSTitle.create(tmd, dataProcessorFunction.apply(dataProvider, Optional.empty(), Optional.empty()), Optional.empty(),
@@ -89,8 +90,10 @@ public class NUSTitleLoader {
             NUSTitle result = NUSTitle.create(tmd, dpp, ticket, Optional.empty());
 
             FSTDataProvider dp = new FSTDataProviderNUSTitle(result);
-            for (FSTEntry children : dp.getRoot().getChildren()) {
-                dp.readFile(children);
+            for (NodeEntry child : dp.getRoot().getFileChildren()) {
+                if (!child.isLink()) {
+                    dp.readFile((FileEntry) child);
+                }
             }
 
             return result;
@@ -99,7 +102,7 @@ public class NUSTitleLoader {
         Content fstContent = tmd.getContentByIndex(0);
 
         byte[] fstBytes = dpp.readPlainDecryptedContent(fstContent, true);
-        FST fst = FST.parseFST(fstBytes);
+        FST fst = FST.parseData(fstBytes);
 
         // The dataprovider may need the FST to calculate the offset of a content
         // on the partition.

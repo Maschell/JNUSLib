@@ -22,10 +22,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import de.mas.wiiu.jnus.entities.TMD;
 import de.mas.wiiu.jnus.entities.Ticket;
-import de.mas.wiiu.jnus.entities.fst.FST;
-import de.mas.wiiu.jnus.entities.fst.FSTEntry;
+import de.mas.wiiu.jnus.entities.FST.FST;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.FileEntry;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.NodeEntry;
+import de.mas.wiiu.jnus.entities.TMD.TitleMetaData;
 import de.mas.wiiu.jnus.interfaces.NUSDataProcessor;
 import de.mas.wiiu.jnus.utils.FSTUtils;
 import lombok.Getter;
@@ -35,38 +36,38 @@ public class NUSTitle {
     @Getter @Setter private Optional<FST> FST = Optional.empty();
     @Getter @Setter private Optional<Ticket> ticket;
 
-    @Getter private final TMD TMD;
+    @Getter private final TitleMetaData TMD;
 
     @Getter private final NUSDataProcessor dataProcessor;
 
-    private NUSTitle(TMD tmd, NUSDataProcessor dataProcessor) {
+    private NUSTitle(TitleMetaData tmd, NUSDataProcessor dataProcessor) {
         this.TMD = tmd;
         this.dataProcessor = dataProcessor;
     }
 
-    public static NUSTitle create(TMD tmd, NUSDataProcessor dataProcessor, Optional<Ticket> ticket, Optional<FST> fst) {
+    public static NUSTitle create(TitleMetaData tmd, NUSDataProcessor dataProcessor, Optional<Ticket> ticket, Optional<FST> fst) {
         NUSTitle result = new NUSTitle(tmd, dataProcessor);
         result.setTicket(ticket);
         result.setFST(fst);
         return result;
     }
 
-    public Stream<FSTEntry> getAllFSTEntriesAsStream() {
+    public Stream<NodeEntry> getAllFSTEntriesAsStream() {
         if (!FST.isPresent()) {
             return Stream.empty();
         }
-        return FSTUtils.getAllFSTEntryChildrenAsStream(FST.get().getRoot());
+        return FSTUtils.getAllFSTEntryChildrenAsStream(FST.get().getRootEntry());
     }
 
-    public List<FSTEntry> getFSTEntriesByRegEx(String regEx) {
+    public List<FileEntry> getFSTEntriesByRegEx(String regEx) {
         return getFSTEntriesByRegEx(regEx, true);
     }
 
-    public List<FSTEntry> getFSTEntriesByRegEx(String regEx, boolean onlyInPackage) {
+    public List<FileEntry> getFSTEntriesByRegEx(String regEx, boolean onlyInPackage) {
         if (!FST.isPresent()) {
             return new ArrayList<>();
         }
-        return FSTUtils.getFSTEntriesByRegEx(FST.get().getRoot(), regEx, onlyInPackage);
+        return FSTUtils.getFSTEntriesByRegEx(FST.get().getRootEntry(), regEx, onlyInPackage);
     }
 
     public void cleanup() throws IOException {

@@ -9,7 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Optional;
 
-import de.mas.wiiu.jnus.entities.content.Content;
+import de.mas.wiiu.jnus.entities.TMD.Content;
 import de.mas.wiiu.jnus.interfaces.ContentDecryptor;
 import de.mas.wiiu.jnus.interfaces.NUSDataProcessor;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
@@ -52,10 +52,10 @@ public class DefaultNUSDataProcessor implements NUSDataProcessor {
             } catch (Exception e) {
                 in.throwException(e);
                 try {
-					out.close();
-				} catch (IOException e1) {					
-					e1.printStackTrace();
-				}
+                    out.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
             }
         }).start();
 
@@ -139,11 +139,11 @@ public class DefaultNUSDataProcessor implements NUSDataProcessor {
             } catch (Exception e) {
                 in.throwException(e);
                 try {
-					in.close();
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+                    in.close();
+                } catch (IOException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
             }
         }).start();
 
@@ -156,7 +156,7 @@ public class DefaultNUSDataProcessor implements NUSDataProcessor {
             long payloadOffset = offset;
             long streamOffset = payloadOffset;
             long streamFilesize = 0;
-            
+
             streamOffset = (payloadOffset / 0xFC00) * 0x10000;
             long offsetInBlock = payloadOffset - ((streamOffset / 0x10000) * 0xFC00);
             if (offsetInBlock + size < 0xFC00) {
@@ -182,7 +182,7 @@ public class DefaultNUSDataProcessor implements NUSDataProcessor {
                 throw new IOException(e);
             }
         } else {
-            InputStream in = readDecryptedContentAsStream(c, offset, size);
+            InputStream in = readDecryptedContentAsStream(c, offset, Utils.align(size, 16));
 
             byte[] hash = null;
             if (forceCheckHash) {

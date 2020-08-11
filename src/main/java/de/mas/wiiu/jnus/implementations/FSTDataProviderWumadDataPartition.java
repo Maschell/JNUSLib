@@ -7,7 +7,8 @@ import java.io.OutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import de.mas.wiiu.jnus.entities.fst.FSTEntry;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.FileEntry;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.RootEntry;
 import de.mas.wiiu.jnus.implementations.wud.wumad.WumadDataPartition;
 import de.mas.wiiu.jnus.interfaces.FSTDataProvider;
 import de.mas.wiiu.jnus.utils.StreamUtils;
@@ -27,24 +28,23 @@ public class FSTDataProviderWumadDataPartition implements FSTDataProvider {
     }
 
     @Override
-    public FSTEntry getRoot() {
-        return dataPartition.getFST().getRoot();
+    public RootEntry getRoot() {
+        return dataPartition.getFST().getRootEntry();
     }
 
     @Override
-    public long readFileToStream(OutputStream out, FSTEntry entry, long offset, long size) throws IOException {
+    public long readFileToStream(OutputStream out, FileEntry entry, long offset, long size) throws IOException {
         return StreamUtils.saveInputStreamToOutputStream(readFileAsStream(entry, offset, size), out, size);
     }
 
     @Override
-    public InputStream readFileAsStream(FSTEntry entry, long offset, long size) throws IOException {
-        ZipEntry zipEntry = zipFile.stream()
-                .filter(e -> e.getName().equals(String.format("p%s.s%04d.00000000.app", dataPartition.getPartitionName(), entry.getContentIndex())))
-                .findFirst()
-                .orElseThrow(() -> new FileNotFoundException());
+    public InputStream readFileAsStream(FileEntry entry, long offset, long size) throws IOException {
+        ZipEntry zipEntry = zipFile.stream().filter(
+                e -> e.getName().equals(String.format("p%s.s%04d.00000000.app", dataPartition.getPartitionName(), entry.getSectionEntry().getSectionNumber())))
+                .findFirst().orElseThrow(() -> new FileNotFoundException());
 
         InputStream in = zipFile.getInputStream(zipEntry);
-        StreamUtils.skipExactly(in, offset + entry.getFileOffset());
+        StreamUtils.skipExactly(in, offset + entry.getOffset());
         return in;
     }
 

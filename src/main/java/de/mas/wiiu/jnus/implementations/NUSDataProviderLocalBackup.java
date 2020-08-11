@@ -25,7 +25,7 @@ import java.nio.file.Files;
 import java.util.Optional;
 
 import de.mas.wiiu.jnus.Settings;
-import de.mas.wiiu.jnus.entities.content.Content;
+import de.mas.wiiu.jnus.entities.TMD.Content;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 import lombok.Getter;
@@ -40,7 +40,7 @@ public class NUSDataProviderLocalBackup implements NUSDataProvider {
 
     public NUSDataProviderLocalBackup(String localPath, short version) {
         this.localPath = localPath;
-        this.titleVersion = version;        
+        this.titleVersion = version;
     }
 
     private String getFilePathOnDisk(Content c) {

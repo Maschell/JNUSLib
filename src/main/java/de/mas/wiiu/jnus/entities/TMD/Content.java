@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
-package de.mas.wiiu.jnus.entities.content;
+package de.mas.wiiu.jnus.entities.TMD;
 
 import java.nio.ByteBuffer;
 import java.text.ParseException;
@@ -37,7 +37,7 @@ public class Content implements Comparable<Content> {
     public static final short CONTENT_FLAG_UNKWN1 = 0x4000;
     public static final short CONTENT_HASHED = 0x0002;
     public static final short CONTENT_ENCRYPTED = 0x0001;
-    
+
     public static final int CONTENT_SIZE = 0x30;
 
     @Getter private final int ID;
@@ -63,7 +63,7 @@ public class Content implements Comparable<Content> {
      * @return content object
      * @throws ParseException
      */
-    public static Content parseContent(byte[] input) throws ParseException {
+    public static Content parseData(byte[] input) throws ParseException {
         if (input == null || input.length != CONTENT_SIZE) {
             log.info("Error: invalid Content byte[] input");
             throw new ParseException("Error: invalid Content byte[] input", 0);
@@ -180,8 +180,6 @@ public class Content implements Comparable<Content> {
 
         private long encryptedFileSize;
         private byte[] SHA2Hash;
-
-        private ContentFSTInfo contentFSTInfo;
     }
 
     @Override

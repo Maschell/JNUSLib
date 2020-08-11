@@ -19,52 +19,53 @@ package de.mas.wiiu.jnus.implementations;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Optional;
 
-import de.mas.wiiu.jnus.entities.content.ContentFSTInfo;
-import de.mas.wiiu.jnus.entities.fst.FSTEntry;
-import de.mas.wiiu.jnus.implementations.wud.parser.WUDDataPartition;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.FileEntry;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.RootEntry;
+import de.mas.wiiu.jnus.entities.FST.sectionentry.SectionEntry;
+import de.mas.wiiu.jnus.implementations.wud.content.partitions.WiiUDataPartition;
 import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReader;
 import de.mas.wiiu.jnus.interfaces.FSTDataProvider;
-import de.mas.wiiu.jnus.utils.FSTUtils;
 
 public class FSTDataProviderWUDDataPartition implements FSTDataProvider {
-    private final WUDDataPartition partition;
+    private final WiiUDataPartition partition;
     private final WUDDiscReader discReader;
-    private final byte[] titleKey;
+    private final Optional<byte[]> discKey;
 
-    public FSTDataProviderWUDDataPartition(WUDDataPartition partition, WUDDiscReader discReader, byte[] titleKey) {
+    public FSTDataProviderWUDDataPartition(WiiUDataPartition partition, WUDDiscReader discReader, Optional<byte[]> discKey) {
         this.partition = partition;
         this.discReader = discReader;
-        this.titleKey = titleKey;
+        this.discKey = discKey;
     }
 
     @Override
     public String getName() {
-        return partition.getPartitionName();
+        return partition.getVolumeID();
     }
 
     @Override
-    public FSTEntry getRoot() {
-        return partition.getFST().getRoot();
+    public RootEntry getRoot() {
+        return partition.getFst().getRootEntry();
     }
 
     @Override
-    public long readFileToStream(OutputStream out, FSTEntry entry, long offset, long size) throws IOException {
-        ContentFSTInfo info = FSTUtils.getFSTInfoForContent(partition.getFST(), entry.getContentIndex())
-                .orElseThrow(() -> new IOException("Failed to find FSTInfo"));
-        if (titleKey == null) {
-            return discReader.readEncryptedToStream(out, partition.getPartitionOffset() + info.getOffset() + entry.getFileOffset() + offset, size);
+    public long readFileToStream(OutputStream out, FileEntry entry, long offset, long size) throws IOException {
+        SectionEntry info = entry.getSectionEntry();
+        if (!discKey.isPresent()) {
+            return discReader.readEncryptedToStream(out,
+                    partition.getSectionOffsetOnDefaultPartition() + info.getAddress().getAddressInBytes() + entry.getOffset() + offset, size);
         }
-        return discReader.readDecryptedToOutputStream(out, partition.getPartitionOffset() + info.getOffset(), entry.getFileOffset() + offset, size, titleKey,
-                null, false);
+        return discReader.readDecryptedToOutputStream(out, partition.getSectionOffsetOnDefaultPartition() + info.getAddress().getAddressInBytes(),
+                entry.getOffset() + offset, size, discKey.get(), null, false);
     }
 
     @Override
-    public InputStream readFileAsStream(FSTEntry entry, long offset, long size) throws IOException {
-        if (titleKey == null) {
-            ContentFSTInfo info = FSTUtils.getFSTInfoForContent(partition.getFST(), entry.getContentIndex())
-                    .orElseThrow(() -> new IOException("Failed to find FSTInfo"));
-            return discReader.readEncryptedToStream(partition.getPartitionOffset() + info.getOffset() + entry.getFileOffset() + offset, size);
+    public InputStream readFileAsStream(FileEntry entry, long offset, long size) throws IOException {
+        if (!discKey.isPresent()) {
+            SectionEntry info = entry.getSectionEntry();
+            return discReader.readEncryptedToStream(
+                    partition.getSectionOffsetOnDefaultPartition() + info.getAddress().getAddressInBytes() + entry.getOffset() + offset, size);
         }
 
         return FSTDataProvider.super.readFileAsStream(entry, offset, size);

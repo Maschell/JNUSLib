@@ -37,7 +37,7 @@ public class AESEncryption {
 
     @Getter @Setter private byte[] AESKey;
     @Getter @Setter private byte[] IV;
-    
+
     public AESEncryption(byte[] AESKey, byte[] IV) throws NoSuchProviderException {
         try {
             cipher = Cipher.getInstance("AES/CBC/NoPadding", "SunJCE");

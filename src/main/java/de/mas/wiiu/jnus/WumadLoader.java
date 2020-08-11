@@ -41,7 +41,8 @@ public class WumadLoader {
         final NUSTitleConfig config = new NUSTitleConfig();
         config.setCommonKey(commonKey);
         gamePartition.getTmd();
-        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderWumad(gamePartition, wudmadFile), (dp, cd, ce) -> new DefaultNUSDataProcessor(dp, cd));
+        return NUSTitleLoader.loadNusTitle(config, () -> new NUSDataProviderWumad(gamePartition, wudmadFile),
+                (dp, cd, ce) -> new DefaultNUSDataProcessor(dp, cd));
     }
 
     public static List<FSTDataProvider> getPartitonsAsFSTDataProvider(@NonNull WumadInfo wumadInfo, byte[] commonKey) throws IOException, ParseException {

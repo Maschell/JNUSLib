@@ -23,7 +23,6 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -265,6 +264,5 @@ public final class Utils {
 
         return null;
     }
-
 
 }

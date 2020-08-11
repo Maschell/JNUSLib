@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
-package de.mas.wiiu.jnus.entities;
+package de.mas.wiiu.jnus.entities.TMD;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,14 +27,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.mas.wiiu.jnus.entities.content.Content;
-import de.mas.wiiu.jnus.entities.content.ContentInfo;
 import lombok.Data;
 import lombok.Getter;
 import lombok.extern.java.Log;
 
 @Log
-public final class TMD {
+public final class TitleMetaData {
     private static final int SIGNATURE_LENGTH = 0x100;
     private static final int ISSUER_LENGTH = 0x40;
     private static final int RESERVED_LENGTH = 0x3E;
@@ -78,7 +76,7 @@ public final class TMD {
     private final Map<Integer, Content> contentToIndex = new HashMap<>();
     private final Map<Integer, Content> contentToID = new HashMap<>();
 
-    private TMD(TMDParam param) {
+    private TitleMetaData(TMDParam param) {
         super();
         this.signatureType = param.getSignatureType();
         this.signature = param.getSignature();
@@ -101,7 +99,7 @@ public final class TMD {
         this.cert2 = param.getCert2();
     }
 
-    public static TMD parseTMD(File tmd) throws IOException, ParseException {
+    public static TitleMetaData parseTMD(File tmd) throws IOException, ParseException {
         if (tmd == null || !tmd.exists()) {
             log.info("TMD input file null or doesn't exist.");
             throw new IOException("TMD input file null or doesn't exist.");
@@ -109,7 +107,7 @@ public final class TMD {
         return parseTMD(Files.readAllBytes(tmd.toPath()));
     }
 
-    public static TMD parseTMD(byte[] input) throws ParseException {
+    public static TitleMetaData parseTMD(byte[] input) throws ParseException {
         if (input == null || input.length == 0) {
             throw new ParseException("Invalid TMD file.", 0);
         }
@@ -171,7 +169,7 @@ public final class TMD {
         for (int i = 0; i < CONTENT_INFO_ARRAY_SIZE; i++) {
             byte[] contentInfo = new byte[ContentInfo.CONTENT_INFO_SIZE];
             buffer.get(contentInfo, 0, ContentInfo.CONTENT_INFO_SIZE);
-            contentInfos[i] = ContentInfo.parseContentInfo(contentInfo);
+            contentInfos[i] = ContentInfo.parseData(contentInfo);
         }
 
         List<Content> contentList = new ArrayList<>();
@@ -180,7 +178,7 @@ public final class TMD {
             buffer.position(CONTENT_OFFSET + (Content.CONTENT_SIZE * i));
             byte[] content = new byte[Content.CONTENT_SIZE];
             buffer.get(content, 0, Content.CONTENT_SIZE);
-            Content c = Content.parseContent(content);
+            Content c = Content.parseData(content);
             contentList.add(c);
         }
 
@@ -213,7 +211,7 @@ public final class TMD {
         param.setCert1(cert1);
         param.setCert2(cert2);
 
-        TMD result = new TMD(param);
+        TitleMetaData result = new TitleMetaData(param);
 
         for (Content c : contentList) {
             result.setContentToIndex(c.getIndex(), c);

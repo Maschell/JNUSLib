@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
-package de.mas.wiiu.jnus.entities.content;
+package de.mas.wiiu.jnus.entities.TMD;
 
 import java.nio.ByteBuffer;
 import java.text.ParseException;
@@ -69,7 +69,7 @@ public class ContentInfo {
      * @return ContentFSTInfo object
      * @throws ParseException
      */
-    public static ContentInfo parseContentInfo(byte[] input) throws ParseException {
+    public static ContentInfo parseData(byte[] input) throws ParseException {
         if (input == null || input.length != CONTENT_INFO_SIZE) {
             log.info("Error: invalid ContentInfo byte[] input");
             throw new ParseException("Error: invalid ContentInfo byte[] input", 0);

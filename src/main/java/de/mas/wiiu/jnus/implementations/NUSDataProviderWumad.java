@@ -19,7 +19,8 @@ package de.mas.wiiu.jnus.implementations;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.ParseException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Locale;
@@ -28,13 +29,14 @@ import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import de.mas.wiiu.jnus.entities.TMD;
-import de.mas.wiiu.jnus.entities.content.Content;
-import de.mas.wiiu.jnus.implementations.wud.GamePartitionHeader;
+import de.mas.wiiu.jnus.entities.TMD.Content;
 import de.mas.wiiu.jnus.implementations.wud.wumad.WumadGamePartition;
 import de.mas.wiiu.jnus.interfaces.NUSDataProvider;
+import de.mas.wiiu.jnus.utils.HashUtil;
 import de.mas.wiiu.jnus.utils.StreamUtils;
+import lombok.extern.java.Log;
 
+@Log
 public class NUSDataProviderWumad implements NUSDataProvider {
     private final ZipFile wumad;
     private final WumadGamePartition partition;
@@ -72,15 +74,17 @@ public class NUSDataProviderWumad implements NUSDataProvider {
 
     @Override
     public Optional<byte[]> getContentH3Hash(Content content) throws IOException {
-        GamePartitionHeader partitionHeader = partition.getPartitionHeader();
-        if (!partitionHeader.isCalculatedHashes()) {
-            try {
-                partitionHeader.calculateHashes(TMD.parseTMD(getRawTMD().get()).getAllContents());
-            } catch (ParseException e) {
-                throw new IOException(e);
+        byte[] hash = partition.getPartitionHeader().getH3HashArrayList().get(content.getIndex()).getH3HashArray();
+        // Checking the hash of the h3 file.
+        try {
+            if (!Arrays.equals(HashUtil.hashSHA1(hash), content.getSHA2Hash())) {
+                log.warning("h3 incorrect from WUD");
             }
+        } catch (NoSuchAlgorithmException e) {
+            log.warning(e.getMessage());
         }
-        return partitionHeader.getH3Hash(content);
+
+        return Optional.of(hash);
     }
 
     @Override

@@ -72,8 +72,7 @@ public abstract class WUDDiscReader {
         return in;
     }
 
-    public InputStream readDecryptedToStream(long offset, long fileOffset, long size, byte[] key, byte[] IV,
-            boolean useFixedIV) throws IOException {
+    public InputStream readDecryptedToStream(long offset, long fileOffset, long size, byte[] key, byte[] IV, boolean useFixedIV) throws IOException {
         PipedOutputStream out = new PipedOutputStream();
         PipedInputStreamWithException in = new PipedInputStreamWithException(out, 0x8000);
 

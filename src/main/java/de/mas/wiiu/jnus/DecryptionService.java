@@ -25,7 +25,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
-import de.mas.wiiu.jnus.entities.fst.FSTEntry;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.FileEntry;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.NodeEntry;
 import de.mas.wiiu.jnus.interfaces.FSTDataProvider;
 import de.mas.wiiu.jnus.utils.CheckSumWrongException;
 import de.mas.wiiu.jnus.utils.FSTUtils;
@@ -49,7 +50,7 @@ public final class DecryptionService {
         this.dataProvider = dataProvider;
     }
 
-    public void decryptFSTEntryTo(boolean useFullPath, FSTEntry entry, String outputPath, boolean skipExistingFile) {
+    public void decryptFSTEntryTo(boolean useFullPath, NodeEntry entry, String outputPath, boolean skipExistingFile) {
         try {
             decryptFSTEntryToAsync(useFullPath, entry, outputPath, skipExistingFile).get();
         } catch (InterruptedException | ExecutionException e) {
@@ -57,26 +58,26 @@ public final class DecryptionService {
         }
     }
 
-    public CompletableFuture<Void> decryptFSTEntryToAsync(boolean useFullPath, FSTEntry entry, String outputPath, boolean skipExistingFile) {
+    public CompletableFuture<Void> decryptFSTEntryToAsync(boolean useFullPath, NodeEntry entry, String outputPath, boolean skipExistingFile) {
         return CompletableFuture.runAsync(() -> {
             try {
-                if (entry.isNotInPackage()) {
+                if (entry.isLink()) {
                     return;
                 }
 
-                log.info("Decrypting " + entry.getFilename());
+                log.info("Decrypting " + entry.getName());
 
-                String targetFilePath = new StringBuilder().append(outputPath).append("/").append(entry.getFilename()).toString();
+                String targetFilePath = new StringBuilder().append(outputPath).append("/").append(entry.getName()).toString();
                 String fullPath = new StringBuilder().append(outputPath).toString();
 
                 if (useFullPath) {
-                    targetFilePath = new StringBuilder().append(outputPath).append(entry.getFullPath()).toString();
                     fullPath = new StringBuilder().append(outputPath).append(entry.getPath()).toString();
-                    if (entry.isDir()) { // If the entry is a directory. Create it and return.
+                    targetFilePath = new StringBuilder().append(outputPath).append(entry.getFullPath()).toString();
+                    if (entry.isDirectory()) { // If the entry is a directory. Create it and return.
                         Utils.createDir(targetFilePath);
                         return;
                     }
-                } else if (entry.isDir()) {
+                } else if (entry.isDirectory()) {
                     return;
                 }
 
@@ -87,16 +88,16 @@ public final class DecryptionService {
                 if (skipExistingFile) {
                     File targetFile = new File(targetFilePath);
                     if (targetFile.exists()) {
-                        if (entry.isDir()) {
+                        if (entry.isDirectory()) {
                             return;
                         }
-                        if (targetFile.length() == entry.getFileSize()) {
+                        if (targetFile.length() == ((FileEntry) entry).getSize()) {
 
-                            log.info("File already exists: " + entry.getFilename());
+                            log.info("File already exists: " + entry.getName());
                             return;
 
                         } else {
-                            log.info("File already exists but the filesize doesn't match: " + entry.getFilename());
+                            log.info("File already exists but the filesize doesn't match: " + entry.getName());
                         }
                     }
                 }
@@ -104,25 +105,31 @@ public final class DecryptionService {
                 File target = new File(targetFilePath);
 
                 // to avoid having fragmented files.
-                FileUtils.FileAsOutputStreamWrapper(target, entry.getFileSize(), newOutputStream -> decryptFSTEntryToStream(entry, newOutputStream));
+                FileUtils.FileAsOutputStreamWrapper(target, ((FileEntry) entry).getSize(),
+                        newOutputStream -> decryptFSTEntryToStream((FileEntry) entry, newOutputStream));
             } catch (Exception ex) {
                 throw new CompletionException(ex);
             }
         });
     }
 
-    public void decryptFSTEntryToStream(FSTEntry entry, OutputStream outputStream) throws IOException {
-        dataProvider.readFileToStream(outputStream, entry);
+    public void decryptFSTEntryToStream(NodeEntry entry, OutputStream outputStream) throws IOException {
+        if (!entry.isFile() || entry.isLink()) {
+            return;
+        }
+        dataProvider.readFileToStream(outputStream, (FileEntry) entry);
     }
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // Decrypt FSTEntry to OutputStream
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     public void decryptFSTEntryTo(String entryFullPath, OutputStream outputStream) throws IOException, CheckSumWrongException {
-        FSTEntry entry = FSTUtils.getFSTEntryByFullPath(dataProvider.getRoot(), entryFullPath)
+        NodeEntry entry = FSTUtils.getFSTEntryByFullPath(dataProvider.getRoot(), entryFullPath)
                 .orElseThrow(() -> new FileNotFoundException("File not found: " + entryFullPath));
 
-        decryptFSTEntryToStream(entry, outputStream);
+        if (entry.isFile()) {
+            decryptFSTEntryToStream(entry, outputStream);
+        }
     }
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -132,10 +139,13 @@ public final class DecryptionService {
     public void decryptFSTEntryTo(boolean fullPath, String entryFullPath, String outputFolder, boolean skipExistingFiles)
             throws IOException, CheckSumWrongException {
 
-        FSTEntry entry = FSTUtils.getFSTEntryByFullPath(dataProvider.getRoot(), entryFullPath)
+        NodeEntry entry = FSTUtils.getFSTEntryByFullPath(dataProvider.getRoot(), entryFullPath)
                 .orElseThrow(() -> new FileNotFoundException("File not found: " + entryFullPath));
 
-        decryptFSTEntryTo(fullPath, entry, outputFolder, skipExistingFiles);
+        if (entry.isFile()) {
+            decryptFSTEntryTo(fullPath, entry, outputFolder, skipExistingFiles);
+        }
+
     }
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -156,11 +166,11 @@ public final class DecryptionService {
         decryptFSTEntryListTo(fullPath, FSTUtils.getFSTEntriesByRegEx(dataProvider.getRoot(), regEx), outputFolder, skipExisting);
     }
 
-    public void decryptFSTEntryListTo(List<FSTEntry> list, String outputFolder, boolean skipExisting) throws IOException, CheckSumWrongException {
+    public void decryptFSTEntryListTo(List<FileEntry> list, String outputFolder, boolean skipExisting) throws IOException, CheckSumWrongException {
         decryptFSTEntryListTo(true, list, outputFolder, skipExisting);
     }
 
-    public void decryptFSTEntryListTo(boolean fullPath, List<FSTEntry> list, String outputFolder, boolean skipExisting)
+    public void decryptFSTEntryListTo(boolean fullPath, List<FileEntry> list, String outputFolder, boolean skipExisting)
             throws IOException, CheckSumWrongException {
         if (parallelizable && Settings.ALLOW_PARALLELISATION) {
             try {
@@ -175,7 +185,7 @@ public final class DecryptionService {
         }
     }
 
-    public CompletableFuture<Void> decryptFSTEntryListToAsync(boolean fullPath, List<FSTEntry> list, String outputFolder, boolean skipExisting)
+    public CompletableFuture<Void> decryptFSTEntryListToAsync(boolean fullPath, List<FileEntry> list, String outputFolder, boolean skipExisting)
             throws IOException, CheckSumWrongException {
         return CompletableFuture
                 .allOf(list.stream().map(entry -> decryptFSTEntryToAsync(fullPath, entry, outputFolder, skipExisting)).toArray(CompletableFuture[]::new));

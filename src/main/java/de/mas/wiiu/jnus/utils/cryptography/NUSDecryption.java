@@ -73,7 +73,6 @@ public class NUSDecryption extends AESDecryption implements ContentDecryptor {
                     return wrote;
                 }
                 if (inBlockBuffer != BLOCKSIZE) {
-                   
                     throw new IOException("wasn't able to read  " + BLOCKSIZE);
                 }
 
@@ -168,8 +167,7 @@ public class NUSDecryption extends AESDecryption implements ContentDecryptor {
                     curReadSize = (int) (toRead + writeOffset);
                 }
                 inBlockBuffer = StreamUtils.getChunkFromStream(inputStream, blockBuffer, overflow, (int) Utils.align(curReadSize, 16));
-
-                if (inBlockBuffer < 0) {
+                if (inBlockBuffer <= 0) {
                     break;
                 }
 

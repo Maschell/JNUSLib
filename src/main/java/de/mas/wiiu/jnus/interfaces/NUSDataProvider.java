@@ -21,8 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
-import de.mas.wiiu.jnus.entities.content.Content;
-import de.mas.wiiu.jnus.entities.fst.FST;
+import de.mas.wiiu.jnus.entities.FST.FST;
+import de.mas.wiiu.jnus.entities.TMD.Content;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 
 public interface NUSDataProvider {

@@ -10,6 +10,7 @@ public interface ContentEncryptor {
 
     long readEncryptedContentToStreamHashed(InputStream in, OutputStream out, long offset, long size, long payloadOffset) throws IOException;
 
-    long readEncryptedContentToStreamNonHashed(InputStream in, OutputStream out, long offset, long size, long payloadOffset, byte[] IV, IVCache ivcache) throws IOException;
+    long readEncryptedContentToStreamNonHashed(InputStream in, OutputStream out, long offset, long size, long payloadOffset, byte[] IV, IVCache ivcache)
+            throws IOException;
 
 }

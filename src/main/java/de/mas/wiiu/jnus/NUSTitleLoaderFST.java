@@ -19,7 +19,7 @@ package de.mas.wiiu.jnus;
 import java.io.IOException;
 import java.text.ParseException;
 
-import de.mas.wiiu.jnus.entities.fst.FSTEntry;
+import de.mas.wiiu.jnus.entities.FST.nodeentry.DirectoryEntry;
 import de.mas.wiiu.jnus.implementations.DefaultNUSDataProcessor;
 import de.mas.wiiu.jnus.implementations.NUSDataProviderFST;
 import de.mas.wiiu.jnus.interfaces.FSTDataProvider;
@@ -33,7 +33,7 @@ public final class NUSTitleLoaderFST {
         return loadNUSTitle(dataProvider, dataProvider.getRoot(), commonKey);
     }
 
-    public static NUSTitle loadNUSTitle(FSTDataProvider dataProvider, FSTEntry base, byte[] commonKey) throws IOException, ParseException {
+    public static NUSTitle loadNUSTitle(FSTDataProvider dataProvider, DirectoryEntry base, byte[] commonKey) throws IOException, ParseException {
         NUSTitleConfig config = new NUSTitleConfig();
         config.setCommonKey(commonKey);
 

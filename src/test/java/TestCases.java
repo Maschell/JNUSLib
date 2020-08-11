@@ -19,7 +19,7 @@ import org.junit.rules.TemporaryFolder;
 
 import de.mas.wiiu.jnus.NUSTitle;
 import de.mas.wiiu.jnus.NUSTitleLoaderLocal;
-import de.mas.wiiu.jnus.entities.content.Content;
+import de.mas.wiiu.jnus.entities.TMD.Content;
 import de.mas.wiiu.jnus.interfaces.NUSDataProcessor;
 import de.mas.wiiu.jnus.utils.HashUtil;
 import de.mas.wiiu.jnus.utils.Utils;
