@@ -54,22 +54,22 @@ public final class WUDService {
     }
 
     public static Optional<File> compressWUDToWUX(WUDImage image, String outputFolder) throws IOException {
-        return compressWUDToWUX(image, outputFolder, "game.wux", false);
+        return compressWUDToWUX(image, outputFolder, "game.wux", false, Optional.empty());
     }
 
     public static Optional<File> compressWUDToWUX(WUDImage image, String outputFolder, boolean overwrite) throws IOException {
-        return compressWUDToWUX(image, outputFolder, "game.wux", overwrite);
+        return compressWUDToWUX(image, outputFolder, "game.wux", overwrite, Optional.empty());
     }
 
-    public static Optional<File> compressWUDToWUX(WUDImage image, String outputFolder, String filename, boolean overwrite) throws IOException {
+    public static Optional<File> compressWUDToWUX(WUDImage image, String outputFolder, String filename, boolean overwrite, Optional<Long> inputFileSize) throws IOException {
         if (image.isCompressed()) {
             log.info("Given image is already compressed");
-            return Optional.empty();
+            //return Optional.empty();
         }
 
         if (image.getWUDFileSize() != WUDImage.WUD_FILESIZE) {
             log.info("Given WUD has not the expected filesize");
-            return Optional.empty();
+            //return Optional.empty();
         }
 
         String usedOutputFolder = outputFolder;
@@ -89,21 +89,26 @@ public final class WUDService {
             log.info("Couldn't compress wud, target file already exists (" + outputFile.getAbsolutePath() + ")");
             return Optional.empty();
         }
+        
+        long toReadFilesize = image.getWUDFileSize();
+        if(inputFileSize.isPresent()) {
+            toReadFilesize = inputFileSize.get();         
+        }
 
         log.info("Writing compressed file to: " + outputFile.getAbsolutePath());
         RandomAccessFile fileOutput = new RandomAccessFile(outputFile, "rw");
         try {
 
-            WUDImageCompressedInfo info = WUDImageCompressedInfo.getDefaultCompressedInfo();
+            WUDImageCompressedInfo info = new WUDImageCompressedInfo(WUDImageCompressedInfo.SECTOR_SIZE, 0, toReadFilesize);
 
             byte[] header = info.getHeaderAsBytes();
-            log.info("Writing header");
+            log.info("Writing header + " + header.length);
             fileOutput.write(header);
 
-            int sectorTableEntryCount = (int) ((image.getWUDFileSize() + WUDImageCompressedInfo.SECTOR_SIZE - 1) / (long) WUDImageCompressedInfo.SECTOR_SIZE);
+            int sectorTableEntryCount = (int) ((toReadFilesize + WUDImageCompressedInfo.SECTOR_SIZE - 1) / (long) WUDImageCompressedInfo.SECTOR_SIZE);
 
             long sectorTableStart = fileOutput.getFilePointer();
-            long sectorTableEnd = Utils.align(sectorTableEntryCount * 0x04, WUDImageCompressedInfo.SECTOR_SIZE);
+            long sectorTableEnd = Utils.align(sectorTableStart + (sectorTableEntryCount * 0x04), WUDImageCompressedInfo.SECTOR_SIZE);
             byte[] sectorTablePlaceHolder = new byte[(int) (sectorTableEnd - sectorTableStart)];
 
             fileOutput.write(sectorTablePlaceHolder);
@@ -111,7 +116,7 @@ public final class WUDService {
             Map<ByteArrayWrapper, Integer> sectorHashes = new HashMap<>();
             Map<Integer, Integer> sectorMapping = new TreeMap<>();
 
-            InputStream in = image.getWUDDiscReader().readEncryptedToStream(0, image.getWUDFileSize());
+            InputStream in = image.getWUDDiscReader().readEncryptedToStream(0, toReadFilesize);
 
             int bufferSize = WUDImageCompressedInfo.SECTOR_SIZE;
             byte[] blockBuffer = new byte[bufferSize];
@@ -147,12 +152,12 @@ public final class WUDService {
                 if (curSector % 10 == 0) {
                     double readMB = written / 1024.0 / 1024.0;
                     double writtenMB = ((long) realSector * (long) bufferSize) / 1024.0 / 1024.0;
-                    double percent = ((double) written / image.getWUDFileSize()) * 100;
+                    double percent = ((double) written / toReadFilesize) * 100;
                     double ratio = 1 / (writtenMB / readMB);
                     System.out.print(String.format(Locale.ROOT, "\rCompressing into .wux | Progress %.2f%% | Ratio: 1:%.2f | Read: %.2fMB | Written: %.2fMB\t",
                             percent, ratio, readMB, writtenMB));
                 }
-            } while (written < image.getWUDFileSize());
+            } while (written < toReadFilesize);
             System.out.println();
             log.info("Sectors compressed.");
             log.info("Writing sector table");
@@ -235,7 +240,7 @@ public final class WUDService {
 
         if (image.getWUDFileSize() != WUDImage.WUD_FILESIZE) {
             log.info("Given WUX has not the expected filesize");
-            return Optional.empty();
+            //return Optional.empty();
         }
 
         String usedOutputFolder = outputFolder;
@@ -255,9 +260,11 @@ public final class WUDService {
             log.info("Couldn't decompress wux, target file already exists (" + outputFile.getAbsolutePath() + ")");
             return Optional.empty();
         }
+        
+        long toReadFilesize = image.getWUDFileSize() ;
 
         log.info("Writing decompressed file to: " + outputFile.getAbsolutePath());
-        InputStream in = image.getWUDDiscReader().readEncryptedToStream(0, WUDImage.WUD_FILESIZE);
+        InputStream in = image.getWUDDiscReader().readEncryptedToStream(0, toReadFilesize);
         OutputStream out = new FileOutputStream(outputFile);
 
         int bufferSize = 1024 * 1024;
@@ -279,10 +286,10 @@ public final class WUDService {
             curSector++;
             if (curSector % 1 == 0) {
                 double readMB = totalread / 1024.0 / 1024.0;
-                double percent = ((double) totalread / WUDImage.WUD_FILESIZE) * 100;
+                double percent = ((double) totalread / toReadFilesize) * 100;
                 System.out.print(String.format("\rDecompressing: %.2fMB done (%.2f%%)", readMB, percent));
             }
-        } while (totalread < WUDImage.WUD_FILESIZE);
+        } while (totalread < toReadFilesize);
         System.out.println();
         log.info("Decompressing done!");
         in.close();
