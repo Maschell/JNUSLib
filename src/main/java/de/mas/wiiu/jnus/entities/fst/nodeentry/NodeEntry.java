@@ -73,7 +73,7 @@ public abstract class NodeEntry {
 
     public String getPath() {
         if (parent != null) {
-            return parent.getFullPath();
+            return parent.getFullPath() + "/";
         }
         return "/";
     }
