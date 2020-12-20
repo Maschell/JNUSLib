@@ -76,7 +76,7 @@ public class WiiUPartitions extends LinkedList<WiiUPartition> {
         val nonGMPartitions = tmp.stream().filter(e -> !e.getVolumeID().startsWith("GM")).collect(Collectors.toList());
         for (val partition : nonGMPartitions) {
             if (partition.getVolumes().size() != 1) {
-                throw new IOException("We can't handle more than one partion address yet.");
+                throw new IOException("We can't handle more or less than one partion address yet.");
             }
             val volumeAddress = partition.getVolumes().keySet().iterator().next();
             VolumeHeader vh = VolumeHeader.parseData(reader, volumeAddress.getAddressInBytes());
