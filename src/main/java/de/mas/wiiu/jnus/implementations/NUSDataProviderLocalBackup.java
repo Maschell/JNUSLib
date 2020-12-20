@@ -73,7 +73,7 @@ public class NUSDataProviderLocalBackup implements NUSDataProvider {
         String inputPath = getLocalPath();
         String tmdPath = inputPath + File.separator + Settings.TMD_FILENAME;
         if (titleVersion != Settings.LATEST_TMD_VERSION) {
-            tmdPath = inputPath + File.separator + "v" + titleVersion + File.separator + Settings.TMD_FILENAME;
+            tmdPath = inputPath + File.separator + "tmd." + titleVersion;
         }
         File tmdFile = new File(tmdPath);
         return Optional.of(Files.readAllBytes(tmdFile.toPath()));
