@@ -27,6 +27,7 @@ import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReader;
 import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReaderCompressed;
 import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReaderSplitted;
 import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReaderUncompressed;
+import de.mas.wiiu.jnus.implementations.wud.reader.WUDDiscReaderWumadArchive;
 import de.mas.wiiu.jnus.utils.ByteUtils;
 import lombok.Getter;
 import lombok.Setter;
@@ -41,6 +42,7 @@ public class WUDImage {
 
     @Getter private final boolean isCompressed;
     @Getter private final boolean isSplitted;
+    @Getter private final boolean isWUMADArchiveFormat;
 
     private long inputFileSize = 0L;
     @Getter private final WUDDiscReader WUDDiscReader;
@@ -57,6 +59,9 @@ public class WUDImage {
 
         RandomAccessFile fileStream = new RandomAccessFile(file, "r");
         fileStream.seek(0);
+
+        this.fileHandle = file;
+
         byte[] wuxheader = new byte[WUDImageCompressedInfo.WUX_HEADER_SIZE];
         fileStream.read(wuxheader);
         WUDImageCompressedInfo compressedInfo = new WUDImageCompressedInfo(wuxheader);
@@ -65,6 +70,7 @@ public class WUDImage {
             log.fine("Image is compressed");
             this.isCompressed = true;
             this.isSplitted = false;
+            this.isWUMADArchiveFormat = false;
             Map<Integer, Long> indexTable = new HashMap<>();
             long offsetIndexTable = compressedInfo.getOffsetIndexTable();
             fileStream.seek(offsetIndexTable);
@@ -80,6 +86,12 @@ public class WUDImage {
             setCompressedInfo(compressedInfo);
         } else {
             this.isCompressed = false;
+            int magic0 = ByteUtils.getIntFromBytes(wuxheader, 0x00, ByteOrder.BIG_ENDIAN);
+            if (magic0 == 0x57696920) {
+                this.isWUMADArchiveFormat = true;
+            }else {
+                this.isWUMADArchiveFormat = false;
+            }
             if (file.getName().equals(String.format(WUDDiscReaderSplitted.WUD_SPLITTED_DEFAULT_FILEPATTERN, 1))
                     && (file.length() == WUDDiscReaderSplitted.WUD_SPLITTED_FILE_SIZE)) {
                 this.isSplitted = true;
@@ -93,12 +105,13 @@ public class WUDImage {
             this.WUDDiscReader = new WUDDiscReaderCompressed(this, readOffset);
         } else if (isSplitted()) {
             this.WUDDiscReader = new WUDDiscReaderSplitted(this, readOffset);
+        } else if ((isWUMADArchiveFormat())) {
+            this.WUDDiscReader = new WUDDiscReaderWumadArchive(this, readOffset);
         } else {
             this.WUDDiscReader = new WUDDiscReaderUncompressed(this, readOffset);
         }
-
         fileStream.close();
-        this.fileHandle = file;
+
     }
 
     public long getWUDFileSize() {
@@ -107,6 +120,8 @@ public class WUDImage {
                 inputFileSize = calculateSplittedFileSize();
             } else if (isCompressed()) {
                 inputFileSize = getCompressedInfo().getUncompressedSize();
+            } else if (isWUMADArchiveFormat()){
+                inputFileSize = WUDImage.WUD_FILESIZE;
             } else {
                 inputFileSize = getFileHandle().length();
             }
