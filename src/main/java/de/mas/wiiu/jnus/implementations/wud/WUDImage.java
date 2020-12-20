@@ -46,6 +46,10 @@ public class WUDImage {
     @Getter private final WUDDiscReader WUDDiscReader;
 
     public WUDImage(File file) throws IOException {
+        this(file, 0);
+    }
+
+    public WUDImage(File file, long readOffset) throws IOException {
         if (file == null || !file.exists()) {
             log.info("WUD file is null or does not exist");
             System.exit(1);
@@ -86,11 +90,11 @@ public class WUDImage {
         }
 
         if (isCompressed()) {
-            this.WUDDiscReader = new WUDDiscReaderCompressed(this);
+            this.WUDDiscReader = new WUDDiscReaderCompressed(this, readOffset);
         } else if (isSplitted()) {
-            this.WUDDiscReader = new WUDDiscReaderSplitted(this);
+            this.WUDDiscReader = new WUDDiscReaderSplitted(this, readOffset);
         } else {
-            this.WUDDiscReader = new WUDDiscReaderUncompressed(this);
+            this.WUDDiscReader = new WUDDiscReaderUncompressed(this, readOffset);
         }
 
         fileStream.close();

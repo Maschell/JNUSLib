@@ -36,9 +36,16 @@ import lombok.extern.java.Log;
 @Log
 public abstract class WUDDiscReader {
     @Getter private final WUDImage image;
-
+    @Getter private long baseOffset;
+    
     public WUDDiscReader(WUDImage image) {
+        this(image, 0);
+    }
+
+    public WUDDiscReader(WUDImage image, long baseOffset) {
+        this.baseOffset = 0;
         this.image = image;
+        this.baseOffset = baseOffset;
     }
 
     public byte[] readEncryptedToByteArray(long offset, long fileoffset, long size) throws IOException {
