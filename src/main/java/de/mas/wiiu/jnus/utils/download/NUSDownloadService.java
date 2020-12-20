@@ -64,6 +64,11 @@ public final class NUSDownloadService extends Downloader {
         String URL = URL_BASE + "/" + String.format("%016X", titleID) + "/tmd" + version_suf;
         return downloadFileToByteArray(URL);
     }
+    
+    public byte[] downloadContentToByteArray(long titleID, int contentId) throws IOException {
+        String URL = URL_BASE + "/" + String.format("%016X/%08X", titleID, contentId);
+        return downloadFileToByteArray(URL);
+    }
 
     /**
      * For the cert we need a part from a ticket. For this we simply load a public ticket and use it.
