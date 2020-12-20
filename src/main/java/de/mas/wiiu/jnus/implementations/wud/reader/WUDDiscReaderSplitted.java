@@ -32,20 +32,21 @@ public class WUDDiscReaderSplitted extends WUDDiscReader {
     public static long NUMBER_OF_FILES = 12;
     public static String WUD_SPLITTED_DEFAULT_FILEPATTERN = "game_part%d.wud";
 
-    public WUDDiscReaderSplitted(WUDImage image) {
-        super(image);
+    public WUDDiscReaderSplitted(WUDImage image, long baseOffset) {
+        super(image, baseOffset);
     }
 
     @Override
     public long readEncryptedToStream(OutputStream outputStream, long offset, long size) throws IOException {
-        RandomAccessFile input = getFileByOffset(offset);
+        long newOffset = offset +  + this.getBaseOffset();
+        RandomAccessFile input = getFileByOffset(newOffset);
 
         int bufferSize = 0x8000;
         byte[] buffer = new byte[bufferSize];
         long totalread = 0;
-        long curOffset = offset;
+        long curOffset = newOffset;
 
-        int part = getFilePartByOffset(offset);
+        int part = getFilePartByOffset(newOffset);
         long offsetInFile = getOffsetInFilePart(part, curOffset);
 
         do {

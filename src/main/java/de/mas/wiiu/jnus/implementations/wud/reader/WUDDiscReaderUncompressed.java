@@ -26,8 +26,11 @@ import de.mas.wiiu.jnus.implementations.wud.WUDImage;
 import de.mas.wiiu.jnus.utils.StreamUtils;
 
 public class WUDDiscReaderUncompressed extends WUDDiscReader {
-    public WUDDiscReaderUncompressed(WUDImage image) {
-        super(image);
+
+
+    public WUDDiscReaderUncompressed(WUDImage image, long baseOffset) {        
+        super(image, baseOffset);
+       
     }
 
     @Override
@@ -35,7 +38,7 @@ public class WUDDiscReaderUncompressed extends WUDDiscReader {
 
         FileInputStream input = new FileInputStream(getImage().getFileHandle());
 
-        StreamUtils.skipExactly(input, offset);
+        StreamUtils.skipExactly(input, offset + this.getBaseOffset());
 
         int bufferSize = 0x8000;
         byte[] buffer = new byte[bufferSize];
@@ -68,7 +71,7 @@ public class WUDDiscReaderUncompressed extends WUDDiscReader {
     @Override
     public InputStream readEncryptedToStream(long offset, long size) throws IOException {
         FileInputStream input = new FileInputStream(getImage().getFileHandle());
-        StreamUtils.skipExactly(input, offset);
+        StreamUtils.skipExactly(input, offset + this.getBaseOffset());
         return input;
     }
 

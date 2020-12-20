@@ -27,8 +27,8 @@ import de.mas.wiiu.jnus.utils.StreamUtils;
 
 public class WUDDiscReaderCompressed extends WUDDiscReader {
 
-    public WUDDiscReaderCompressed(WUDImage image) {
-        super(image);
+    public WUDDiscReaderCompressed(WUDImage image, long baseOffset) {
+        super(image, baseOffset);
     }
 
     /**
@@ -39,9 +39,9 @@ public class WUDDiscReaderCompressed extends WUDDiscReader {
         // make sure there is no out-of-bounds read
         WUDImageCompressedInfo info = getImage().getCompressedInfo();
 
-        long fileBytesLeft = info.getUncompressedSize() - offset;
+        long fileBytesLeft = info.getUncompressedSize() - (offset + getBaseOffset());
 
-        long usedOffset = offset;
+        long usedOffset = offset + getBaseOffset();
         long usedSize = size;
 
         if (fileBytesLeft <= 0) {
