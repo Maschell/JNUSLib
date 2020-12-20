@@ -102,7 +102,7 @@ public final class WUDService {
             WUDImageCompressedInfo info = new WUDImageCompressedInfo(WUDImageCompressedInfo.SECTOR_SIZE, 0, toReadFilesize);
 
             byte[] header = info.getHeaderAsBytes();
-            log.info("Writing header + " + header.length);
+            log.info("Writing header");
             fileOutput.write(header);
 
             int sectorTableEntryCount = (int) ((toReadFilesize + WUDImageCompressedInfo.SECTOR_SIZE - 1) / (long) WUDImageCompressedInfo.SECTOR_SIZE);
